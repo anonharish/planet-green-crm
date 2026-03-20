@@ -15,17 +15,19 @@ import {
   FormLabel,
   FormMessage,
 } from '../../../components/ui/form';
+import { useUpdatePasswordMutation } from '../api/authApi';
 
 const setPasswordSchema = z
   .object({
-    password: z
+    old_password: z.string().min(1, { message: 'Current (temporary) password is required.' }),
+    new_password: z
       .string()
       .min(8, { message: 'Password must be at least 8 characters.' })
       .regex(/[A-Z]/, { message: 'Must contain at least one uppercase letter.' })
       .regex(/[0-9]/, { message: 'Must contain at least one number.' }),
     confirmPassword: z.string().min(1, { message: 'Please confirm your password.' }),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => data.new_password === data.confirmPassword, {
     path: ['confirmPassword'],
     message: 'Passwords do not match.',
   });
@@ -35,19 +37,32 @@ type SetPasswordFormValues = z.infer<typeof setPasswordSchema>;
 export const SetPasswordPage = () => {
   const { completePasswordSetup } = useAuth();
   const navigate = useNavigate();
+  const [updatePassword, { isLoading }] = useUpdatePasswordMutation();
 
   const form = useForm<SetPasswordFormValues>({
     resolver: zodResolver(setPasswordSchema),
     defaultValues: {
-      password: '',
+      old_password: '',
+      new_password: '',
       confirmPassword: '',
     },
   });
 
-  const onSubmit = (_values: SetPasswordFormValues) => {
-    // TODO: hook into a real /auth/set-password API call here
-    completePasswordSetup();
-    navigate('/dashboard', { replace: true });
+  const onSubmit = async (values: SetPasswordFormValues) => {
+    try {
+      const response = await updatePassword({
+        old_password: values.old_password,
+        new_password: values.new_password,
+      }).unwrap();
+
+      if (response.success) {
+        completePasswordSetup();
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err: any) {
+      const message = err?.data?.error || err?.data?.message || 'Failed to update password. Please try again.';
+      form.setError('root', { message });
+    }
   };
 
   return (
@@ -65,12 +80,25 @@ export const SetPasswordPage = () => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="password"
+                  name="old_password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current (Temporary) Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Enter your temporary password" disabled={isLoading} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="new_password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" disabled={isLoading} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -81,16 +109,21 @@ export const SetPasswordPage = () => {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>Confirm New Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" disabled={isLoading} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full mt-2">
-                  Save & Continue to Dashboard
+                {form.formState.errors.root && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.root.message}
+                  </p>
+                )}
+                <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                  {isLoading ? 'Updating...' : 'Save & Continue to Dashboard'}
                 </Button>
               </form>
             </Form>

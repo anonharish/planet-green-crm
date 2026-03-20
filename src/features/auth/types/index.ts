@@ -13,3 +13,25 @@ export interface LoginResponse {
   token: string;
   refreshToken: string;
 }
+
+export interface UpdatePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
+
+export interface UpdatePasswordResponse {
+  success: boolean;
+}
+
+export interface Role {
+  id: number;
+  code: string;
+  description: string;
+  role_level: number;
+}
+
+export type RoleCode = 'SADMIN' | 'ADMIN' | 'RELMNG' | 'EXPMNG';
+
+export interface GetUserRolesRequest {
+  offset: number;
+}

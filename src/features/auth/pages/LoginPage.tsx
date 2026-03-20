@@ -2,6 +2,8 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../../app/store';
 import { useAuth } from '../../../context/AuthContext';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -15,6 +17,8 @@ import {
   FormMessage,
 } from '../../../components/ui/form';
 import { useLoginMutation } from '../api/authApi';
+import { useGetUserRolesMutation } from '../api/authApi';
+import { setRoles } from '../store/authSlice';
 
 const loginSchema = z.object({
   login_id: z.email({ message: 'Please enter a valid email address.' }),
@@ -25,7 +29,11 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
   const { login } = useAuth();
-  const [loginApi, { isLoading }] = useLoginMutation();
+  const dispatch = useDispatch<AppDispatch>();
+  const [loginApi, { isLoading: isLoggingIn }] = useLoginMutation();
+  const [getUserRoles, { isLoading: isFetchingRoles }] = useGetUserRolesMutation();
+
+  const isLoading = isLoggingIn || isFetchingRoles;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,7 +45,7 @@ export const LoginPage = () => {
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
-      const response = await loginApi(values).unwrap();
+      const response = await loginApi(values).unwrap();     
       const isFirst = Boolean(response.is_first_login);
       login(
         response.token,
@@ -47,8 +55,13 @@ export const LoginPage = () => {
           id: String(response.id),
           email: response.login_id,
           name: `${response.first_name} ${response.last_name}`,
+          role_id: response.role_id,
         }
       );
+
+      const roles = await getUserRoles({ offset: 0 }).unwrap();
+      dispatch(setRoles(roles));
+
     } catch (err: any) {
       const message = err?.data?.error || 'Invalid credentials or server unavailable.';
       form.setError('root', { message });
@@ -107,7 +120,11 @@ export const LoginPage = () => {
               </p>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoggingIn
+                ? 'Signing In...'
+                : isFetchingRoles
+                ? 'Loading roles...'
+                : 'Sign In'}
             </Button>
           </form>
         </Form>

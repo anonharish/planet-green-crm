@@ -1,11 +1,14 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { Role } from '../types';
 
 interface AuthState {
-  user: { id: string; email: string; name: string } | null;
+  user: { id: string; email: string; name: string; role_id: number } | null;
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
   isFirstLogin: boolean;
+  roles: Role[];
+  currentRole: Role | null;
 }
 
 const getStoredItem = (key: string) => localStorage.getItem(key);
@@ -16,6 +19,8 @@ const initialState: AuthState = {
   refreshToken: getStoredItem('refreshToken'),
   isAuthenticated: !!getStoredItem('token'),
   isFirstLogin: getStoredItem('isFirstLogin') === 'true',
+  roles: [],
+  currentRole: null,
 };
 
 const authSlice = createSlice({
@@ -37,6 +42,12 @@ const authSlice = createSlice({
       localStorage.setItem('refreshToken', action.payload.refreshToken);
       localStorage.setItem('isFirstLogin', String(action.payload.isFirstLogin));
     },
+    setRoles: (state, action: PayloadAction<Role[]>) => {
+      state.roles = action.payload;
+      if (state.user) {
+        state.currentRole = action.payload.find((r) => r.id === state.user!.role_id) ?? null;
+      }
+    },
     setPasswordSuccess: (state) => {
       state.isFirstLogin = false;
       localStorage.setItem('isFirstLogin', 'false');
@@ -47,6 +58,8 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.isFirstLogin = false;
+      state.roles = [];
+      state.currentRole = null;
 
       localStorage.removeItem('user');
       localStorage.removeItem('token');
@@ -56,5 +69,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, setPasswordSuccess, logoutUser } = authSlice.actions;
+export const { setCredentials, setRoles, setPasswordSuccess, logoutUser } = authSlice.actions;
 export default authSlice.reducer;

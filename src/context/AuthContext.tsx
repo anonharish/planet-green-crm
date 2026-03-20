@@ -6,8 +6,8 @@ import { setCredentials, logoutUser, setPasswordSuccess } from '../features/auth
 interface AuthContextType {
   isAuthenticated: boolean;
   isFirstLogin: boolean;
-  user: { id: string; email: string; name: string } | null;
-  login: (token: string, refreshToken: string, isFirstLogin: boolean, user: { id: string; email: string; name: string }) => void;
+  user: { id: string; email: string; name: string; role_id: number } | null;
+  login: (token: string, refreshToken: string, isFirstLogin: boolean, user: { id: string; email: string; name: string; role_id: number }) => void;
   logout: () => void;
   completePasswordSetup: () => void;
 }
@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const dispatch = useDispatch();
   const { isAuthenticated, isFirstLogin, user } = useSelector((state: RootState) => state.auth);
 
-  const login = (token: string, refreshToken: string, isFirstLevel: boolean, userData: { id: string; email: string; name: string }) => {
+  const login = (token: string, refreshToken: string, isFirstLevel: boolean, userData: { id: string; email: string; name: string; role_id: number }) => {
     dispatch(setCredentials({ user: userData, token, refreshToken, isFirstLogin: isFirstLevel }));
   };
 
