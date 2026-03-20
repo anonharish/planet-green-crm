@@ -35,9 +35,8 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, Fetch
         const refreshToken = (api.getState() as any).auth.refreshToken;
         
         if (refreshToken) {
-          // Attempt to fetch a new token
           const refreshResult = await baseQuery(
-            { url: '/auth/refresh', method: 'POST', body: { refreshToken } },
+            { url: '/auth/refreshToken', method: 'POST', body: { token: refreshToken } },
             api,
             extraOptions
           );
