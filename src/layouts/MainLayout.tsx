@@ -8,7 +8,8 @@ import {
   UserCircle, 
   Briefcase,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FlaskConical
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import {
@@ -38,6 +39,7 @@ export const MainLayout = () => {
     { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} /> },
     { label: 'Manage Users', path: '/users', icon: <Users size={20} /> },
     { label: 'Manage Agents', path: '/agents', icon: <UserCircle size={20} /> },
+    { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} /> },
   ];
 
   return (

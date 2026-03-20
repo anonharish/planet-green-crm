@@ -6,6 +6,7 @@ const DashboardPage = React.lazy(() => import('../features/dashboard/pages/Dashb
 const LeadsPage = React.lazy(() => import('../features/leads/pages/LeadsPage').then(m => ({ default: m.LeadsPage })));
 const UsersPage = React.lazy(() => import('../features/users/pages/UsersPage').then(m => ({ default: m.UsersPage })));
 const AgentsPage = React.lazy(() => import('../features/agents/pages/AgentsPage').then(m => ({ default: m.AgentsPage })));
+const PlaygroundPage = React.lazy(() => import('../features/playground/pages/PlaygroundPage').then(m => ({ default: m.PlaygroundPage })));
 
 export const PrivateRoutes = (
   <Route element={<MainLayout />}>
@@ -14,5 +15,6 @@ export const PrivateRoutes = (
     <Route path="/leads" element={<LeadsPage />} />
     <Route path="/users" element={<UsersPage />} />
     <Route path="/agents" element={<AgentsPage />} />
+    <Route path="/playground" element={<PlaygroundPage />} />
   </Route>
 );
