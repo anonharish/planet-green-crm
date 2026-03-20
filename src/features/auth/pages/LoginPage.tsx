@@ -15,11 +15,11 @@ export const LoginPage = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@example.com' && password === 'Admin@123') {
+    if (email === 'testuser@mail.com' && password === '123456') {
       login('dummy_token_123', { id: '1', email, name: 'Admin User' });
       navigate('/dashboard');
     } else {
-      setError('Invalid credentials. Use admin@example.com / Admin@123');
+      setError('Invalid credentials. Use testuser@mail.com / 123456');
     }
   };
 
@@ -38,7 +38,7 @@ export const LoginPage = () => {
             <Input 
               id="email" 
               type="email" 
-              placeholder="admin@example.com" 
+              placeholder="testuser@mail.com" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required 
