@@ -1,25 +1,50 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Label } from '../../../components/ui/label';
+import { useLoginMutation } from '../api/authApi';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
+  
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const [loginApi, { isLoading }] = useLoginMutation();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'testuser@mail.com' && password === '123456') {
-      // Pass true for isFirstLevel to trigger the Set Password flow
-      login('dummy_jwt_token', 'dummy_refresh_token', true, { id: '1', email, name: 'Admin User' });
-    } else {
-      setError('Invalid credentials. Use testuser@mail.com / 123456');
+    setLocalError('');
+    
+    if (!email || !password) {
+      setLocalError('Please enter both email and password.');
+      return;
+    }
+
+    try {
+      // Call the real API
+      const response = await loginApi({ login_id: email, password }).unwrap();
+      
+      // The API returns is_first_login as an integer 0 or 1
+      const isFirst = Boolean(response.is_first_login);
+      
+      login(
+        response.token, 
+        response.refreshToken, 
+        isFirst, 
+        { 
+          id: String(response.id), 
+          email: response.login_id, 
+          name: `${response.first_name} ${response.last_name}` 
+        }
+      );
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      setLocalError(
+        err?.data?.message || err?.error || 'Invalid credentials or server unavailable.'
+      );
     }
   };
 
@@ -38,10 +63,11 @@ export const LoginPage = () => {
             <Input 
               id="email" 
               type="email" 
-              placeholder="testuser@mail.com" 
+              placeholder="superadmin@gmail.com" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required 
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -52,11 +78,12 @@ export const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required 
+              disabled={isLoading}
             />
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <Button type="submit" className="w-full">
-            Sign In
+          {localError && <p className="text-sm text-red-500 font-medium">{localError}</p>}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
       </CardContent>

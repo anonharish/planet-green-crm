@@ -7,7 +7,7 @@ import { Mutex } from 'async-mutex';
 const mutex = new Mutex();
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:3000/api', // To be replaced with actual API later
+  baseUrl: 'http://localhost:3000', // Update to user's specified base url
   prepareHeaders: (headers, { getState }) => {
     // We can get the token from Redux state instead of localStorage directly
     const token = (getState() as any).auth.token;
