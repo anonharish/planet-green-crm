@@ -16,8 +16,8 @@ export const LoginPage = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email === 'testuser@mail.com' && password === '123456') {
-      login('dummy_token_123', { id: '1', email, name: 'Admin User' });
-      navigate('/dashboard');
+      // Pass true for isFirstLevel to trigger the Set Password flow
+      login('dummy_jwt_token', 'dummy_refresh_token', true, { id: '1', email, name: 'Admin User' });
     } else {
       setError('Invalid credentials. Use testuser@mail.com / 123456');
     }

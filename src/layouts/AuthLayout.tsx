@@ -3,9 +3,13 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export const AuthLayout = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isFirstLogin } = useAuth();
 
-  if (isAuthenticated) {
+  if (isAuthenticated && isFirstLogin) {
+    return <Navigate to="/set-password" replace />;
+  }
+
+  if (isAuthenticated && !isFirstLogin) {
     return <Navigate to="/dashboard" replace />;
   }
 

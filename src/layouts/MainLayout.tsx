@@ -22,11 +22,15 @@ import {
 import { cn } from '../utils';
 
 export const MainLayout = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isFirstLogin, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isFirstLogin) {
+    return <Navigate to="/set-password" replace />;
   }
 
   const navItems = [

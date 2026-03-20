@@ -1,30 +1,37 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../app/store';
-import { setCredentials, logoutUser } from '../features/auth/store/authSlice';
+import { setCredentials, logoutUser, setPasswordSuccess } from '../features/auth/store/authSlice';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (token: string, user: { id: string; email: string; name: string }) => void;
+  isFirstLogin: boolean;
+  user: { id: string; email: string; name: string } | null;
+  login: (token: string, refreshToken: string, isFirstLogin: boolean, user: { id: string; email: string; name: string }) => void;
   logout: () => void;
+  completePasswordSetup: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const { isAuthenticated, isFirstLogin, user } = useSelector((state: RootState) => state.auth);
 
-  const login = (token: string, user: { id: string; email: string; name: string }) => {
-    dispatch(setCredentials({ user, token }));
+  const login = (token: string, refreshToken: string, isFirstLevel: boolean, userData: { id: string; email: string; name: string }) => {
+    dispatch(setCredentials({ user: userData, token, refreshToken, isFirstLogin: isFirstLevel }));
   };
 
   const logout = () => {
     dispatch(logoutUser());
   };
 
+  const completePasswordSetup = () => {
+    dispatch(setPasswordSuccess());
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isFirstLogin, user, login, logout, completePasswordSetup }}>
       {children}
     </AuthContext.Provider>
   );
