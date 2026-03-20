@@ -1,50 +1,57 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '../../../context/AuthContext';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Label } from '../../../components/ui/label';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '../../../components/ui/form';
 import { useLoginMutation } from '../api/authApi';
 
+const loginSchema = z.object({
+  login_id: z.email({ message: 'Please enter a valid email address.' }),
+  password: z.string().min(1, { message: 'Password is required.' }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 export const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [localError, setLocalError] = useState('');
-  
   const { login } = useAuth();
   const [loginApi, { isLoading }] = useLoginMutation();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLocalError('');
-    
-    if (!email || !password) {
-      setLocalError('Please enter both email and password.');
-      return;
-    }
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      login_id: '',
+      password: '',
+    },
+  });
 
+  const onSubmit = async (values: LoginFormValues) => {
     try {
-      // Call the real API
-      const response = await loginApi({ login_id: email, password }).unwrap();
-      
-      // The API returns is_first_login as an integer 0 or 1
+      const response = await loginApi(values).unwrap();
       const isFirst = Boolean(response.is_first_login);
-      
       login(
-        response.token, 
-        response.refreshToken, 
-        isFirst, 
-        { 
-          id: String(response.id), 
-          email: response.login_id, 
-          name: `${response.first_name} ${response.last_name}` 
+        response.token,
+        response.refreshToken,
+        isFirst,
+        {
+          id: String(response.id),
+          email: response.login_id,
+          name: `${response.first_name} ${response.last_name}`,
         }
       );
     } catch (err: any) {
-      console.error('Login failed:', err);
-      setLocalError(
-        err?.data?.message || err?.error || 'Invalid credentials or server unavailable.'
-      );
+      const message = err?.data?.error || 'Invalid credentials or server unavailable.';
+      form.setError('root', { message });
     }
   };
 
@@ -57,35 +64,53 @@ export const LoginPage = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="superadmin@gmail.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-              disabled={isLoading}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="login_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="superadmin@gmail.com"
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required 
-              disabled={isLoading}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          {localError && <p className="text-sm text-red-500 font-medium">{localError}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
-          </Button>
-        </form>
+            {form.formState.errors.root && (
+              <p className="text-sm font-medium text-destructive">
+                {form.formState.errors.root.message}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );
