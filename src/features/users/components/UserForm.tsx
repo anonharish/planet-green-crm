@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '../../../components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '../../../components/ui/popover';
+import { cn } from '../../../utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { useGetAllUsersByRoleIdQuery } from '../api/usersApi';
 
 const formSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -28,6 +43,7 @@ const formSchema = z.object({
   login_id: z.string().optional(),
   password: z.string().optional(),
   role_id: z.number(),
+  reporting_manager_id: z.number().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -49,6 +65,11 @@ export const UserForm = ({
   roleId,
   roleLabel
 }: UserFormProps) => {
+  const [open, setOpen] = useState(false);
+
+  // Fetch all Relationship Managers (Role ID 3) for the reporting manager dropdown
+  const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,15 +80,16 @@ export const UserForm = ({
       login_id: initialValues?.login_id || '',
       password: initialValues?.password || '',
       role_id: initialValues?.role_id || roleId,
+      reporting_manager_id: initialValues?.reporting_manager_id || null,
     },
   });
 
   const handleInternalSubmit = (values: FormValues) => {
-    // Automatically set login_id to email as per user request
+    // Automatically set login_id to email
     const payload = {
       ...values,
       login_id: values.email,
-      role_id: roleId // Ensure correct role_id is sent
+      role_id: roleId 
     };
     onSubmit(payload);
   };
@@ -172,6 +194,67 @@ export const UserForm = ({
             </FormItem>
           )}
         />
+
+        {/* Reporting Manager Dropdown (Only for Experience Managers/Agents) */}
+        {roleId === 4 && (
+          <FormField
+            control={form.control}
+            name="reporting_manager_id"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Reporting Manager</FormLabel>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        disabled={isLoading}
+                      >
+                        {field.value
+                          ? `${managers.find((m) => m.id === field.value)?.first_name} ${managers.find((m) => m.id === field.value)?.last_name}`
+                          : "Select relationship manager"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search managers..." />
+                      <CommandEmpty>No manager found.</CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-y-auto">
+                        {managers.map((manager) => (
+                          <CommandItem
+                            key={manager.id}
+                            value={`${manager.first_name} ${manager.last_name}`}
+                            onSelect={() => {
+                              field.onChange(manager.id);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                manager.id === field.value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {manager.first_name} {manager.last_name} ({manager.email})
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button type="submit" disabled={isLoading} className="w-full">

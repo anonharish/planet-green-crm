@@ -81,6 +81,9 @@ const authSlice = createSlice({
       storage.set(STORAGE_KEYS.TOKEN, action.payload.token);
       storage.set(STORAGE_KEYS.REFRESH_TOKEN, action.payload.refreshToken);
     },
+    setPasswordSuccess: (state) => {
+      state.isFirstLogin = false;
+    },
     logoutUser: (state) => {
       state.user = null;
       state.token = null;
@@ -96,5 +99,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, setRoles, setCurrentRole, updateToken, logoutUser } = authSlice.actions;
+export const { setCredentials, setRoles, setCurrentRole, updateToken, setPasswordSuccess, logoutUser } = authSlice.actions;
 export default authSlice.reducer;

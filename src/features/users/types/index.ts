@@ -11,6 +11,7 @@ export interface User {
   is_active: number; // 1 for Yes, 0 for No
   created_on: string;
   updated_on: string | null;
+  reporting_manager_id?: number | null;
 }
 
 export interface CreateUserRequest {
@@ -21,6 +22,7 @@ export interface CreateUserRequest {
   phone_number: string;
   email: string;
   role_id: number;
+  reporting_manager_id?: number | null;
 }
 
 export interface CreateUserResponse {
