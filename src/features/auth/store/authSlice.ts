@@ -1,8 +1,21 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Role } from '../types';
+import { storage } from '../../../shared/utils/localStorage';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role_id: number;
+}
+
+export interface Role {
+  id: number;
+  code: string;
+  description: string;
+}
 
 interface AuthState {
-  user: { id: string; email: string; name: string; role_id: number } | null;
+  user: User | null;
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
@@ -11,21 +24,23 @@ interface AuthState {
   currentRole: Role | null;
 }
 
-const getStoredItem = (key: string) => localStorage.getItem(key);
-
-const storedRolesData = getStoredItem('roles');
-const storedUserData = getStoredItem('user');
-const storedRoles: Role[] = storedRolesData ? JSON.parse(storedRolesData) : [];
-const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
+// Keys for localStorage
+const STORAGE_KEYS = {
+  USER: 'crm_user',
+  TOKEN: 'crm_token',
+  REFRESH_TOKEN: 'crm_refresh_token',
+  ROLES: 'crm_roles',
+  CURRENT_ROLE: 'crm_current_role',
+};
 
 const initialState: AuthState = {
-  user: storedUser,
-  token: getStoredItem('token'),
-  refreshToken: getStoredItem('refreshToken'),
-  isAuthenticated: !!getStoredItem('token'),
-  isFirstLogin: getStoredItem('isFirstLogin') === 'true',
-  roles: storedRoles,
-  currentRole: storedUser ? storedRoles.find((r: Role) => r.id === storedUser.role_id) || null : null,
+  user: storage.get(STORAGE_KEYS.USER, null),
+  token: storage.get(STORAGE_KEYS.TOKEN, null),
+  refreshToken: storage.get(STORAGE_KEYS.REFRESH_TOKEN, null),
+  roles: storage.get(STORAGE_KEYS.ROLES, []),
+  currentRole: storage.get(STORAGE_KEYS.CURRENT_ROLE, null),
+  isAuthenticated: !!storage.get(STORAGE_KEYS.TOKEN, null),
+  isFirstLogin: false,
 };
 
 const authSlice = createSlice({
@@ -34,47 +49,52 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ user: AuthState['user']; token: string; refreshToken: string; isFirstLogin: boolean }>
+      action: PayloadAction<{ user: User; token: string; refreshToken: string; isFirstLogin?: boolean }>
     ) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.refreshToken = action.payload.refreshToken;
-      state.isFirstLogin = action.payload.isFirstLogin;
+      const { user, token, refreshToken, isFirstLogin } = action.payload;
+      state.user = user;
+      state.token = token;
+      state.refreshToken = refreshToken;
       state.isAuthenticated = true;
+      state.isFirstLogin = !!isFirstLogin;
 
-      localStorage.setItem('user', JSON.stringify(action.payload.user));
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('refreshToken', action.payload.refreshToken);
-      localStorage.setItem('isFirstLogin', String(action.payload.isFirstLogin));
+      storage.set(STORAGE_KEYS.USER, user);
+      storage.set(STORAGE_KEYS.TOKEN, token);
+      storage.set(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
     },
     setRoles: (state, action: PayloadAction<Role[]>) => {
       state.roles = action.payload;
-      localStorage.setItem('roles', JSON.stringify(action.payload));
-      if (state.user) {
-        state.currentRole = action.payload.find((r) => r.id === state.user!.role_id) ?? null;
+      storage.set(STORAGE_KEYS.ROLES, action.payload);
+
+      if (action.payload.length > 0 && !state.currentRole) {
+        state.currentRole = action.payload[0];
+        storage.set(STORAGE_KEYS.CURRENT_ROLE, action.payload[0]);
       }
     },
-    setPasswordSuccess: (state) => {
-      state.isFirstLogin = false;
-      localStorage.setItem('isFirstLogin', 'false');
+    setCurrentRole: (state, action: PayloadAction<Role>) => {
+      state.currentRole = action.payload;
+      storage.set(STORAGE_KEYS.CURRENT_ROLE, action.payload);
+    },
+    updateToken: (state, action: PayloadAction<{ token: string; refreshToken: string }>) => {
+      state.token = action.payload.token;
+      state.refreshToken = action.payload.refreshToken;
+      storage.set(STORAGE_KEYS.TOKEN, action.payload.token);
+      storage.set(STORAGE_KEYS.REFRESH_TOKEN, action.payload.refreshToken);
     },
     logoutUser: (state) => {
       state.user = null;
       state.token = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
-      state.isFirstLogin = false;
       state.roles = [];
       state.currentRole = null;
+      state.isFirstLogin = false;
 
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('isFirstLogin');
-      localStorage.removeItem('roles');
+      // Clear ALL localStorage
+      storage.clear();
     },
   },
 });
 
-export const { setCredentials, setRoles, setPasswordSuccess, logoutUser } = authSlice.actions;
+export const { setCredentials, setRoles, setCurrentRole, updateToken, logoutUser } = authSlice.actions;
 export default authSlice.reducer;
