@@ -13,14 +13,19 @@ interface AuthState {
 
 const getStoredItem = (key: string) => localStorage.getItem(key);
 
+const storedRolesData = getStoredItem('roles');
+const storedUserData = getStoredItem('user');
+const storedRoles: Role[] = storedRolesData ? JSON.parse(storedRolesData) : [];
+const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
+
 const initialState: AuthState = {
-  user: getStoredItem('user') ? JSON.parse(getStoredItem('user')!) : null,
+  user: storedUser,
   token: getStoredItem('token'),
   refreshToken: getStoredItem('refreshToken'),
   isAuthenticated: !!getStoredItem('token'),
   isFirstLogin: getStoredItem('isFirstLogin') === 'true',
-  roles: [],
-  currentRole: null,
+  roles: storedRoles,
+  currentRole: storedUser ? storedRoles.find((r: Role) => r.id === storedUser.role_id) || null : null,
 };
 
 const authSlice = createSlice({
@@ -44,6 +49,7 @@ const authSlice = createSlice({
     },
     setRoles: (state, action: PayloadAction<Role[]>) => {
       state.roles = action.payload;
+      localStorage.setItem('roles', JSON.stringify(action.payload));
       if (state.user) {
         state.currentRole = action.payload.find((r) => r.id === state.user!.role_id) ?? null;
       }
@@ -65,6 +71,7 @@ const authSlice = createSlice({
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('isFirstLogin');
+      localStorage.removeItem('roles');
     },
   },
 });

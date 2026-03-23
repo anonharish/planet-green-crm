@@ -47,6 +47,8 @@ export const LoginPage = () => {
     try {
       const response = await loginApi(values).unwrap();     
       const isFirst = Boolean(response.is_first_login);
+      
+      // 1. Set credentials first so the token is available for subsequent API calls
       login(
         response.token,
         response.refreshToken,
@@ -59,6 +61,7 @@ export const LoginPage = () => {
         }
       );
 
+      // 2. Now fetch roles (token will be injected by baseApi)
       const roles = await getUserRoles({ offset: 0 }).unwrap();
       dispatch(setRoles(roles));
 

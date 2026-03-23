@@ -37,8 +37,8 @@ export const MainLayout = () => {
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} /> },
-    { label: 'Manage Users', path: '/users', icon: <Users size={20} /> },
-    { label: 'Manage Agents', path: '/agents', icon: <UserCircle size={20} /> },
+    { label: 'Relationship Managers', path: '/relationship-managers', icon: <Users size={20} /> },
+    { label: 'Experience Managers', path: '/agents', icon: <UserCircle size={20} /> },
     { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} /> },
   ];
 
@@ -68,7 +68,7 @@ export const MainLayout = () => {
               <p className="text-zinc-400 text-xs mt-1 font-medium">CRM Platform</p>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center font-bold text-white flex-shrink-0">
+            <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center font-bold text-white shrink-0">
               PG
             </div>
           )}
@@ -85,7 +85,7 @@ export const MainLayout = () => {
                 isSidebarOpen ? "space-x-3" : "justify-center"
               )}
             >
-              <div className="flex-shrink-0">{item.icon}</div>
+              <div className="shrink-0">{item.icon}</div>
               <span className={cn("font-medium whitespace-nowrap text-sm overflow-hidden transition-all duration-300",
                 isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
               )}>
