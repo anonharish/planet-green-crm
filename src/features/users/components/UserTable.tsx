@@ -1,8 +1,17 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Eye, Users } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '../../../components/ui/dropdown-menu';
+import { ExperienceManagerListDialog } from './ExperienceManagerListDialog';
 import type { User } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import type { Permission } from '../../../config/permissions';
@@ -33,6 +42,7 @@ export const UserTable = ({
   permissionPrefix
 }: UserTableProps) => {
   const { can } = usePermissions();
+  const [viewAgentsManager, setViewAgentsManager] = React.useState<User | null>(null);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '---';
@@ -74,45 +84,71 @@ export const UserTable = ({
     {
       key: 'actions',
       header: 'Actions',
-      width: '80px',
-      render: (user) => (
-        <div className="flex items-center gap-2">
-          {can(`${permissionPrefix}.edit` as Permission) && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              onClick={() => onEdit(user)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-          {can(`${permissionPrefix}.delete` as Permission) && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => onDelete(user.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
+      width: '60px',
+      render: (user: User) => (
+        <div className="flex items-center justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-xs font-normal text-zinc-500 uppercase tracking-wider px-3 py-2">
+                User Actions
+              </DropdownMenuLabel>
+              
+              {can(`${permissionPrefix}.edit` as Permission) && (
+                <DropdownMenuItem onClick={() => onEdit(user)} className="cursor-pointer gap-2 py-2">
+                  <Pencil className="h-4 w-4 text-blue-500" />
+                  <span>Edit Details</span>
+                </DropdownMenuItem>
+              )}
+
+              {user.role_id === 3 && (
+                <DropdownMenuItem onClick={() => setViewAgentsManager(user)} className="cursor-pointer gap-2 py-2">
+                  <Users className="h-4 w-4 text-emerald-500" />
+                  <span>View Experience Managers</span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+              
+              {can(`${permissionPrefix}.delete` as Permission) && (
+                <DropdownMenuItem 
+                  onClick={() => onDelete(user.id)} 
+                  className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete User</span>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
   ];
 
   return (
-    <DataTable
-      columns={columns as any}
-      data={data}
-      isLoading={isLoading}
-      page={page}
-      limit={limit}
-      total={total}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      rowKey={(u) => u.id}
-    />
+    <>
+      <DataTable
+        columns={columns as any}
+        data={data}
+        isLoading={isLoading}
+        page={page}
+        limit={limit}
+        total={total}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        rowKey={(u) => u.id}
+      />
+      
+      <ExperienceManagerListDialog 
+        open={!!viewAgentsManager}
+        onClose={() => setViewAgentsManager(null)}
+        manager={viewAgentsManager}
+      />
+    </>
   );
 };
