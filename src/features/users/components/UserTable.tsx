@@ -1,12 +1,13 @@
 import React from 'react';
-import { DataTable, type ColumnDef } from '../../../shared/components/DataTable/DataTable';
-import { StatusBadge } from '../../../shared/components/StatusBadge/StatusBadge';
-import { Button } from '../../../components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
-import type { User } from '../../users/types';
+import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Button } from '../../../components/ui/button';
+import type { User } from '../types';
+import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
+import type { Permission } from '../../../config/permissions';
 
-interface RelationshipManagerTableProps {
+interface UserTableProps {
   data: User[];
   isLoading: boolean;
   page: number;
@@ -16,9 +17,10 @@ interface RelationshipManagerTableProps {
   onLimitChange: (limit: number) => void;
   onEdit: (user: User) => void;
   onDelete: (id: number) => void;
+  permissionPrefix: 'manager' | 'agent';
 }
 
-export const RelationshipManagerTable = ({
+export const UserTable = ({
   data,
   isLoading,
   page,
@@ -28,7 +30,8 @@ export const RelationshipManagerTable = ({
   onLimitChange,
   onEdit,
   onDelete,
-}: RelationshipManagerTableProps) => {
+  permissionPrefix
+}: UserTableProps) => {
   const { can } = usePermissions();
 
   const formatDate = (dateString?: string) => {
@@ -68,24 +71,23 @@ export const RelationshipManagerTable = ({
       header: 'Creation Date',
       render: (user) => <span>{formatDate(user.created_on)}</span>,
     },
-
     {
       key: 'actions',
       header: 'Actions',
       width: '80px',
       render: (user) => (
         <div className="flex items-center gap-2">
-          {can('manager.edit') && (
+          {can(`${permissionPrefix}.edit` as Permission) && (
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               onClick={() => onEdit(user)}
             >
-              <Edit className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
             </Button>
           )}
-          {can('manager.delete') && (
+          {can(`${permissionPrefix}.delete` as Permission) && (
             <Button
               variant="ghost"
               size="icon"
@@ -102,7 +104,7 @@ export const RelationshipManagerTable = ({
 
   return (
     <DataTable
-      columns={columns}
+      columns={columns as any}
       data={data}
       isLoading={isLoading}
       page={page}
@@ -110,8 +112,7 @@ export const RelationshipManagerTable = ({
       total={total}
       onPageChange={onPageChange}
       onLimitChange={onLimitChange}
-      rowKey={(user) => user.id}
-      emptyMessage="No Relationship Managers found."
+      rowKey={(u) => u.id}
     />
   );
 };

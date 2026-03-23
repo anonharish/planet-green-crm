@@ -32,19 +32,23 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface RelationshipManagerFormProps {
+interface UserFormProps {
   onSubmit: (values: FormValues) => void;
   isLoading?: boolean;
   initialValues?: Partial<FormValues>;
   isEdit?: boolean;
+  roleId: number;
+  roleLabel: string;
 }
 
-export const RelationshipManagerForm = ({ 
+export const UserForm = ({ 
   onSubmit, 
   isLoading, 
   initialValues,
-  isEdit = false
-}: RelationshipManagerFormProps) => {
+  isEdit = false,
+  roleId,
+  roleLabel
+}: UserFormProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,7 +58,7 @@ export const RelationshipManagerForm = ({
       email: initialValues?.email || '',
       login_id: initialValues?.login_id || '',
       password: initialValues?.password || '',
-      role_id: initialValues?.role_id || 3, // Relationship Manager
+      role_id: initialValues?.role_id || roleId,
     },
   });
 
@@ -62,7 +66,8 @@ export const RelationshipManagerForm = ({
     // Automatically set login_id to email as per user request
     const payload = {
       ...values,
-      login_id: values.email
+      login_id: values.email,
+      role_id: roleId // Ensure correct role_id is sent
     };
     onSubmit(payload);
   };
@@ -151,7 +156,7 @@ export const RelationshipManagerForm = ({
               <FormLabel>Role</FormLabel>
               <Select 
                 onValueChange={(v) => field.onChange(Number(v))} 
-                defaultValue={String(field.value)}
+                value={String(field.value)}
                 disabled
               >
                 <FormControl>
@@ -160,10 +165,7 @@ export const RelationshipManagerForm = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="1">Super Admin</SelectItem>
-                  <SelectItem value="2">Admin</SelectItem>
-                  <SelectItem value="3">Relationship Manager</SelectItem>
-                  <SelectItem value="4">Experience Manager</SelectItem>
+                  <SelectItem value={String(roleId)}>{roleLabel}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -175,7 +177,7 @@ export const RelationshipManagerForm = ({
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading 
               ? (isEdit ? 'Updating...' : 'Creating...') 
-              : (isEdit ? 'Update Relationship Manager' : 'Create Relationship Manager')
+              : (isEdit ? `Update ${roleLabel}` : `Create ${roleLabel}`)
             }
           </Button>
         </div>
