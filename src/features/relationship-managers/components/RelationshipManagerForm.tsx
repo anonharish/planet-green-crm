@@ -78,7 +78,7 @@ export const RelationshipManagerForm = ({
               <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Super" {...field} disabled={isLoading} />
+                  <Input placeholder="Enter first name" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -91,7 +91,7 @@ export const RelationshipManagerForm = ({
               <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Admin" {...field} disabled={isLoading} />
+                  <Input placeholder="Enter last name" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -106,7 +106,7 @@ export const RelationshipManagerForm = ({
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input placeholder="9876543210" {...field} disabled={isLoading} />
+                <Input placeholder="Enter phone number" {...field} disabled={isLoading} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -120,7 +120,7 @@ export const RelationshipManagerForm = ({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="superadmin@gmail.com" type="email" {...field} disabled={isLoading} />
+                <Input placeholder="Enter email eg:hello@gmail.com" type="email" {...field} disabled={isLoading} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -133,9 +133,9 @@ export const RelationshipManagerForm = ({
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>Temporary Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="Welcome@123" type="password" {...field} disabled={isLoading} />
+                  <Input placeholder="Enter password" type="password" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
