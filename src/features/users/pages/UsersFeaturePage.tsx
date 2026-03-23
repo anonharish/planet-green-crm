@@ -43,8 +43,8 @@ export const UsersFeaturePage = ({
   
   // 3. Filter/Search State
   const [search, setSearch] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  // const [fromDate, setFromDate] = useState('');
+  // const [toDate, setToDate] = useState('');
   
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -144,14 +144,14 @@ export const UsersFeaturePage = ({
       />
 
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar onReset={() => { setSearch(''); setFromDate(''); setToDate(''); }}>
+        <FilterBar onReset={() => { setSearch(''); /* setFromDate(''); setToDate(''); */ }}>
           <SearchInput value={search} onChange={setSearch} placeholder={`Search ${roleLabel.toLowerCase()}s...`} />
-          <DateRangeFilter 
+          {/* <DateRangeFilter 
             fromDate={fromDate} 
             toDate={toDate} 
             onFromChange={setFromDate} 
             onToChange={setToDate} 
-          />
+          /> */}
         </FilterBar>
 
         <UserTable
