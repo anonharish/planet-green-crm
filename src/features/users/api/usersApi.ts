@@ -33,18 +33,19 @@ export const usersApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Users'],
     }),
-    updateUser: builder.mutation<CreateUserResponse, Partial<CreateUserRequest> & { id: number }>({
-      query: ({ id, ...body }) => ({
-        url: `/users/updateUser/${id}`,
-        method: 'PUT',
+    updateUser: builder.mutation<{ message: string }, Partial<CreateUserRequest> & { id: number }>({
+      query: (body) => ({
+        url: '/users/updateUser',
+        method: 'POST',
         body,
       }),
       invalidatesTags: ['Users'],
     }),
-    deleteUser: builder.mutation<{ success: boolean }, number>({
+    deleteUser: builder.mutation<{ message: string }, number>({
       query: (id) => ({
-        url: `/users/deleteUser/${id}`,
-        method: 'DELETE',
+        url: '/users/deleteUser',
+        method: 'POST',
+        body: { id },
       }),
       invalidatesTags: ['Users'],
     }),

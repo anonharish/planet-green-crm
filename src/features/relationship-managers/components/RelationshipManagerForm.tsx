@@ -25,8 +25,8 @@ const formSchema = z.object({
   last_name: z.string().min(1, 'Last name is required'),
   phone_number: z.string().min(10, 'Phone number must be at least 10 digits'),
   email: z.string().email('Invalid email address'),
-  login_id: z.string().min(1, 'Login ID is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  login_id: z.string().optional(),
+  password: z.string().optional(),
   role_id: z.number(),
 });
 
@@ -36,12 +36,14 @@ interface RelationshipManagerFormProps {
   onSubmit: (values: FormValues) => void;
   isLoading?: boolean;
   initialValues?: Partial<FormValues>;
+  isEdit?: boolean;
 }
 
 export const RelationshipManagerForm = ({ 
   onSubmit, 
   isLoading, 
-  initialValues 
+  initialValues,
+  isEdit = false
 }: RelationshipManagerFormProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,13 +54,22 @@ export const RelationshipManagerForm = ({
       email: initialValues?.email || '',
       login_id: initialValues?.login_id || '',
       password: initialValues?.password || '',
-      role_id: 3, // Relationship Manager
+      role_id: initialValues?.role_id || 3, // Relationship Manager
     },
   });
 
+  const handleInternalSubmit = (values: FormValues) => {
+    // Automatically set login_id to email as per user request
+    const payload = {
+      ...values,
+      login_id: values.email
+    };
+    onSubmit(payload);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleInternalSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -116,33 +127,21 @@ export const RelationshipManagerForm = ({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="login_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Login ID (Email)</FormLabel>
-              <FormControl>
-                <Input placeholder="superadmin@gmail.com" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input placeholder="Welcome@123" type="password" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isEdit && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input placeholder="Welcome@123" type="password" {...field} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -161,7 +160,10 @@ export const RelationshipManagerForm = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="1">Super Admin</SelectItem>
+                  <SelectItem value="2">Admin</SelectItem>
                   <SelectItem value="3">Relationship Manager</SelectItem>
+                  <SelectItem value="4">Experience Manager</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -171,7 +173,10 @@ export const RelationshipManagerForm = ({
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Creating...' : 'Create Relationship Manager'}
+            {isLoading 
+              ? (isEdit ? 'Updating...' : 'Creating...') 
+              : (isEdit ? 'Update Relationship Manager' : 'Create Relationship Manager')
+            }
           </Button>
         </div>
       </form>

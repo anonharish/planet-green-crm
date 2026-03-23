@@ -10,6 +10,7 @@ import { RelationshipManagerForm } from '../components/RelationshipManagerForm';
 import { 
   useGetAllUsersByRoleIdQuery, 
   useCreateUserMutation, 
+  useUpdateUserMutation,
   useDeleteUserMutation 
 } from '../../users/api/usersApi';
 import { usePermissions } from '../../../hooks/usePermissions';
@@ -34,18 +35,17 @@ export const RelationshipManagersPage = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   // Queries & Mutations
-  // Fetch a block of 200 users from the server
   const { data: serverUsers = [], isLoading, isFetching } = useGetAllUsersByRoleIdQuery({
     role_id: 3, // Relationship Managers only
     offset: serverOffset,
   });
 
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
-
-  console.log(can('manager.create'),"insideRel");
 
   // 4. Hybrid Logic: Client-side Search & Slicing
   const filteredData = React.useMemo(() => {
@@ -68,7 +68,6 @@ export const RelationshipManagersPage = () => {
     return filteredData.slice(start, end);
   }, [filteredData, page, limit]);
 
-  // Adjust server offset if needed
   const handlePageChange = (newPage: number) => {
     const targetIndex = (newPage - 1) * limit;
     const newServerOffset = Math.floor(targetIndex / 200) * 200;
@@ -79,13 +78,28 @@ export const RelationshipManagersPage = () => {
   };
 
   // Handlers
-  const handleCreate = async (values: any) => {
+  const handleAddClick = () => {
+    setEditingUser(null);
+    setIsDrawerOpen(true);
+  };
+
+  const handleEditClick = (user: User) => {
+    setEditingUser(user);
+    setIsDrawerOpen(true);
+  };
+
+  const handleFormSubmit = async (values: any) => {
     try {
-      await createUser(values).unwrap();
-      toast.success('Relationship Manager created successfully');
+      if (editingUser) {
+        await updateUser({ ...values, id: editingUser.id }).unwrap();
+        toast.success('Updated successfully');
+      } else {
+        await createUser(values).unwrap();
+        toast.success('Created successfully');
+      }
       setIsDrawerOpen(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to create user');
+      toast.error(err?.data?.message || 'Operation failed');
     }
   };
 
@@ -93,15 +107,15 @@ export const RelationshipManagersPage = () => {
     if (!selectedUserId) return;
     try {
       await deleteUser(selectedUserId).unwrap();
-      toast.success('User deleted successfully');
+      toast.success('Deleted successfully');
       setIsDeleteDialogOpen(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to delete user');
+      toast.error(err?.data?.message || 'Delete operation failed');
     }
   };
 
   const actions = can('manager.create') && (
-    <Button onClick={() => setIsDrawerOpen(true)}>
+    <Button onClick={handleAddClick}>
       <Plus className="h-4 w-4 mr-2" />
       Add Relationship Manager
     </Button>
@@ -134,9 +148,7 @@ export const RelationshipManagersPage = () => {
           total={totalFiltered}
           onPageChange={handlePageChange}
           onLimitChange={setLimit}
-          onEdit={(user) => {
-             console.log('Edit user:', user);
-          }}
+          onEdit={handleEditClick}
           onDelete={(id) => {
             setSelectedUserId(id);
             setIsDeleteDialogOpen(true);
@@ -147,12 +159,14 @@ export const RelationshipManagersPage = () => {
       <AppDrawer
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        title="New Relationship Manager"
-        description="Fill in the details to create a new relationship manager account."
+        title={editingUser ? "Edit Relationship Manager" : "New Relationship Manager"}
+        description={editingUser ? "Modify user details below." : "Fill in the details to create a new relationship manager account."}
       >
         <RelationshipManagerForm 
-          onSubmit={handleCreate} 
-          isLoading={isCreating} 
+          onSubmit={handleFormSubmit} 
+          isLoading={isCreating || isUpdating} 
+          initialValues={editingUser || undefined}
+          isEdit={!!editingUser}
         />
       </AppDrawer>
 

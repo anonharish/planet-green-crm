@@ -68,15 +68,7 @@ export const RelationshipManagerTable = ({
       header: 'Creation Date',
       render: (user) => <span>{formatDate(user.created_on)}</span>,
     },
-    {
-      key: 'status',
-      header: 'Active User',
-      render: (user) => (
-        <span className={user.is_active === 1 ? 'text-green-600 font-medium' : 'text-zinc-500'}>
-          {user.is_active === 1 ? 'Yes' : 'No'}
-        </span>
-      ),
-    },
+
     {
       key: 'actions',
       header: 'Actions',
