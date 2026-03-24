@@ -23,7 +23,7 @@ import {
 import { cn } from '../utils';
 
 export const MainLayout = () => {
-  const { isAuthenticated, isFirstLogin, logout } = useAuth();
+  const { isAuthenticated, isFirstLogin, user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   if (!isAuthenticated) {
@@ -34,13 +34,30 @@ export const MainLayout = () => {
     return <Navigate to="/set-password" replace />;
   }
 
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} /> },
-    { label: 'Relationship Managers', path: '/relationship-managers', icon: <Users size={20} /> },
-    { label: 'Experience Managers', path: '/agents', icon: <UserCircle size={20} /> },
-    { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} /> },
+  const allNavItems = [
+    { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: [1, 2, 3, 4] },
+    { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} />, roles: [1, 2, 3, 4] },
+    { label: 'Relationship Managers', path: '/relationship-managers', icon: <Users size={20} />, roles: [1, 2] },
+    { label: 'Experience Managers', path: '/agents', icon: <UserCircle size={20} />, roles: [1, 2, 3] },
+    { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} />, roles: [1, 2] },
   ];
+
+  const navItems = allNavItems.filter(item => 
+    user?.role_id && item.roles.includes(user.role_id)
+  );
+
+  const getInitials = () => {
+    if (!user) return '??';
+    if (user.name) {
+      return user.name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+    }
+    return user.email?.[0]?.toUpperCase() || 'U';
+  };
 
   return (
     <div className="flex h-screen bg-zinc-100 dark:bg-zinc-900">
@@ -109,17 +126,22 @@ export const MainLayout = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-zinc-200 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800">
                   <span className="sr-only">Open user menu</span>
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    AD
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-sm font-medium text-zinc-900 dark:text-zinc-100 uppercase">
+                    {getInitials()}
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="font-normal p-4">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-semibold leading-none text-zinc-900 dark:text-zinc-100">{user?.name || 'User'}</p>
+                    <p className="text-xs leading-none text-zinc-500">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                <DropdownMenuItem className="cursor-pointer p-3 focus:bg-zinc-100 dark:focus:bg-zinc-800" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4 text-zinc-500" />
+                  <span className="font-medium text-sm">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
