@@ -57,6 +57,14 @@ export const usersApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Users'],
     }),
+    getAllUsers: builder.query<User[], { offset: number }>({
+      query: (body) => ({
+        url: '/users/getAllUsers',
+        method: 'POST',
+        body,
+      }),
+      providesTags: ['Users'],
+    }),
   }),
 });
 
@@ -67,4 +75,5 @@ export const {
   useUpdateUserMutation, 
   useDeleteUserMutation,
   useGetReporteesQuery,
+  useGetAllUsersQuery,
 } = usersApi;

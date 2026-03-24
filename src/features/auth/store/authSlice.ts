@@ -66,9 +66,12 @@ const authSlice = createSlice({
       state.roles = action.payload;
       storage.set(STORAGE_KEYS.ROLES, action.payload);
 
-      if (action.payload.length > 0 && !state.currentRole) {
-        state.currentRole = action.payload[0];
-        storage.set(STORAGE_KEYS.CURRENT_ROLE, action.payload[0]);
+      if (action.payload.length > 0) {
+        const matchingRole = action.payload.find(r => r.id === state.user?.role_id);
+        const roleToSet = matchingRole || action.payload[0];
+        
+        state.currentRole = roleToSet;
+        storage.set(STORAGE_KEYS.CURRENT_ROLE, roleToSet);
       }
     },
     setCurrentRole: (state, action: PayloadAction<Role>) => {
