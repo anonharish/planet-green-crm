@@ -1,7 +1,7 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
-import { Pencil, Trash2, MoreVertical, User as UserIcon, Calendar, MapPin } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
   DropdownMenu,
@@ -14,7 +14,6 @@ import {
 import { Badge } from '../../../components/ui/badge';
 import type { Lead } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
-import { PERMISSIONS } from '../../../config/permissions';
 
 interface LeadTableProps {
   data: Lead[];
@@ -26,6 +25,9 @@ interface LeadTableProps {
   onLimitChange: (limit: number) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (uuid: string) => void;
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
 }
 
 export const LeadTable = ({
@@ -38,75 +40,91 @@ export const LeadTable = ({
   onLimitChange,
   onEdit,
   onDelete,
+  sortField,
+  sortOrder,
+  onSort
 }: LeadTableProps) => {
   const { can } = usePermissions();
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '---';
-    return new Date(dateString).toLocaleDateString();
-  };
+  const fallback = (value: any) => value ?? '--';
 
   const columns: ColumnDef<Lead>[] = [
     {
-      key: 'name',
-      header: 'Name',
-      render: (lead) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-            <UserIcon className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="font-medium text-zinc-900 dark:text-zinc-100">
-              {lead.first_name} {lead.last_name}
-            </div>
-            <div className="text-xs text-zinc-500">{lead.email_address}</div>
-          </div>
-        </div>
+      key: 'first_name',
+      header: 'First Name',
+      sortable: true,
+      render: (l) => <span className="font-medium text-zinc-900 dark:text-zinc-100">{fallback(l.first_name)}</span>,
+    },
+    {
+      key: 'last_name',
+      header: 'Last Name',
+      sortable: true,
+      render: (l) => <span>{fallback(l.last_name)}</span>,
+    },
+    {
+      key: 'email_address',
+      header: 'Email Address',
+      sortable: true,
+      render: (l) => <span className="text-zinc-500">{fallback(l.email_address)}</span>,
+    },
+    {
+      key: 'source_employee_user_id',
+      header: 'Source',
+      render: (l) => (
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+          {l.source_employee_user_id ? `Emp ID: ${l.source_employee_user_id}` : 'Direct/Other'}
+        </span>
       ),
     },
     {
-      key: 'location',
-      header: 'Location',
-      render: (lead) => (
-        <div className="flex items-center gap-2 text-zinc-500">
-          <MapPin className="h-3 w-3" />
-          <span className="text-xs truncate max-w-[150px]">
-            {lead.city}, {lead.state}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: 'assignment',
-      header: 'Assignments',
-      render: (lead) => (
-        <div className="space-y-1">
-          <div className="text-[10px] text-zinc-400 uppercase tracking-wider">RM ID: {lead.assigned_to_rm || '---'}</div>
-          <div className="text-[10px] text-zinc-400 uppercase tracking-wider">EM ID: {lead.assigned_to_em || '---'}</div>
-        </div>
-      ),
-    },
-    {
-      key: 'created_on',
-      header: 'Created',
-      render: (lead) => (
-        <div className="flex items-center gap-2 text-zinc-500">
-          <Calendar className="h-3.5 w-3.5" />
-          <span className="text-xs">{formatDate(lead.created_on)}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
+      key: 'lead_status_id',
       header: 'Status',
-      render: (lead) => {
-        // Mock status badge for now until we have status codes
-        return (
-          <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase tracking-wider bg-zinc-50 dark:bg-zinc-900">
-            Status {lead.lead_status_id}
-          </Badge>
-        );
-      },
+      sortable: true,
+      render: (l) => (
+        <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          Status {l.lead_status_id}
+        </Badge>
+      ),
+    },
+    {
+      key: 'lead_priority_id',
+      header: 'Priority',
+      sortable: true,
+      render: (l) => (
+        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+          P{l.lead_priority_id}
+        </span>
+      ),
+    },
+    {
+      key: 'assigned_to_rm',
+      header: 'Assigned RM',
+      render: (l) => <span className="text-xs">{l.assigned_to_rm ? `ID: ${l.assigned_to_rm}` : '--'}</span>,
+    },
+    {
+      key: 'assigned_to_em',
+      header: 'Assigned EM',
+      render: (l) => <span className="text-xs">{l.assigned_to_em ? `ID: ${l.assigned_to_em}` : '--'}</span>,
+    },
+    {
+      key: 'occupation',
+      header: 'Occupation',
+      render: (l) => <span className="text-xs text-zinc-500">{fallback(l.occupation)}</span>,
+    },
+    {
+      key: 'city',
+      header: 'City',
+      render: (l) => <span className="text-xs">{fallback(l.city)}</span>,
+    },
+    {
+      key: 'state',
+      header: 'State',
+      render: (l) => <span className="text-xs">{fallback(l.state)}</span>,
+    },
+    {
+      key: 'country',
+      header: 'Country',
+      render: (l) => <span className="text-xs">{fallback(l.country)}</span>,
     },
     {
       key: 'actions',
@@ -120,21 +138,18 @@ export const LeadTable = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs font-normal text-zinc-500 uppercase px-3 py-2">
+            <DropdownMenuContent align="end" className="w-48 text-xs">
+              <DropdownMenuLabel className="font-normal text-zinc-500 uppercase px-3 py-2">
                 Lead Actions
               </DropdownMenuLabel>
-              
-              <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer gap-2">
+              <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer gap-2 py-2">
                 <Pencil className="h-4 w-4 text-blue-500" />
                 <span>Edit Lead</span>
               </DropdownMenuItem>
-
               <DropdownMenuSeparator />
-              
               <DropdownMenuItem 
                 onClick={() => onDelete(lead.uuid)} 
-                className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
+                className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600"
               >
                 <Trash2 className="h-4 w-4" />
                 <span>Delete Lead</span>
@@ -157,6 +172,9 @@ export const LeadTable = ({
       onPageChange={onPageChange}
       onLimitChange={onLimitChange}
       rowKey={(l) => l.uuid}
+      sortField={sortField}
+      sortOrder={sortOrder}
+      onSort={onSort as any}
     />
   );
 };

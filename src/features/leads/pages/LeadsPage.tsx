@@ -5,7 +5,7 @@ import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog/ConfirmDialog';
 import { LeadForm } from '../components/LeadForm';
 import { LeadTable } from '../components/LeadTable';
-import { Plus, UserPlus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'sonner';
 import { 
@@ -19,6 +19,11 @@ export const LeadsPage = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(200); // Fixed at 200 per user request
   const [search, setSearch] = useState('');
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<string>('created_on');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Default: Newest first
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
@@ -44,6 +49,15 @@ export const LeadsPage = () => {
     setDeleteUuid(uuid);
   };
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   const handleFormSubmit = async (values: CreateLeadRequest) => {
     try {
       if (editingLead) {
@@ -59,12 +73,43 @@ export const LeadsPage = () => {
     }
   };
 
-  // Filter leads locally for search (since API doesn't have search params yet)
-  const filteredLeads = leads.filter(lead => {
-    const fullName = `${lead.first_name} ${lead.last_name}`.toLowerCase();
-    const query = search.toLowerCase();
-    return fullName.includes(query) || lead.email_address?.toLowerCase().includes(query);
-  });
+  // Search, Filter and Sort leads locally
+  const sortedAndFilteredLeads = React.useMemo(() => {
+    let result = [...leads];
+    
+    // Search Filtering
+    if (search) {
+      const query = search.toLowerCase();
+      result = result.filter(lead => {
+        const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase();
+        return (
+          fullName.includes(query) || 
+          lead.email_address?.toLowerCase().includes(query) ||
+          lead.phone_number?.includes(query)
+        );
+      });
+    }
+
+    // Sorting Logic
+    result.sort((a, b) => {
+      let valA: any = (a as any)[sortField];
+      let valB: any = (b as any)[sortField];
+
+      if (sortField === 'created_on') {
+        valA = a.created_on ? new Date(a.created_on).getTime() : 0;
+        valB = b.created_on ? new Date(b.created_on).getTime() : 0;
+      } else {
+        valA = typeof valA === 'string' ? valA.toLowerCase() : valA ?? '';
+        valB = typeof valB === 'string' ? valB.toLowerCase() : valB ?? '';
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [leads, search, sortField, sortOrder]);
 
   return (
     <div className="space-y-6">
@@ -85,15 +130,18 @@ export const LeadsPage = () => {
         </FilterBar>
 
         <LeadTable 
-          data={filteredLeads}
+          data={sortedAndFilteredLeads}
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
-          total={leads.length} // Local total for now
+          total={leads.length}
           onPageChange={setPage}
           onLimitChange={setLimit}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          onSort={handleSort}
         />
       </div>
 
@@ -102,19 +150,20 @@ export const LeadsPage = () => {
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
       >
-        <LeadForm 
-          onSubmit={handleFormSubmit}
-          isLoading={isCreating || isUpdating}
-          isEdit={!!editingLead}
-          initialValues={editingLead || undefined}
-        />
+        {isDrawerOpen && (
+          <LeadForm 
+            onSubmit={handleFormSubmit}
+            isLoading={isCreating || isUpdating}
+            isEdit={!!editingLead}
+            initialValues={editingLead || undefined}
+          />
+        )}
       </AppDrawer>
 
       <ConfirmDialog
         open={!!deleteUuid}
         onClose={() => setDeleteUuid(null)}
         onConfirm={async () => {
-          // No delete API provided yet, but setup for future
           toast.info('Delete functionality pending API');
           setDeleteUuid(null);
         }}
