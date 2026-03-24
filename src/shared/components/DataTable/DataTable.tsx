@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '../../../components/ui/table';
 import { Button } from '../../../components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -16,12 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
+import { cn } from '../../../utils';
 
 export interface ColumnDef<T> {
   key: string;
-  header: string;
+  header: React.ReactNode;
   width?: string;
   render: (row: T, index: number) => React.ReactNode;
+  sortable?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -34,6 +36,10 @@ interface DataTableProps<T> {
   total: number;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  // Sorting
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
   // Optional
   emptyMessage?: string;
   rowKey: (row: T) => string | number;
@@ -58,6 +64,9 @@ export function DataTable<T>({
   total,
   onPageChange,
   onLimitChange,
+  sortField,
+  sortOrder,
+  onSort,
   emptyMessage = 'No records found.',
   rowKey,
 }: DataTableProps<T>) {
@@ -73,9 +82,33 @@ export function DataTable<T>({
           <TableHeader>
             <TableRow className="bg-zinc-50 dark:bg-zinc-900">
               {columns.map((col) => (
-                <TableHead key={col.key} style={col.width ? { width: col.width } : undefined}
-                  className="font-semibold text-zinc-700 dark:text-zinc-300 text-xs uppercase tracking-wide">
-                  {col.header}
+                <TableHead 
+                  key={col.key} 
+                  style={col.width ? { width: col.width } : undefined}
+                  className={cn(
+                    "font-semibold text-zinc-700 dark:text-zinc-300 text-xs uppercase tracking-wide",
+                    col.sortable && "p-0" // Remove padding for sortable headers to handle it in the button
+                  )}
+                >
+                  {col.sortable ? (
+                    <button
+                      onClick={() => onSort?.(col.key)}
+                      className="flex items-center gap-1 w-full h-full px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left font-bold"
+                    >
+                      {col.header}
+                      <div className="flex flex-col">
+                        {sortField === col.key ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-30" />
+                        )}
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="px-4 py-3">
+                      {col.header}
+                    </div>
+                  )}
                 </TableHead>
               ))}
             </TableRow>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageHeader } from '../../../shared/components/PageHeader/PageHeader';
-import { FilterBar, SearchInput, DateRangeFilter } from '../../../shared/components/FilterBar/FilterBar';
+import { FilterBar, SearchInput } from '../../../shared/components/FilterBar/FilterBar';
 import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog/ConfirmDialog';
 import { Button } from '../../../components/ui/button';
@@ -34,18 +34,19 @@ export const UsersFeaturePage = ({
 }: UsersFeaturePageProps) => {
   const { can } = usePermissions();
   
-  // 1. Server-side State (200 items per fetch)
+  // 1. Server-side Offset State
   const [serverOffset, setServerOffset] = useState(0);
   
   // 2. Client-side Pagination State
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   
-  // 3. Filter/Search State
+  // 3. Filter/Search/Sort State
   const [search, setSearch] = useState('');
-  // const [fromDate, setFromDate] = useState('');
-  // const [toDate, setToDate] = useState('');
-  
+  const [sortField, setSortField] = useState<'created_on' | 'first_name'>('created_on');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Default sorting: date desc
+
+  // Drawer/Dialog States
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -61,27 +62,52 @@ export const UsersFeaturePage = ({
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
 
-  // 4. Hybrid Logic: Client-side Search & Slicing
-  const filteredData = React.useMemo(() => {
-    if (!search) return serverUsers;
-    const lowerSearch = search.toLowerCase();
-    return serverUsers.filter((u: User) => 
-      u.first_name.toLowerCase().includes(lowerSearch) || 
-      u.last_name.toLowerCase().includes(lowerSearch) ||
-      u.login_id.toLowerCase().includes(lowerSearch) ||
-      u.email.toLowerCase().includes(lowerSearch) ||
-      u.phone_number.includes(search)
-    );
-  }, [serverUsers, search]);
+  // 4. Client-side Filtering & Sorting Logic
+  const sortedAndFilteredData = React.useMemo(() => {
+    let result = [...serverUsers];
+    
+    // Search Filter
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      result = result.filter((u: User) => 
+        u.first_name.toLowerCase().includes(lowerSearch) || 
+        u.last_name.toLowerCase().includes(lowerSearch) ||
+        u.login_id.toLowerCase().includes(lowerSearch) ||
+        u.email.toLowerCase().includes(lowerSearch) ||
+        (u.phone_number && u.phone_number.includes(search))
+      );
+    }
 
-  const totalFiltered = filteredData.length;
+    // Sort Logic
+    result.sort((a, b) => {
+      let valA: any;
+      let valB: any;
+
+      if (sortField === 'created_on') {
+        valA = a.created_on ? new Date(a.created_on).getTime() : 0;
+        valB = b.created_on ? new Date(b.created_on).getTime() : 0;
+      } else {
+        valA = a.first_name.toLowerCase();
+        valB = b.first_name.toLowerCase();
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [serverUsers, search, sortField, sortOrder]);
+
+  const totalItems = sortedAndFilteredData.length;
   
   const displayData = React.useMemo(() => {
     const start = (page - 1) * limit;
     const end = start + limit;
-    return filteredData.slice(start, end);
-  }, [filteredData, page, limit]);
+    return sortedAndFilteredData.slice(start, end);
+  }, [sortedAndFilteredData, page, limit]);
 
+  // Handlers
   const handlePageChange = (newPage: number) => {
     const targetIndex = (newPage - 1) * limit;
     const newServerOffset = Math.floor(targetIndex / 200) * 200;
@@ -91,7 +117,15 @@ export const UsersFeaturePage = ({
     setPage(newPage);
   };
 
-  // Handlers
+  const handleSort = (field: 'created_on' | 'first_name') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   const handleAddClick = () => {
     setEditingUser(null);
     setIsDrawerOpen(true);
@@ -117,7 +151,7 @@ export const UsersFeaturePage = ({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedUserId) return;
     try {
       await deleteUser(selectedUserId).unwrap();
@@ -128,6 +162,7 @@ export const UsersFeaturePage = ({
     }
   };
 
+  // Actions Header
   const actions = can(`${permissionPrefix}.create`) && (
     <Button onClick={handleAddClick}>
       <Plus className="h-4 w-4 mr-2" />
@@ -144,16 +179,12 @@ export const UsersFeaturePage = ({
       />
 
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar 
-          //  onReset={() => { setSearch(''); /* setFromDate(''); setToDate(''); */ }}
-        >
-          <SearchInput value={search} onChange={setSearch} placeholder={`Search ${roleLabel.toLowerCase()}s...`} />
-          {/* <DateRangeFilter 
-            fromDate={fromDate} 
-            toDate={toDate} 
-            onFromChange={setFromDate} 
-            onToChange={setToDate} 
-          /> */}
+        <FilterBar>
+          <SearchInput 
+            value={search} 
+            onChange={setSearch} 
+            placeholder={`Search ${roleLabel.toLowerCase()}s...`} 
+          />
         </FilterBar>
 
         <UserTable
@@ -161,7 +192,7 @@ export const UsersFeaturePage = ({
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
-          total={totalFiltered}
+          total={totalItems}
           onPageChange={handlePageChange}
           onLimitChange={setLimit}
           onEdit={handleEditClick}
@@ -170,6 +201,9 @@ export const UsersFeaturePage = ({
             setIsDeleteDialogOpen(true);
           }}
           permissionPrefix={permissionPrefix}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          onSort={handleSort}
         />
       </div>
 
@@ -192,7 +226,7 @@ export const UsersFeaturePage = ({
       <ConfirmDialog
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDelete}
+        onConfirm={handleDeleteConfirm}
         isLoading={isDeleting}
         title="Delete User"
         description={`Are you sure you want to delete this ${roleLabel.toLowerCase()}? This action cannot be undone.`}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
-import { Pencil, Trash2, MoreVertical, Eye, Users } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Users } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
   DropdownMenu,
@@ -27,6 +27,9 @@ interface UserTableProps {
   onEdit: (user: User) => void;
   onDelete: (id: number) => void;
   permissionPrefix: 'manager' | 'agent';
+  sortField?: 'created_on' | 'first_name';
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (field: 'created_on' | 'first_name') => void;
 }
 
 export const UserTable = ({
@@ -39,7 +42,10 @@ export const UserTable = ({
   onLimitChange,
   onEdit,
   onDelete,
-  permissionPrefix
+  permissionPrefix,
+  sortField,
+  sortOrder,
+  onSort
 }: UserTableProps) => {
   const { can } = usePermissions();
   const [viewAgentsManager, setViewAgentsManager] = React.useState<User | null>(null);
@@ -59,6 +65,7 @@ export const UserTable = ({
     {
       key: 'first_name',
       header: 'First Name',
+      sortable: true,
       render: (user) => <span className="font-medium">{user.first_name}</span>,
     },
     {
@@ -77,8 +84,9 @@ export const UserTable = ({
       render: (user) => <span className="text-zinc-500">{user.email}</span>,
     },
     {
-      key: 'createdAt',
+      key: 'created_on',
       header: 'Creation Date',
+      sortable: true,
       render: (user) => <span>{formatDate(user.created_on)}</span>,
     },
     {
@@ -93,8 +101,8 @@ export const UserTable = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-xs font-normal text-zinc-500 uppercase tracking-wider px-3 py-2">
+            <DropdownMenuContent align="end" className="w-56 text-xs">
+              <DropdownMenuLabel className="font-normal text-zinc-500 uppercase tracking-wider px-3 py-2">
                 User Actions
               </DropdownMenuLabel>
               
@@ -142,6 +150,9 @@ export const UserTable = ({
         onPageChange={onPageChange}
         onLimitChange={onLimitChange}
         rowKey={(u) => u.id}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSort={onSort as any}
       />
       
       <ExperienceManagerListDialog 
