@@ -7,7 +7,7 @@ import {
 } from '../../../components/ui/dialog';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { useGetAllUsersByRoleIdQuery } from '../api/usersApi';
+import { useGetReporteesQuery } from '../api/usersApi';
 import { Mail, Phone, User as UserIcon, Loader2, Search, X } from 'lucide-react';
 import type { User } from '../types';
 
@@ -24,25 +24,24 @@ export const ExperienceManagerListDialog = ({
 }: ExperienceManagerListDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch all agents (Role ID 4)
-  const { data: allAgents = [], isLoading, isFetching } = useGetAllUsersByRoleIdQuery(
-    { role_id: 4, offset: 0 },
-    { skip: !open } // Only fetch when dialog opens
+  // Fetch reportees for this manager (Dedicated API)
+  const { data: reportees = [], isLoading, isFetching } = useGetReporteesQuery(
+    { reporting_manager_id: manager?.id || 0, offset: 0 },
+    { skip: !open || !manager?.id } // Only fetch when dialog opens and manager is present
   );
 
-  // Filter agents by this manager + local search query
+  // Apply local search query to the filtered results from API
   const filteredReports = useMemo(() => {
-    const reportsForThisManager = allAgents.filter(agent => agent.reporting_manager_id === manager?.id);
-    if (!searchQuery) return reportsForThisManager;
+    if (!searchQuery) return reportees;
     
     const lowerQuery = searchQuery.toLowerCase();
-    return reportsForThisManager.filter(agent => 
+    return reportees.filter(agent => 
       agent.first_name.toLowerCase().includes(lowerQuery) ||
       agent.last_name.toLowerCase().includes(lowerQuery) ||
       agent.email.toLowerCase().includes(lowerQuery) ||
       agent.phone_number.includes(searchQuery)
     );
-  }, [allAgents, manager?.id, searchQuery]);
+  }, [reportees, searchQuery]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -111,7 +110,7 @@ export const ExperienceManagerListDialog = ({
             </div>
           ) : (
             <div className="p-2 space-y-1">
-              {filteredReports.map((agent) => (
+              {filteredReports.map((agent: User) => (
                 <div 
                   key={agent.id} 
                   className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 border border-transparent hover:border-emerald-500/10 transition-all duration-200 cursor-default group"
