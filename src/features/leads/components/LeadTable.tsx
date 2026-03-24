@@ -53,26 +53,30 @@ export const LeadTable = ({
       key: 'first_name',
       header: 'First Name',
       sortable: true,
+      width: '260px',
       render: (l) => <span className="font-medium text-zinc-900 dark:text-zinc-100">{fallback(l.first_name)}</span>,
     },
     {
       key: 'last_name',
       header: 'Last Name',
       sortable: true,
+      width: '260px',
       render: (l) => <span>{fallback(l.last_name)}</span>,
     },
     {
       key: 'email_address',
       header: 'Email Address',
       sortable: true,
+      width: '300px',
       render: (l) => <span className="text-zinc-500">{fallback(l.email_address)}</span>,
     },
     {
       key: 'source_employee_user_id',
       header: 'Source',
+      width: '200px',
       render: (l) => (
         <span className="text-xs text-zinc-600 dark:text-zinc-400">
-          {l.source_employee_user_id ? `Emp ID: ${l.source_employee_user_id}` : 'Direct/Other'}
+          {l.source_employee_user_id ? `${l.source_employee_user_id}` : '--'}
         </span>
       ),
     },
@@ -80,9 +84,10 @@ export const LeadTable = ({
       key: 'lead_status_id',
       header: 'Status',
       sortable: true,
+      width: '200px',
       render: (l) => (
         <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-          Status {l.lead_status_id}
+          {l.lead_status_id}
         </Badge>
       ),
     },
@@ -90,40 +95,47 @@ export const LeadTable = ({
       key: 'lead_priority_id',
       header: 'Priority',
       sortable: true,
+      width: '200px',
       render: (l) => (
         <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-          P{l.lead_priority_id}
+          {l.lead_priority_id}
         </span>
       ),
     },
     {
       key: 'assigned_to_rm',
       header: 'Assigned RM',
-      render: (l) => <span className="text-xs">{l.assigned_to_rm ? `ID: ${l.assigned_to_rm}` : '--'}</span>,
+      width: '200px',
+      render: (l) => <span className="text-xs">{l.assigned_to_rm ? `${l.assigned_to_rm}` : '--'}</span>,
     },
     {
       key: 'assigned_to_em',
       header: 'Assigned EM',
-      render: (l) => <span className="text-xs">{l.assigned_to_em ? `ID: ${l.assigned_to_em}` : '--'}</span>,
+      width: '200px',
+      render: (l) => <span className="text-xs">{l.assigned_to_em ? `${l.assigned_to_em}` : '--'}</span>,
     },
     {
       key: 'occupation',
       header: 'Occupation',
+      width: '200px',
       render: (l) => <span className="text-xs text-zinc-500">{fallback(l.occupation)}</span>,
     },
     {
       key: 'city',
       header: 'City',
+      width: '20px',
       render: (l) => <span className="text-xs">{fallback(l.city)}</span>,
     },
     {
       key: 'state',
       header: 'State',
+      width: '200px',
       render: (l) => <span className="text-xs">{fallback(l.state)}</span>,
     },
     {
       key: 'country',
       header: 'Country',
+      width: '200px',
       render: (l) => <span className="text-xs">{fallback(l.country)}</span>,
     },
     {

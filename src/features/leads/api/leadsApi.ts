@@ -2,6 +2,7 @@ import { baseApi } from '../../../app/api/baseApi';
 import type { 
   Lead, 
   CreateLeadRequest, 
+  UpdateLeadRequest,
   GetLeadsRequest, 
   GetLeadsResponse 
 } from '../types';
@@ -24,7 +25,7 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
-    updateLead: builder.mutation<{ message: string }, Partial<CreateLeadRequest> & { uuid: string }>({
+    updateLead: builder.mutation<{ message: string }, UpdateLeadRequest>({
       query: (body) => ({
         url: '/leads/updateLead',
         method: 'POST',

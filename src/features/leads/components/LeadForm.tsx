@@ -33,7 +33,7 @@ import {
 } from '../../../components/ui/popover';
 import { cn } from '../../../utils';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
-import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery } from '../../users/api/usersApi';
+import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
 import type { CreateLeadRequest } from '../types';
 
 const formSchema = z.object({
@@ -76,8 +76,7 @@ export const LeadForm = ({
   
   // Fetch Managers/Agents for assignment dropdowns
   const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
-  const { data: agents = [] } = useGetAllUsersByRoleIdQuery({ role_id: 4, offset: 0 });
-
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -100,6 +99,31 @@ export const LeadForm = ({
   });
 
   const sourceType = form.watch('source_type');
+  const selectedRmId = form.watch('assigned_to_rm');
+
+  // Fetch reportees (EMs) for the selected RM
+  const { data: reportees = [], isLoading: isLoadingReportees } = useGetReporteesQuery(
+    { reporting_manager_id: selectedRmId as number, offset: 0 },
+    { skip: !selectedRmId }
+  );
+
+  // Reset EM when RM changes (unless it's the initial edit selection)
+  const isFirstRender = React.useRef(true);
+  const initialRmId = React.useRef(initialValues?.assigned_to_rm || null);
+  
+  React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    
+    // Only reset if we are not on the initial load / reset to same value
+    if (selectedRmId !== initialRmId.current) {
+      form.setValue('assigned_to_em', null);
+      // Once changed, the "initial" value is no longer relevant for reset logic
+      initialRmId.current = -1; 
+    }
+  }, [selectedRmId, form]);
 
   const handleInternalSubmit = (values: FormValues) => {
     // Explicitly exclude UI-only fields from the spread
@@ -314,17 +338,29 @@ export const LeadForm = ({
             name="assigned_to_em"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assign to EM</FormLabel>
-                <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value ? String(field.value) : undefined}>
+                <FormLabel className={cn(!selectedRmId && "text-zinc-400")}>Assign to EM</FormLabel>
+                <Select 
+                  onValueChange={(v) => field.onChange(Number(v))} 
+                  value={field.value ? String(field.value) : undefined}
+                  disabled={!selectedRmId || isLoading}
+                >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select EM" />
+                      <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {agents.map(a => (
+                    {isLoadingReportees && (
+                      <div className="flex items-center justify-center p-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    )}
+                    {reportees.map(a => (
                       <SelectItem key={a.id} value={String(a.id)}>{a.first_name} {a.last_name}</SelectItem>
                     ))}
+                    {!isLoadingReportees && reportees.length === 0 && (
+                      <div className="p-2 text-xs text-center text-zinc-500">No reportees found</div>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />

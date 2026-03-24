@@ -46,6 +46,10 @@ export interface CreateLeadRequest {
   zip: string;
 }
 
+export interface UpdateLeadRequest extends CreateLeadRequest {
+  uuid: string;
+}
+
 export interface GetLeadsRequest {
   offset: number;
 }
