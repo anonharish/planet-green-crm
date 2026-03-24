@@ -144,7 +144,9 @@ export const UsersFeaturePage = ({
       />
 
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar onReset={() => { setSearch(''); /* setFromDate(''); setToDate(''); */ }}>
+        <FilterBar 
+          //  onReset={() => { setSearch(''); /* setFromDate(''); setToDate(''); */ }}
+        >
           <SearchInput value={search} onChange={setSearch} placeholder={`Search ${roleLabel.toLowerCase()}s...`} />
           {/* <DateRangeFilter 
             fromDate={fromDate} 
