@@ -179,7 +179,6 @@ export const LeadsPage = () => {
         description="Core CRM leads management and assignment platform"
         actions={
           <Button onClick={handleCreateNew} className="gap-2">
-            <Plus className="h-4 w-4" />
             Add Lead
           </Button>
         }
