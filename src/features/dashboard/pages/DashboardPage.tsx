@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
 
 export const DashboardPage = () => {
+  const { data: masterData } = useGetAllMasterDataQuery();
+
+  useEffect(() => {
+    if (masterData) {
+      console.log('Master Data (Seed data):', masterData);
+    }
+  }, [masterData]);
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

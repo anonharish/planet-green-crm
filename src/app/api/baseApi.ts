@@ -80,6 +80,6 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 export const baseApi = createApi({
   reducerPath: 'baseApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Users', 'Leads', 'Customers'],
+  tagTypes: ['Users', 'Leads', 'Customers', 'Master'],
   endpoints: () => ({}),
 });
