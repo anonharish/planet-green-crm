@@ -13,27 +13,69 @@ import {
   useCreateLeadMutation, 
   useUpdateLeadMutation 
 } from '../api/leadsApi';
+import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
+import { useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
+import { useDebounce } from '../../../shared/hooks/useDebounce';
+import { MultiSelect } from '../../../components/ui/multi-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 import type { Lead, CreateLeadRequest } from '../types';
 
 export const LeadsPage = () => {
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(200); // Fixed at 200 per user request
+  const [limit] = useState(200); // Fixed at 200 per user request
+  
+  // Filter state
   const [search, setSearch] = useState('');
+  const [statusIds, setStatusIds] = useState<string[]>([]);
+  const [projectIds, setProjectIds] = useState<string[]>([]);
+  const [rmId, setRmId] = useState<string>('all');
+  const [emId, setEmId] = useState<string>('all');
+
+  // Debouncing for efficient API calls
+  const debouncedSearch = useDebounce(search, 500);
+  const debouncedFilters = useDebounce({ statusIds, projectIds, rmId, emId }, 300);
   
   // Sorting state
   const [sortField, setSortField] = useState<string>('created_on');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Default: Newest first
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
 
+  // Data Fetching
+  const { data: masterData } = useGetAllMasterDataQuery();
+  const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
+  const { data: ems = [] } = useGetReporteesQuery(
+    { reporting_manager_id: Number(rmId), offset: 0 },
+    { skip: rmId === 'all' }
+  );
+
   const { data: leads = [], isLoading, isFetching } = useGetLeadsQuery({ 
-    offset: (page - 1) * limit 
+    offset: (page - 1) * limit,
+    search_text: debouncedSearch || undefined,
+    status: debouncedFilters.statusIds.length > 0 ? debouncedFilters.statusIds.map(Number) : undefined,
+    project: debouncedFilters.projectIds.length > 0 ? debouncedFilters.projectIds.map(Number) : undefined,
+    rm: debouncedFilters.rmId !== 'all' ? [Number(debouncedFilters.rmId)] : undefined,
+    em: debouncedFilters.emId !== 'all' ? [Number(debouncedFilters.emId)] : undefined,
   });
 
   const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setStatusIds([]);
+    setProjectIds([]);
+    setRmId('all');
+    setEmId('all');
+  };
 
   const handleCreateNew = () => {
     setEditingLead(null);
@@ -73,24 +115,10 @@ export const LeadsPage = () => {
     }
   };
 
-  // Search, Filter and Sort leads locally
-  const sortedAndFilteredLeads = React.useMemo(() => {
+  // Local Sort logic (Filters are now server-side)
+  const sortedLeads = React.useMemo(() => {
     let result = [...leads];
     
-    // Search Filtering
-    if (search) {
-      const query = search.toLowerCase();
-      result = result.filter(lead => {
-        const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase();
-        return (
-          fullName.includes(query) || 
-          lead.email_address?.toLowerCase().includes(query) ||
-          lead.phone_number?.includes(query)
-        );
-      });
-    }
-
-    // Sorting Logic
     result.sort((a, b) => {
       let valA: any = (a as any)[sortField];
       let valB: any = (b as any)[sortField];
@@ -109,7 +137,10 @@ export const LeadsPage = () => {
     });
 
     return result;
-  }, [leads, search, sortField, sortOrder]);
+  }, [leads, sortField, sortOrder]);
+
+  const statusOptions = (masterData?.lead_statuses || []).map(s => ({ label: s.description, value: String(s.id) }));
+  const projectOptions = (masterData?.projects || []).map(p => ({ label: p.description, value: String(p.id) }));
 
   return (
     <div className="space-y-6">
@@ -125,18 +156,60 @@ export const LeadsPage = () => {
       />
 
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar onReset={() => setSearch('')}>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search leads by name or email..." />
+        <FilterBar onReset={handleResetFilters}>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search leads..." />
+          
+          <div className="w-48">
+            <MultiSelect 
+              options={statusOptions} 
+              selected={statusIds} 
+              onChange={setStatusIds} 
+              placeholder="Filter Status"
+            />
+          </div>
+
+          <div className="w-48">
+            <MultiSelect 
+              options={projectOptions} 
+              selected={projectIds} 
+              onChange={setProjectIds} 
+              placeholder="Filter Project"
+            />
+          </div>
+
+          <Select value={rmId} onValueChange={(val) => { setRmId(val); setEmId('all'); }}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Select RM" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All RMs</SelectItem>
+              {rms.map(r => (
+                <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={emId} onValueChange={setEmId} disabled={rmId === 'all'}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Select EM" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All EMs</SelectItem>
+              {ems.map(e => (
+                <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FilterBar>
 
         <LeadTable 
-          data={sortedAndFilteredLeads}
+          data={sortedLeads}
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
-          total={leads.length}
+          total={leads.length} // Note: Server should ideally return total count
           onPageChange={setPage}
-          onLimitChange={setLimit}
+          onLimitChange={() => {}} // Limit fixed at 200
           onEdit={handleEdit}
           onDelete={handleDelete}
           sortField={sortField}

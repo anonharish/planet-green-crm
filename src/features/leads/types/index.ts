@@ -51,6 +51,11 @@ export interface UpdateLeadRequest extends CreateLeadRequest {
 }
 
 export interface GetLeadsRequest {
+  status?: number[];
+  project?: number[];
+  rm?: number[];
+  em?: number[];
+  search_text?: string;
   offset: number;
 }
 
