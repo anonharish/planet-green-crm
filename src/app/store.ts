@@ -3,11 +3,13 @@ import type { AnyAction, Reducer } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { baseApi } from './api/baseApi';
 import authReducer from '../features/auth/store/authSlice';
+import leadsReducer from '../features/leads/store/leadsSlice';
 
 // 1. Combine all slice reducers
 const appReducer = combineReducers({
   [baseApi.reducerPath]: baseApi.reducer,
   auth: authReducer,
+  leads: leadsReducer,
 });
 
 // 2. Define a root reducer to intercept logout

@@ -57,6 +57,7 @@ export interface GetLeadsRequest {
   rm?: number[];
   em?: number[];
   search_text?: string;
+  is_rm_assigned?: number;
   offset: number;
 }
 

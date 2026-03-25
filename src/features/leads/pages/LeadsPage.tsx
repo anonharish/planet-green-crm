@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { PageHeader } from '../../../shared/components/PageHeader/PageHeader';
 import { FilterBar, SearchInput } from '../../../shared/components/FilterBar/FilterBar';
 import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
@@ -18,6 +19,7 @@ import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
 import { useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
 import { useDebounce } from '../../../shared/hooks/useDebounce';
 import { MultiSelect } from '../../../components/ui/multi-select';
+import { cn } from '../../../utils';
 import {
   Select,
   SelectContent,
@@ -25,38 +27,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { useAppSelector } from '../../../app/hooks';
+import { 
+  setActiveTab as setActiveTabAction, 
+  updateTabFilters, 
+  resetTabFilters,
+  setSelectedUuids 
+} from '../store/leadsSlice';
 import type { Lead, CreateLeadRequest } from '../types';
 
 export const LeadsPage = () => {
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20); // Local limit for display (10, 20, 50)
-  
-  // Selection state
-  const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
-  const [targetRmId, setTargetRmId] = useState<string>('');
-
+  const dispatch = useAppDispatch();
   const { currentRole } = useAppSelector((state) => state.auth);
   const isAdmin = currentRole?.code === 'ADMIN' || currentRole?.code === 'SADMIN';
+  const isRM = currentRole?.code === 'RELMNG';
+  const showTabs = isAdmin || isRM;
 
-  // Filter state
-  const [search, setSearch] = useState('');
-  const [statusIds, setStatusIds] = useState<string[]>([]);
-  const [projectIds, setProjectIds] = useState<string[]>([]);
-  const [rmId, setRmId] = useState<string>('all');
-  const [emId, setEmId] = useState<string>('all');
+  const { activeTab, tabFilters } = useAppSelector((state) => state.leads);
+  const tabKey = showTabs ? String(activeTab) : 'all';
+  const currentFilters = tabFilters[tabKey];
 
-  // Calculate server-side offset based on local page/limit
-  // We fetch in chunks of 200
+  const {
+    page,
+    limit,
+    search,
+    statusIds,
+    projectIds,
+    rmIds,
+    emIds,
+    sortField,
+    sortOrder,
+    selectedUuids
+  } = currentFilters;
+
+  const [targetRmId, setTargetRmId] = useState<string>('');
+
+  // Calculate server-side offset based on 200-record chunks
   const serverOffset = Math.floor(((page - 1) * limit) / 200) * 200;
 
-  // Debouncing for efficient API calls
+  // Debouncing for API efficiency
   const debouncedSearch = useDebounce(search, 500);
-  const debouncedFilters = useDebounce({ statusIds, projectIds, rmId, emId }, 300);
-  
-  // Sorting state
-  const [sortField, setSortField] = useState<string>('created_on');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const debouncedFilters = useDebounce({ statusIds, projectIds, rmIds, emIds }, 300);
+
+  // Handlers
+  const handleSort = (field: string) => {
+    const newSortOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(updateTabFilters({ tabKey, updates: { sortField: field, sortOrder: newSortOrder } }));
+  };
+
+  const handleResetFilters = () => {
+    dispatch(resetTabFilters(tabKey));
+  };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -66,30 +86,23 @@ export const LeadsPage = () => {
   const { data: masterData } = useGetAllMasterDataQuery();
   const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
   const { data: ems = [] } = useGetReporteesQuery(
-    { reporting_manager_id: Number(rmId), offset: 0 },
-    { skip: rmId === 'all' }
+    { reporting_manager_id: Number(rmIds[0] || 0), offset: 0 },
+    { skip: rmIds.length === 0 }
   );
 
   const { data: leads = [], isLoading, isFetching } = useGetLeadsQuery({ 
     offset: serverOffset,
+    is_rm_assigned: showTabs ? activeTab : undefined,
     search_text: debouncedSearch || undefined,
     status: debouncedFilters.statusIds.length > 0 ? debouncedFilters.statusIds.map(Number) : undefined,
     project: debouncedFilters.projectIds.length > 0 ? debouncedFilters.projectIds.map(Number) : undefined,
-    rm: debouncedFilters.rmId !== 'all' ? [Number(debouncedFilters.rmId)] : undefined,
-    em: debouncedFilters.emId !== 'all' ? [Number(debouncedFilters.emId)] : undefined,
+    rm: debouncedFilters.rmIds.length > 0 ? debouncedFilters.rmIds.map(Number) : undefined,
+    em: debouncedFilters.emIds.length > 0 ? debouncedFilters.emIds.map(Number) : undefined,
   });
 
   const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
   const [bulkAssign, { isLoading: isBulkAssigning }] = useBulkAssignLeadsToRmMutation();
-
-  const handleResetFilters = () => {
-    setSearch('');
-    setStatusIds([]);
-    setProjectIds([]);
-    setRmId('all');
-    setEmId('all');
-  };
 
   const handleBulkAssign = async () => {
     if (!targetRmId || selectedUuids.length === 0) return;
@@ -99,7 +112,7 @@ export const LeadsPage = () => {
         assigned_to_rm: Number(targetRmId)
       }).unwrap();
       toast.success('Leads successfully assigned to RM');
-      setSelectedUuids([]);
+      dispatch(setSelectedUuids({ tabKey, uuids: [] }));
       setTargetRmId('');
     } catch (err: any) {
       toast.error(err?.data?.message || 'Bulk assignment failed');
@@ -120,15 +133,6 @@ export const LeadsPage = () => {
     setDeleteUuid(uuid);
   };
 
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
-
   const handleFormSubmit = async (values: CreateLeadRequest) => {
     try {
       if (editingLead) {
@@ -144,10 +148,9 @@ export const LeadsPage = () => {
     }
   };
 
-  // Local Sort logic (Filters are now server-side)
+  // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
     let result = [...leads];
-    
     result.sort((a, b) => {
       let valA: any = (a as any)[sortField];
       let valB: any = (b as any)[sortField];
@@ -164,48 +167,81 @@ export const LeadsPage = () => {
       if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-
     return result;
   }, [leads, sortField, sortOrder]);
 
-  const statusOptions = (masterData?.lead_statuses || []).map(s => ({ label: s.description, value: String(s.id) }));
-  const projectOptions = (masterData?.projects || []).map(p => ({ label: p.description, value: String(p.id) }));
+  const totalLeads = leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
 
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Manage Leads" 
-        description="View and manage all incoming customer leads"
+        title="Leads Dashboard" 
+        description="Core CRM leads management and assignment platform"
         actions={
-          <Button onClick={handleCreateNew}>
+          <Button onClick={handleCreateNew} className="gap-2">
+            <Plus className="h-4 w-4" />
             Add Lead
           </Button>
         }
       />
 
+      {showTabs && (
+        <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl w-fit drop-shadow-sm border border-zinc-200/50 dark:border-zinc-800/50">
+          <button
+            onClick={() => dispatch(setActiveTabAction(0))}
+            className={cn(
+              "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
+              activeTab === 0 
+                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50" 
+                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50"
+            )}
+          >
+            Unassigned Leads
+          </button>
+          <button
+            onClick={() => dispatch(setActiveTabAction(1))}
+            className={cn(
+              "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
+              activeTab === 1 
+                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50" 
+                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50"
+            )}
+          >
+            Assigned Leads
+          </button>
+        </div>
+      )}
+
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
         <FilterBar onReset={handleResetFilters}>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search leads..." />
+          <SearchInput 
+            value={search} 
+            onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))} 
+            placeholder="Search leads..." 
+          />
           
           <div className="w-48">
-            <MultiSelect 
-              options={statusOptions} 
-              selected={statusIds} 
-              onChange={setStatusIds} 
+            <MultiSelect
+              options={masterData?.lead_statuses.map(s => ({ label: s.description, value: String(s.id) })) || []}
+              selected={statusIds}
+              onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
               placeholder="Filter Status"
             />
           </div>
 
           <div className="w-48">
-            <MultiSelect 
-              options={projectOptions} 
-              selected={projectIds} 
-              onChange={setProjectIds} 
+            <MultiSelect
+              options={masterData?.projects.map(p => ({ label: p.description, value: String(p.id) })) || []}
+              selected={projectIds}
+              onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
               placeholder="Filter Project"
             />
           </div>
 
-          <Select value={rmId} onValueChange={(val) => { setRmId(val); setEmId('all'); }}>
+          <Select 
+            value={rmIds[0] || 'all'} 
+            onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === 'all' ? [] : [v], emIds: [], page: 1 } }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select RM" />
             </SelectTrigger>
@@ -217,7 +253,11 @@ export const LeadsPage = () => {
             </SelectContent>
           </Select>
 
-          <Select value={emId} onValueChange={setEmId} disabled={rmId === 'all'}>
+          <Select 
+            value={emIds[0] || 'all'} 
+            onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === 'all' ? [] : [v], page: 1 } }))}
+            disabled={rmIds.length === 0}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select EM" />
             </SelectTrigger>
@@ -230,42 +270,38 @@ export const LeadsPage = () => {
           </Select>
         </FilterBar>
 
-        {/* Bulk Action Panel */}
-        {isAdmin && selectedUuids.length > 0 && (
-          <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 border rounded-md animate-in fade-in slide-in-from-top-1">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        {selectedUuids.length > 0 && isAdmin && (
+          <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
                 {selectedUuids.length} leads selected
               </span>
-              <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-2" />
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Bulk Assign to RM:</span>
                 <Select value={targetRmId} onValueChange={setTargetRmId}>
-                  <SelectTrigger className="w-48 h-9 shadow-none">
-                    <SelectValue placeholder="Choose Relationship Manager" />
+                  <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-900 transition-all focus:ring-2 focus:ring-indigo-500">
+                    <SelectValue placeholder="Select RM for assignment" />
                   </SelectTrigger>
                   <SelectContent>
-                    {rms.map(r => (
+                    {rms.map((r: any) => (
                       <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Button 
                   size="sm" 
-                  disabled={!targetRmId || isBulkAssigning} 
+                  disabled={!targetRmId || isBulkAssigning}
                   onClick={handleBulkAssign}
-                  className="h-9 px-4"
+                  className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95 transition-all px-4 font-bold"
                 >
-                  {isBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Assign Now
+                  {isBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Assign Selection'}
                 </Button>
               </div>
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => setSelectedUuids([])}
-              className="text-zinc-500 hover:text-zinc-800"
+              onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
+              className="text-zinc-500 hover:text-zinc-800 font-medium"
             >
               Cancel
             </Button>
@@ -273,36 +309,36 @@ export const LeadsPage = () => {
         )}
 
         <LeadTable 
-          data={sortedLeads} // Pass the sorted buffer, LeadTable/DataTable handles slicing
+          data={sortedLeads}
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
-          // If we have 200 leads, assume there might be more to enable "Next"
-          total={leads.length < 200 ? serverOffset + leads.length : serverOffset + 201}
-          onPageChange={setPage}
-          onLimitChange={setLimit}
+          total={totalLeads}
+          onPageChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { page: v } }))}
+          onLimitChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }))}
           onEdit={handleEdit}
           onDelete={handleDelete}
           sortField={sortField}
           sortOrder={sortOrder}
           onSort={handleSort}
-          selectedUuids={selectedUuids}
-          onSelectUuids={setSelectedUuids}
           offset={serverOffset}
+          selectedUuids={selectedUuids}
+          onSelectUuids={(uuids) => dispatch(setSelectedUuids({ tabKey, uuids }))}
         />
       </div>
 
       <AppDrawer
-        title={editingLead ? 'Edit Lead' : 'Create New Lead'}
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        title={editingLead ? "Edit Lead" : "New Lead"}
+        description={editingLead ? "Modify lead details below." : "Fill in the information to register a new property lead."}
       >
         {isDrawerOpen && (
           <LeadForm 
             onSubmit={handleFormSubmit}
             isLoading={isCreating || isUpdating}
-            isEdit={!!editingLead}
             initialValues={editingLead || undefined}
+            isEdit={!!editingLead}
           />
         )}
       </AppDrawer>
@@ -310,12 +346,9 @@ export const LeadsPage = () => {
       <ConfirmDialog
         open={!!deleteUuid}
         onClose={() => setDeleteUuid(null)}
-        onConfirm={async () => {
-          toast.info('Delete functionality pending API');
-          setDeleteUuid(null);
-        }}
+        onConfirm={() => {}} 
         title="Delete Lead"
-        description="Are you sure you want to delete this lead? This action cannot be undone."
+        description="Are you sure you want to remove this lead? This action cannot be undone."
       />
     </div>
   );
