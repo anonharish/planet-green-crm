@@ -34,24 +34,25 @@ import {
 import { cn } from '../../../utils';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
+import { useAppSelector } from '../../../app/hooks';
 import type { CreateLeadRequest } from '../types';
 
 const formSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
   phone_number: z.string().min(10, 'Phone number must be at least 10 digits'),
-  email_address: z.string().email('Invalid email address'),
+  email_address: z.string().email('Invalid email address').optional().or(z.literal('')),
   source_type: z.string().min(1, 'Source is required'), // UI-only
   source_employee_user_id: z.number().nullable().optional(),
   project_selection: z.string().min(1, 'Project is required'), // UI-only
   assigned_to_rm: z.number().nullable().optional(),
   assigned_to_em: z.number().nullable().optional(),
-  occupation: z.string().min(1, 'Occupation is required'),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  country: z.string().min(1, 'Country is required'),
-  zip: z.string().min(1, 'Zip code is required'),
+  occupation: z.string().optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  state: z.string().optional().or(z.literal('')),
+  country: z.string().optional().or(z.literal('')),
+  zip: z.string().optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -70,6 +71,7 @@ export const LeadForm = ({
   isEdit = false 
 }: LeadFormProps) => {
   const [sourceOpen, setSourceOpen] = useState(false);
+  const { user: currentUser } = useAppSelector((state) => state.auth);
 
   // Fetch all users for source autocomplete
   const { data: allUsers = [], isLoading: isLoadingUsers } = useGetAllUsersQuery({ offset: 0 });
@@ -84,9 +86,9 @@ export const LeadForm = ({
       last_name: initialValues?.last_name || '',
       phone_number: initialValues?.phone_number || '',
       email_address: initialValues?.email_address || '',
-      source_type: initialValues?.source_employee_user_id ? 'internal' : (initialValues?.source_id === 1 ? 'facebook' : 'facebook'),
-      source_employee_user_id: initialValues?.source_employee_user_id || null,
-      project_selection: initialValues?.project_id === 2 ? 'planet_green' : 'dates_county',
+      source_type: initialValues?.source_employee_user_id ? 'internal' : (initialValues?.source_id === 1 ? 'facebook' : 'internal'),
+      source_employee_user_id: initialValues?.source_employee_user_id || (isEdit ? null : Number(currentUser?.id)),
+      project_selection: initialValues?.project_id === 1 ? 'dates_county' : 'planet_green',
       assigned_to_rm: initialValues?.assigned_to_rm || null,
       assigned_to_em: initialValues?.assigned_to_em || null,
       occupation: initialValues?.occupation || '',
@@ -135,10 +137,18 @@ export const LeadForm = ({
       source_employee_user_id: source_type === 'internal' ? (values.source_employee_user_id ?? null) : null,
       assigned_to_rm: values.assigned_to_rm ?? null,
       assigned_to_em: values.assigned_to_em ?? null,
-      lead_status_id: 3, // Hardcoded per user request
-      lead_priority_id: 4, // Hardcoded per user request
-      source_id: 1, // Hardcoded per user request
-      project_id: 2, // Hardcoded per user request
+      lead_status_id: initialValues?.lead_status_id || 1, // Default to NEW
+      lead_priority_id: initialValues?.lead_priority_id || 1, // Default to NEW
+      source_id: source_type === 'internal' ? 4 : (source_type === 'facebook' ? 2 : (source_type === 'whatsapp' ? 1 : 5)),
+      project_id: project_selection === 'planet_green' ? 2 : 1,
+      // Ensure all optional fields are at least empty strings for the API
+      email_address: values.email_address || '',
+      occupation: values.occupation || '',
+      address: values.address || '',
+      city: values.city || '',
+      state: values.state || '',
+      country: values.country || '',
+      zip: values.zip || '',
     };
     onSubmit(payload);
   };
@@ -257,7 +267,7 @@ export const LeadForm = ({
             name="source_employee_user_id"
             render={({ field }) => (
               <FormItem className="flex flex-col animate-in fade-in slide-in-from-top-2 duration-300">
-                <FormLabel>Internal Employee List</FormLabel>
+                <FormLabel>Internal Employees</FormLabel>
                 <Popover open={sourceOpen} onOpenChange={setSourceOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
