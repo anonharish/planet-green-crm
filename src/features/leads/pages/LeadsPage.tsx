@@ -79,6 +79,7 @@ export const LeadsPage = () => {
   };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showRandomConfirm, setShowRandomConfirm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
 
@@ -117,6 +118,43 @@ export const LeadsPage = () => {
       setTargetRmId('');
     } catch (err: any) {
       toast.error(err?.data?.message || 'Bulk assignment failed');
+    }
+  };
+
+  const handleRandomAssign = async () => {
+    if (leads.length === 0 || rms.length === 0) {
+      toast.error('No leads or RMs available for assignment');
+      return;
+    }
+
+    try {
+      // Create a shuffled copy of leads
+      const shuffledLeads = [...leads].sort(() => Math.random() - 0.5);
+      const leadUuids = shuffledLeads.map(l => l.uuid);
+      
+      // Calculate chunks
+      const chunkSize = Math.ceil(leadUuids.length / rms.length);
+      const assignmentPromises = [];
+
+      for (let i = 0; i < rms.length; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, leadUuids.length);
+        const chunk = leadUuids.slice(start, end);
+
+        if (chunk.length > 0) {
+          assignmentPromises.push(
+            bulkAssign({
+              lead_uuids: chunk,
+              assigned_to_rm: rms[i].id
+            }).unwrap()
+          );
+        }
+      }
+
+      await Promise.all(assignmentPromises);
+      toast.success(`Successfully distributed ${leadUuids.length} leads across ${rms.length} RMs`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Random assignment failed');
     }
   };
 
@@ -179,9 +217,22 @@ export const LeadsPage = () => {
         title="Leads Dashboard" 
         description="Core CRM leads management and assignment platform"
         actions={
-          <Button onClick={handleCreateNew} className="gap-2">
-            Add Lead
-          </Button>
+          <div className="flex gap-3">
+            {isAdmin && activeTab === 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowRandomConfirm(true)} 
+                disabled={isBulkAssigning || leads.length === 0}
+                className="gap-2"
+              >
+                {isBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Random Assign
+              </Button>
+            )}
+            <Button onClick={handleCreateNew} className="gap-2">
+              Add Lead
+            </Button>
+          </div>
         }
       />
 
@@ -342,6 +393,19 @@ export const LeadsPage = () => {
           />
         )}
       </AppDrawer>
+
+      <ConfirmDialog
+        open={showRandomConfirm}
+        onClose={() => setShowRandomConfirm(false)}
+        onConfirm={() => {
+          handleRandomAssign();
+          setShowRandomConfirm(false);
+        }}
+        title="Confirm Random Assignment"
+        description={`This will equally and randomly distribute the ${leads.length} currently visible unassigned leads among the ${rms.length} available Relationship Managers. Are you sure?`}
+        confirmLabel="Assign Leads"
+        variant="primary"
+      />
 
       <ConfirmDialog
         open={!!deleteUuid}

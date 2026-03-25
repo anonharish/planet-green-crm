@@ -18,6 +18,7 @@ interface ConfirmDialogProps {
   description?: string;
   confirmLabel?: string;
   isLoading?: boolean;
+  variant?: 'destructive' | 'primary';
 }
 
 export const ConfirmDialog = ({
@@ -28,6 +29,7 @@ export const ConfirmDialog = ({
   description = 'This action cannot be undone.',
   confirmLabel = 'Delete',
   isLoading = false,
+  variant = 'destructive',
 }: ConfirmDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
@@ -41,9 +43,11 @@ export const ConfirmDialog = ({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isLoading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className={variant === 'destructive' 
+              ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+              : "bg-primary text-primary-foreground hover:bg-primary/90"}
           >
-            {isLoading ? 'Deleting...' : confirmLabel}
+            {isLoading ? (variant === 'destructive' ? 'Deleting...' : 'Processing...') : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
