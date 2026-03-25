@@ -37,6 +37,7 @@ export const MainLayout = () => {
   const allNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: [1, 2, 3, 4] },
     { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} />, roles: [1, 2, 3, 4] },
+    { label: 'Customers', path: '/customers', icon: <Users size={20} />, roles: [1, 2, 3, 4] },
     { label: 'Relationship Managers', path: '/relationship-managers', icon: <Users size={20} />, roles: [1, 2] },
     { label: 'Experience Managers', path: '/agents', icon: <UserCircle size={20} />, roles: [1, 2, 3] },
     { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} />, roles: [1, 2] },
