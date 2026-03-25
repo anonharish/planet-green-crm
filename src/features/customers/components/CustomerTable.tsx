@@ -3,6 +3,7 @@ import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { Badge } from '../../../components/ui/badge';
 import type { Customer } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
+import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 
 interface CustomerTableProps {
   data: Customer[];
@@ -29,6 +30,8 @@ export const CustomerTable = ({
   sortOrder,
   onSort
 }: CustomerTableProps) => {
+  const { getCustomerStatusLabel, isLoading: isLookupLoading } = useMasterDataLookup();
+
   const fallback = (value: any) => value ?? '--';
 
   const columns: ColumnDef<Customer>[] = [
@@ -75,7 +78,7 @@ export const CustomerTable = ({
       width: '150px',
       render: (c) => (
         <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-          ID: {c.customer_status_id}
+          {getCustomerStatusLabel(c.customer_status_id)}
         </Badge>
       ),
     },
@@ -96,7 +99,7 @@ export const CustomerTable = ({
     <DataTable
       columns={columns as any}
       data={data}
-      isLoading={isLoading}
+      isLoading={isLoading || isLookupLoading}
       page={page}
       limit={limit}
       total={total}

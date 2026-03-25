@@ -1,6 +1,5 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import { usePermissions } from '../../../hooks/usePermissions';
 import { Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
@@ -13,7 +12,9 @@ import {
 } from '../../../components/ui/dropdown-menu';
 import { Badge } from '../../../components/ui/badge';
 import type { Lead } from '../types';
-import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
+import { type ColumnDef } from '../../../shared/components/DataTable/DataTable';
+import { useAppSelector } from '../../../app/hooks';
+import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 
 interface LeadTableProps {
   data: Lead[];
@@ -44,100 +45,88 @@ export const LeadTable = ({
   sortOrder,
   onSort
 }: LeadTableProps) => {
-  const { can } = usePermissions();
+  const { currentRole } = useAppSelector((state) => state.auth);
+  const roleCode = currentRole?.code || '';
+  
+  const { 
+    getStatusLabel, 
+    getProjectLabel, 
+    getRmLabel, 
+    getEmLabel,
+    isLoading: isLookupLoading 
+  } = useMasterDataLookup();
 
   const fallback = (value: any) => value ?? '--';
 
   const columns: ColumnDef<Lead>[] = [
     {
+      key: 'uuid',
+      header: 'ID',
+      width: '100px',
+      render: (l) => <span className="text-[10px] font-mono text-zinc-400">{fallback(l.uuid?.split('-')[0])}</span>,
+    },
+    {
       key: 'first_name',
       header: 'First Name',
       sortable: true,
-      width: '260px',
+      width: '180px',
       render: (l) => <span className="font-medium text-zinc-900 dark:text-zinc-100">{fallback(l.first_name)}</span>,
     },
     {
       key: 'last_name',
       header: 'Last Name',
       sortable: true,
-      width: '260px',
+      width: '180px',
       render: (l) => <span>{fallback(l.last_name)}</span>,
     },
     {
-      key: 'email_address',
-      header: 'Email Address',
-      sortable: true,
-      width: '300px',
-      render: (l) => <span className="text-zinc-500">{fallback(l.email_address)}</span>,
+      key: 'phone_number',
+      header: 'Phone',
+      width: '150px',
+      render: (l) => <span className="text-zinc-500 font-mono text-xs">{fallback(l.phone_number)}</span>,
     },
     {
-      key: 'source_employee_user_id',
-      header: 'Source',
-      width: '200px',
-      render: (l) => (
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">
-          {l.source_employee_user_id ? `${l.source_employee_user_id}` : '--'}
-        </span>
-      ),
+      key: 'email_address',
+      header: 'Email',
+      sortable: true,
+      width: '220px',
+      render: (l) => <span className="text-zinc-500 truncate block">{fallback(l.email_address)}</span>,
     },
     {
       key: 'lead_status_id',
       header: 'Status',
       sortable: true,
-      width: '200px',
+      width: '150px',
       render: (l) => (
         <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-          {l.lead_status_id}
+          {getStatusLabel(l.lead_status_id)}
         </Badge>
       ),
     },
     {
-      key: 'lead_priority_id',
-      header: 'Priority',
-      sortable: true,
-      width: '200px',
-      render: (l) => (
-        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-          {l.lead_priority_id}
-        </span>
-      ),
+      key: 'project_id',
+      header: 'Project',
+      width: '150px',
+      render: (l) => <span className="text-xs font-medium">{getProjectLabel(l.project_id)}</span>,
     },
-    {
-      key: 'assigned_to_rm',
-      header: 'Assigned RM',
-      width: '200px',
-      render: (l) => <span className="text-xs">{l.assigned_to_rm ? `${l.assigned_to_rm}` : '--'}</span>,
-    },
-    {
-      key: 'assigned_to_em',
-      header: 'Assigned EM',
-      width: '200px',
-      render: (l) => <span className="text-xs">{l.assigned_to_em ? `${l.assigned_to_em}` : '--'}</span>,
-    },
-    {
-      key: 'occupation',
-      header: 'Occupation',
-      width: '200px',
-      render: (l) => <span className="text-xs text-zinc-500">{fallback(l.occupation)}</span>,
-    },
-    {
-      key: 'city',
-      header: 'City',
-      width: '20px',
-      render: (l) => <span className="text-xs">{fallback(l.city)}</span>,
-    },
-    {
-      key: 'state',
-      header: 'State',
-      width: '200px',
-      render: (l) => <span className="text-xs">{fallback(l.state)}</span>,
-    },
-    {
-      key: 'country',
-      header: 'Country',
-      width: '200px',
-      render: (l) => <span className="text-xs">{fallback(l.country)}</span>,
-    },
+    // Conditional: RM for Admin/Super Admin (SADMIN, ADMIN)
+    ...( (roleCode === 'SADMIN' || roleCode === 'ADMIN') ? [
+      {
+        key: 'assigned_to_rm',
+        header: 'Assigned RM',
+        width: '180px',
+        render: (l: Lead) => <span className="text-xs text-zinc-500">{getRmLabel(l.assigned_to_rm)}</span>,
+      }
+    ] : []),
+    // Conditional: EM for Admin/Super/RM (SADMIN, ADMIN, RELMNG)
+    ...( (roleCode === 'SADMIN' || roleCode === 'ADMIN' || roleCode === 'RELMNG') ? [
+      {
+        key: 'assigned_to_em',
+        header: 'Assigned EM',
+        width: '180px',
+        render: (l: Lead) => <span className="text-xs text-zinc-500">{getEmLabel(l.assigned_to_em)}</span>,
+      }
+    ] : []),
     {
       key: 'actions',
       header: 'Actions',
@@ -177,7 +166,7 @@ export const LeadTable = ({
     <DataTable
       columns={columns as any}
       data={data}
-      isLoading={isLoading}
+      isLoading={isLoading || isLookupLoading}
       page={page}
       limit={limit}
       total={total}
