@@ -92,7 +92,8 @@ export const LeadsPage = () => {
 
   const { data: leads = [], isLoading, isFetching } = useGetLeadsQuery({ 
     offset: serverOffset,
-    is_rm_assigned: showTabs ? activeTab : undefined,
+    is_rm_assigned: isAdmin ? activeTab : undefined,
+    is_em_assigned: isRM ? activeTab : undefined,
     search_text: debouncedSearch || undefined,
     status: debouncedFilters.statusIds.length > 0 ? debouncedFilters.statusIds.map(Number) : undefined,
     project: debouncedFilters.projectIds.length > 0 ? debouncedFilters.projectIds.map(Number) : undefined,
