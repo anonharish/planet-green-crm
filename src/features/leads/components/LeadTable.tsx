@@ -16,6 +16,8 @@ import { type ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import { useAppSelector } from '../../../app/hooks';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 
+import { Checkbox } from '../../../components/ui/checkbox';
+
 interface LeadTableProps {
   data: Lead[];
   isLoading: boolean;
@@ -29,6 +31,9 @@ interface LeadTableProps {
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (key: string) => void;
+  // Selection
+  selectedUuids?: string[];
+  onSelectUuids?: (uuids: string[]) => void;
 }
 
 export const LeadTable = ({
@@ -43,7 +48,9 @@ export const LeadTable = ({
   onDelete,
   sortField,
   sortOrder,
-  onSort
+  onSort,
+  selectedUuids = [],
+  onSelectUuids
 }: LeadTableProps) => {
   const { currentRole } = useAppSelector((state) => state.auth);
   const roleCode = currentRole?.code || '';
@@ -60,6 +67,41 @@ export const LeadTable = ({
   const fallback = (value: any) => value ?? '--';
 
   const columns: ColumnDef<Lead>[] = [
+    ...( (roleCode === 'SADMIN' || roleCode === 'ADMIN') ? [
+      {
+        key: 'selection',
+        header: (
+          <div className="flex items-center justify-center h-full">
+            <Checkbox 
+              checked={data.length > 0 && selectedUuids.length === data.length}
+              onCheckedChange={(checked: boolean) => {
+                if (checked) {
+                  onSelectUuids?.(data.map(l => l.uuid));
+                } else {
+                  onSelectUuids?.([]);
+                }
+              }}
+              aria-label="Select all"
+            />
+          </div>
+        ),
+        width: '40px',
+        render: (l: Lead) => (
+          <div className="flex items-center justify-center">
+            <Checkbox 
+              checked={selectedUuids.includes(l.uuid)}
+              onCheckedChange={(checked: boolean) => {
+                const newSelection = checked 
+                  ? [...selectedUuids, l.uuid]
+                  : selectedUuids.filter(id => id !== l.uuid);
+                onSelectUuids?.(newSelection);
+              }}
+              aria-label={`Select lead ${l.lead_id}`}
+            />
+          </div>
+        )
+      }
+    ] : []),
     {
       key: 'lead_id',
       header: 'ID',

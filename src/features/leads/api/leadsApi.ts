@@ -33,6 +33,14 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
+    bulkAssignLeadsToRm: builder.mutation<{ message: string; affectedRows: number }, { lead_uuids: string[]; assigned_to_rm: number }>({
+      query: (body) => ({
+        url: '/leads/bulkAssignLeadsToRm',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Leads'],
+    }),
   }),
 });
 
@@ -40,4 +48,5 @@ export const {
   useGetLeadsQuery,
   useCreateLeadMutation,
   useUpdateLeadMutation,
+  useBulkAssignLeadsToRmMutation,
 } = leadsApi;

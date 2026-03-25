@@ -5,13 +5,14 @@ import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog/ConfirmDialog';
 import { LeadForm } from '../components/LeadForm';
 import { LeadTable } from '../components/LeadTable';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'sonner';
 import { 
   useGetLeadsQuery, 
   useCreateLeadMutation, 
-  useUpdateLeadMutation 
+  useUpdateLeadMutation,
+  useBulkAssignLeadsToRmMutation,
 } from '../api/leadsApi';
 import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
 import { useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
@@ -24,12 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
+import { useAppSelector } from '../../../app/hooks';
 import type { Lead, CreateLeadRequest } from '../types';
 
 export const LeadsPage = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(200); // Fixed at 200 per user request
   
+  // Selection state
+  const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
+  const [targetRmId, setTargetRmId] = useState<string>('');
+
+  const { currentRole } = useAppSelector((state) => state.auth);
+  const isAdmin = currentRole?.code === 'ADMIN' || currentRole?.code === 'SADMIN';
+
   // Filter state
   const [search, setSearch] = useState('');
   const [statusIds, setStatusIds] = useState<string[]>([]);
@@ -68,6 +77,7 @@ export const LeadsPage = () => {
 
   const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
+  const [bulkAssign, { isLoading: isBulkAssigning }] = useBulkAssignLeadsToRmMutation();
 
   const handleResetFilters = () => {
     setSearch('');
@@ -75,6 +85,21 @@ export const LeadsPage = () => {
     setProjectIds([]);
     setRmId('all');
     setEmId('all');
+  };
+
+  const handleBulkAssign = async () => {
+    if (!targetRmId || selectedUuids.length === 0) return;
+    try {
+      await bulkAssign({
+        lead_uuids: selectedUuids,
+        assigned_to_rm: Number(targetRmId)
+      }).unwrap();
+      toast.success('Leads successfully assigned to RM');
+      setSelectedUuids([]);
+      setTargetRmId('');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Bulk assignment failed');
+    }
   };
 
   const handleCreateNew = () => {
@@ -201,6 +226,48 @@ export const LeadsPage = () => {
           </Select>
         </FilterBar>
 
+        {/* Bulk Action Panel */}
+        {isAdmin && selectedUuids.length > 0 && (
+          <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 border rounded-md animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                {selectedUuids.length} leads selected
+              </span>
+              <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-2" />
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Bulk Assign to RM:</span>
+                <Select value={targetRmId} onValueChange={setTargetRmId}>
+                  <SelectTrigger className="w-48 h-9 shadow-none">
+                    <SelectValue placeholder="Choose Relationship Manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rms.map(r => (
+                      <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  size="sm" 
+                  disabled={!targetRmId || isBulkAssigning} 
+                  onClick={handleBulkAssign}
+                  className="h-9 px-4"
+                >
+                  {isBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Assign Now
+                </Button>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setSelectedUuids([])}
+              className="text-zinc-500 hover:text-zinc-800"
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+
         <LeadTable 
           data={sortedLeads}
           isLoading={isLoading || isFetching}
@@ -214,6 +281,8 @@ export const LeadsPage = () => {
           sortField={sortField}
           sortOrder={sortOrder}
           onSort={handleSort}
+          selectedUuids={selectedUuids}
+          onSelectUuids={setSelectedUuids}
         />
       </div>
 
