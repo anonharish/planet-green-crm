@@ -43,6 +43,7 @@ interface DataTableProps<T> {
   // Optional
   emptyMessage?: string;
   rowKey: (row: T) => string | number;
+  offset?: number;
 }
 
 const SkeletonRow = ({ columns }: { columns: number }) => (
@@ -69,10 +70,16 @@ export function DataTable<T>({
   onSort,
   emptyMessage = 'No records found.',
   rowKey,
+  offset = 0,
 }: DataTableProps<T>) {
   const totalPages = Math.ceil(total / limit);
-  const from = total === 0 ? 0 : (page - 1) * limit + 1;
-  const to = Math.min(page * limit, total);
+  const globalStart = (page - 1) * limit;
+  const from = total === 0 ? 0 : globalStart + 1;
+  const to = Math.min(globalStart + limit, total);
+
+  // Relative slicing: calculate where in the provided 'data' array the current 'page' starts
+  const relativeStart = Math.max(0, globalStart - offset);
+  const slicedData = data.slice(relativeStart, relativeStart + limit);
 
   return (
     <div className="flex flex-col gap-3">
@@ -125,7 +132,7 @@ export function DataTable<T>({
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((row, index) => (
+              slicedData.map((row, index) => (
                 <TableRow key={rowKey(row)} className="hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                   {columns.map((col) => (
                     <TableCell key={col.key} className="text-sm text-zinc-700 dark:text-zinc-300 py-3">

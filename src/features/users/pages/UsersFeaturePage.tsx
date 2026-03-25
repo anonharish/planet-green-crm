@@ -99,13 +99,7 @@ export const UsersFeaturePage = ({
     return result;
   }, [serverUsers, search, sortField, sortOrder]);
 
-  const totalItems = sortedAndFilteredData.length;
-  
-  const displayData = React.useMemo(() => {
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    return sortedAndFilteredData.slice(start, end);
-  }, [sortedAndFilteredData, page, limit]);
+  const totalItems = sortedAndFilteredData.length < 200 ? serverOffset + sortedAndFilteredData.length : serverOffset + 201;
 
   // Handlers
   const handlePageChange = (newPage: number) => {
@@ -188,7 +182,7 @@ export const UsersFeaturePage = ({
         </FilterBar>
 
         <UserTable
-          data={displayData}
+          data={sortedAndFilteredData}
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
@@ -204,6 +198,7 @@ export const UsersFeaturePage = ({
           sortField={sortField}
           sortOrder={sortOrder}
           onSort={handleSort}
+          offset={serverOffset}
         />
       </div>
 

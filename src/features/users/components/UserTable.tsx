@@ -30,6 +30,7 @@ interface UserTableProps {
   sortField?: 'created_on' | 'first_name';
   sortOrder?: 'asc' | 'desc';
   onSort?: (field: 'created_on' | 'first_name') => void;
+  offset?: number;
 }
 
 export const UserTable = ({
@@ -45,7 +46,8 @@ export const UserTable = ({
   permissionPrefix,
   sortField,
   sortOrder,
-  onSort
+  onSort,
+  offset = 0
 }: UserTableProps) => {
   const { can } = usePermissions();
   const [viewAgentsManager, setViewAgentsManager] = React.useState<User | null>(null);
@@ -153,6 +155,7 @@ export const UserTable = ({
         sortField={sortField}
         sortOrder={sortOrder}
         onSort={onSort as any}
+        offset={offset}
       />
       
       <ExperienceManagerListDialog 

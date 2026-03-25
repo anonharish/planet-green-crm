@@ -30,7 +30,7 @@ import type { Lead, CreateLeadRequest } from '../types';
 
 export const LeadsPage = () => {
   const [page, setPage] = useState(1);
-  const [limit] = useState(200); // Fixed at 200 per user request
+  const [limit, setLimit] = useState(20); // Local limit for display (10, 20, 50)
   
   // Selection state
   const [selectedUuids, setSelectedUuids] = useState<string[]>([]);
@@ -45,6 +45,10 @@ export const LeadsPage = () => {
   const [projectIds, setProjectIds] = useState<string[]>([]);
   const [rmId, setRmId] = useState<string>('all');
   const [emId, setEmId] = useState<string>('all');
+
+  // Calculate server-side offset based on local page/limit
+  // We fetch in chunks of 200
+  const serverOffset = Math.floor(((page - 1) * limit) / 200) * 200;
 
   // Debouncing for efficient API calls
   const debouncedSearch = useDebounce(search, 500);
@@ -67,7 +71,7 @@ export const LeadsPage = () => {
   );
 
   const { data: leads = [], isLoading, isFetching } = useGetLeadsQuery({ 
-    offset: (page - 1) * limit,
+    offset: serverOffset,
     search_text: debouncedSearch || undefined,
     status: debouncedFilters.statusIds.length > 0 ? debouncedFilters.statusIds.map(Number) : undefined,
     project: debouncedFilters.projectIds.length > 0 ? debouncedFilters.projectIds.map(Number) : undefined,
@@ -269,13 +273,14 @@ export const LeadsPage = () => {
         )}
 
         <LeadTable 
-          data={sortedLeads}
+          data={sortedLeads} // Pass the sorted buffer, LeadTable/DataTable handles slicing
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
-          total={leads.length} // Note: Server should ideally return total count
+          // If we have 200 leads, assume there might be more to enable "Next"
+          total={leads.length < 200 ? serverOffset + leads.length : serverOffset + 201}
           onPageChange={setPage}
-          onLimitChange={() => {}} // Limit fixed at 200
+          onLimitChange={setLimit}
           onEdit={handleEdit}
           onDelete={handleDelete}
           sortField={sortField}
@@ -283,6 +288,7 @@ export const LeadsPage = () => {
           onSort={handleSort}
           selectedUuids={selectedUuids}
           onSelectUuids={setSelectedUuids}
+          offset={serverOffset}
         />
       </div>
 

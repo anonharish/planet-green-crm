@@ -34,6 +34,7 @@ interface LeadTableProps {
   // Selection
   selectedUuids?: string[];
   onSelectUuids?: (uuids: string[]) => void;
+  offset?: number;
 }
 
 export const LeadTable = ({
@@ -50,7 +51,8 @@ export const LeadTable = ({
   sortOrder,
   onSort,
   selectedUuids = [],
-  onSelectUuids
+  onSelectUuids,
+  offset = 0
 }: LeadTableProps) => {
   const { currentRole } = useAppSelector((state) => state.auth);
   const roleCode = currentRole?.code || '';
@@ -225,6 +227,7 @@ export const LeadTable = ({
       sortField={sortField}
       sortOrder={sortOrder}
       onSort={onSort as any}
+      offset={offset}
     />
   );
 };

@@ -16,6 +16,7 @@ interface CustomerTableProps {
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (key: string) => void;
+  offset?: number;
 }
 
 export const CustomerTable = ({
@@ -28,7 +29,8 @@ export const CustomerTable = ({
   onLimitChange,
   sortField,
   sortOrder,
-  onSort
+  onSort,
+  offset = 0
 }: CustomerTableProps) => {
   const { getCustomerStatusLabel, isLoading: isLookupLoading } = useMasterDataLookup();
 
@@ -109,6 +111,7 @@ export const CustomerTable = ({
       sortField={sortField}
       sortOrder={sortOrder}
       onSort={onSort as any}
+      offset={offset}
     />
   );
 };

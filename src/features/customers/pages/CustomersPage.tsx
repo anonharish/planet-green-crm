@@ -7,15 +7,19 @@ import type { Customer } from '../types';
 
 export const CustomersPage = () => {
   const [page, setPage] = useState(1);
-  const [limit] = useState(200); // Fixed at 200 per user request
+  const [limit, setLimit] = useState(20); // Local limit for display (10, 20, 50)
   const [search, setSearch] = useState('');
   
+  // Calculate server-side offset based on local page/limit
+  // We fetch in chunks of 200
+  const serverOffset = Math.floor(((page - 1) * limit) / 200) * 200;
+
   // Sorting state
   const [sortField, setSortField] = useState<string>('created_on');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const { data: customers = [], isLoading, isFetching } = useGetCustomersQuery({ 
-    offset: (page - 1) * limit 
+    offset: serverOffset
   });
 
   const handleSort = (field: string) => {
@@ -82,12 +86,14 @@ export const CustomersPage = () => {
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
-          total={customers.length} // Local total since API doesn't provide total count yet
+          // If we have 200 customers, assume there might be more to enable "Next"
+          total={customers.length < 200 ? serverOffset + customers.length : serverOffset + 201}
           onPageChange={setPage}
-          onLimitChange={() => {}} // Limit is fixed at 200
+          onLimitChange={setLimit}
           sortField={sortField}
           sortOrder={sortOrder}
           onSort={handleSort}
+          offset={serverOffset}
         />
       </div>
     </div>
