@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Navigate, Link } from 'react-router-dom';
+import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LogOut, 
@@ -25,6 +25,7 @@ import { cn } from '../utils';
 export const MainLayout = () => {
   const { isAuthenticated, isFirstLogin, user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -93,24 +94,32 @@ export const MainLayout = () => {
         </div>
         
         <nav className="flex-1 mt-6 px-3 space-y-2 overflow-y-auto overflow-x-hidden">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              title={!isSidebarOpen ? item.label : undefined}
-              className={cn(
-                "flex items-center px-3 py-2.5 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-md transition-colors",
-                isSidebarOpen ? "space-x-3" : "justify-center"
-              )}
-            >
-              <div className="shrink-0">{item.icon}</div>
-              <span className={cn("font-medium whitespace-nowrap text-sm overflow-hidden transition-all duration-300",
-                isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
-              )}>
-                {item.label}
-              </span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                title={!isSidebarOpen ? item.label : undefined}
+                className={cn(
+                  "flex items-center px-3 py-2.5 rounded-md transition-colors",
+                  isActive 
+                    ? "bg-zinc-800 text-white shadow-sm ring-1 ring-zinc-700" 
+                    : "text-zinc-300 hover:bg-zinc-800 hover:text-white",
+                  isSidebarOpen ? "space-x-3" : "justify-center"
+                )}
+              >
+                <div className={cn("shrink-0", isActive ? "text-white" : "text-zinc-400 group-hover:text-white")}>
+                  {item.icon}
+                </div>
+                <span className={cn("font-medium whitespace-nowrap text-sm overflow-hidden transition-all duration-300",
+                  isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
+                )}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 

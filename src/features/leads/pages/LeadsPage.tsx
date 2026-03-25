@@ -148,8 +148,7 @@ export const LeadsPage = () => {
         title="Manage Leads" 
         description="View and manage all incoming customer leads"
         actions={
-          <Button onClick={handleCreateNew} className="gap-2">
-            <Plus className="h-4 w-4" />
+          <Button onClick={handleCreateNew}>
             Add Lead
           </Button>
         }
