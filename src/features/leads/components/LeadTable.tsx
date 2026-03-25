@@ -53,6 +53,7 @@ export const LeadTable = ({
     getProjectLabel, 
     getRmLabel, 
     getEmLabel,
+    getSourceLabel,
     isLoading: isLookupLoading 
   } = useMasterDataLookup();
 
@@ -60,10 +61,10 @@ export const LeadTable = ({
 
   const columns: ColumnDef<Lead>[] = [
     {
-      key: 'uuid',
+      key: 'lead_id',
       header: 'ID',
-      width: '100px',
-      render: (l) => <span className="text-[10px] font-mono text-zinc-400">{fallback(l.uuid?.split('-')[0])}</span>,
+      width: '80px',
+      render: (l) => <span className="text-zinc-500 font-medium">#{fallback(l.lead_id)}</span>,
     },
     {
       key: 'first_name',
@@ -91,6 +92,12 @@ export const LeadTable = ({
       sortable: true,
       width: '220px',
       render: (l) => <span className="text-zinc-500 truncate block">{fallback(l.email_address)}</span>,
+    },
+    {
+      key: 'source_id',
+      header: 'Source',
+      width: '150px',
+      render: (l) => <span className="text-xs">{getSourceLabel(l.source_id)}</span>,
     },
     {
       key: 'lead_status_id',

@@ -1,5 +1,6 @@
 export interface Lead {
   uuid: string;
+  lead_id: number;
   customer_uuid: string;
   project_id: number;
   source_id: number;
