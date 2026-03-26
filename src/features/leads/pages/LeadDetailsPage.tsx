@@ -5,6 +5,8 @@ import { Button } from '../../../components/ui/button';
 import { PageHeader } from '../../../shared/components/PageHeader/PageHeader';
 import { useGetLeadByIdQuery } from '../api/leadsApi';
 import { formatDate } from '../../../utils';
+import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
+import { useGetAllUsersQuery } from '../../users/api/usersApi';
 
 export const LeadDetailsPage = () => {
   const { leadId } = useParams<{ leadId: string }>();
@@ -12,8 +14,34 @@ export const LeadDetailsPage = () => {
 
   const { data: lead, isLoading, isError, error } = useGetLeadByIdQuery(
     { uuid: leadId || '' },
+    { uuid: leadId || '' },
     { skip: !leadId }
   );
+
+  const {
+    getStatusLabel,
+    getCustomerStatusLabel,
+    getProjectLabel,
+    getSourceLabel,
+    getRmLabel,
+    getEmLabel,
+    masterData,
+  } = useMasterDataLookup();
+
+  // Find if source is INTEMP or ID 4
+  const sourceObj = masterData?.sources?.find(s => s.id === lead?.source_id);
+  const isInternalEmployeeSource = lead?.source_id === 4 || sourceObj?.code === 'INTEMP';
+
+  const { data: users = [] } = useGetAllUsersQuery(
+    { offset: 0 },
+    { skip: !isInternalEmployeeSource }
+  );
+
+  const getSourceEmployeeName = () => {
+    if (!lead?.source_employee_user_id) return '--';
+    const user = users.find(u => u.id === lead.source_employee_user_id);
+    return user ? `${user.first_name} ${user.last_name}` : `ID: ${lead.source_employee_user_id}`;
+  };
 
   const fallback = (val: any) => val || <span className="text-zinc-400 italic">Not provided</span>;
   return (
@@ -76,9 +104,53 @@ export const LeadDetailsPage = () => {
               </div>
 
               <div className="space-y-1">
-                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><Info className="h-3.5 w-3.5"/> Customer Status ID</dt>
+                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><Info className="h-3.5 w-3.5"/> Lead Status</dt>
                 <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {fallback(lead.customer_status_id)}
+                  {getStatusLabel(lead.lead_status_id)}
+                </dd>
+              </div>
+
+              <div className="space-y-1">
+                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><Info className="h-3.5 w-3.5"/> Customer Status</dt>
+                <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {getCustomerStatusLabel(lead.customer_status_id)}
+                </dd>
+              </div>
+
+              <div className="space-y-1">
+                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5"/> Project</dt>
+                <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {getProjectLabel(lead.project_id)}
+                </dd>
+              </div>
+
+              <div className="space-y-1">
+                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5"/> Source</dt>
+                <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {getSourceLabel(lead.source_id)}
+                </dd>
+              </div>
+
+              {isInternalEmployeeSource && (
+                <div className="space-y-1">
+                  <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><User className="h-3.5 w-3.5"/> Source Employee</dt>
+                  <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {getSourceEmployeeName()}
+                  </dd>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><User className="h-3.5 w-3.5"/> Assigned RM</dt>
+                <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {getRmLabel(lead.assigned_to_rm)}
+                </dd>
+              </div>
+
+              <div className="space-y-1">
+                <dt className="text-xs font-semibold text-zinc-500 mb-1 flex items-center gap-1.5"><User className="h-3.5 w-3.5"/> Assigned EM</dt>
+                <dd className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {getEmLabel(lead.assigned_to_em)}
                 </dd>
               </div>
 

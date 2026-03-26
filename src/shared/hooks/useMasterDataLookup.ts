@@ -45,6 +45,7 @@ export const useMasterDataLookup = () => {
     getSourceLabel,
     getRmLabel,
     getEmLabel,
+    masterData,
     isLoading: !masterData && (rms.length === 0 || ems.length === 0)
   };
 };
