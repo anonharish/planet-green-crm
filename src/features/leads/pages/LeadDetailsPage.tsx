@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User, Phone, Mail, MapPin, Briefcase, Calendar, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { PageHeader } from '../../../shared/components/PageHeader/PageHeader';
@@ -16,6 +16,8 @@ import { LeadChatsTab } from '../components/tabs/LeadChatsTab';
 export const LeadDetailsPage = () => {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromCustomer = location.state?.fromCustomer;
 
   const { data: lead, isLoading, isError, error } = useGetLeadByIdQuery(
     { uuid: leadId || '' },
@@ -54,11 +56,11 @@ export const LeadDetailsPage = () => {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => navigate('/leads')}
+          onClick={() => navigate(fromCustomer ? '/customers' : '/leads')}
           className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Leads Dashboard
+          {fromCustomer ? 'Back to Customers' : 'Back to Leads Dashboard'}
         </Button>
       </div>
       

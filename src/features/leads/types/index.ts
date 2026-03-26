@@ -123,6 +123,11 @@ export interface GetLeadsRequest {
 
 export interface GetLeadsResponse extends Array<Lead> {}
 
+export interface GetCustomerLeadsRequest {
+  customer_uuid: string;
+  offset: number;
+}
+
 export interface GetLeadByIdRequest {
   uuid: string;
 }

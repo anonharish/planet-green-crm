@@ -4,6 +4,15 @@ import { Badge } from '../../../components/ui/badge';
 import type { Customer } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
+import { MoreVertical, Eye } from 'lucide-react';
+import { Button } from '../../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from '../../../components/ui/dropdown-menu';
 
 interface CustomerTableProps {
   data: Customer[];
@@ -17,6 +26,7 @@ interface CustomerTableProps {
   sortOrder?: 'asc' | 'desc';
   onSort?: (key: string) => void;
   offset?: number;
+  onViewLeads?: (customer: Customer) => void;
 }
 
 export const CustomerTable = ({
@@ -30,7 +40,8 @@ export const CustomerTable = ({
   sortField,
   sortOrder,
   onSort,
-  offset = 0
+  offset = 0,
+  onViewLeads
 }: CustomerTableProps) => {
   const { getCustomerStatusLabel, isLoading: isLookupLoading } = useMasterDataLookup();
 
@@ -93,6 +104,34 @@ export const CustomerTable = ({
         <span className="text-xs text-zinc-500">
           {c.created_on ? new Date(c.created_on).toLocaleDateString() : '--'}
         </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '60px',
+      render: (c) => (
+        <div className="flex items-center justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 text-xs">
+              <DropdownMenuLabel className="font-normal text-zinc-500 uppercase px-3 py-2">
+                Customer Actions
+              </DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={() => onViewLeads?.(c)} 
+                className="cursor-pointer gap-2 py-2"
+              >
+                <Eye className="h-4 w-4 text-zinc-500" />
+                <span>View Leads</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     },
   ];

@@ -4,6 +4,7 @@ import { FilterBar, SearchInput } from '../../../shared/components/FilterBar/Fil
 import { CustomerTable } from '../components/CustomerTable';
 import { useGetCustomersQuery } from '../api/customersApi';
 import type { Customer } from '../types';
+import { CustomerLeadsDialog } from '../components/CustomerLeadsDialog';
 
 export const CustomersPage = () => {
   const [page, setPage] = useState(1);
@@ -17,6 +18,9 @@ export const CustomersPage = () => {
   // Sorting state
   const [sortField, setSortField] = useState<string>('created_on');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Customer Leads Dialog state
+  const [viewLeadsCustomer, setViewLeadsCustomer] = useState<Customer | null>(null);
 
   const { data: customers = [], isLoading, isFetching } = useGetCustomersQuery({ 
     offset: serverOffset
@@ -94,8 +98,16 @@ export const CustomersPage = () => {
           sortOrder={sortOrder}
           onSort={handleSort}
           offset={serverOffset}
+          onViewLeads={setViewLeadsCustomer}
         />
       </div>
+
+      <CustomerLeadsDialog 
+        open={viewLeadsCustomer !== null} 
+        onClose={() => setViewLeadsCustomer(null)} 
+        customerUuid={viewLeadsCustomer?.uuid || null}
+        customerName={viewLeadsCustomer ? `${viewLeadsCustomer.first_name || ''} ${viewLeadsCustomer.last_name || ''}`.trim() : undefined}
+      />
     </div>
   );
 };

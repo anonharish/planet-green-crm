@@ -6,7 +6,8 @@ import type {
   GetLeadsRequest, 
   GetLeadsResponse,
   GetLeadByIdRequest,
-  ScheduleVisitRequest
+  ScheduleVisitRequest,
+  GetCustomerLeadsRequest
 } from '../types';
 
 export const leadsApi = baseApi.injectEndpoints({
@@ -26,6 +27,14 @@ export const leadsApi = baseApi.injectEndpoints({
         body,
       }),
       providesTags: (result, error, arg) => [{ type: 'Leads', id: arg.uuid }],
+    }),
+    getLeadsByCustomerUuid: builder.query<GetLeadsResponse, GetCustomerLeadsRequest>({
+      query: (body) => ({
+        url: '/leads/getLeadsByCustomerUuid',
+        method: 'POST',
+        body,
+      }),
+      providesTags: ['Leads'],
     }),
     createLead: builder.mutation<{ message: string }, CreateLeadRequest>({
       query: (body) => ({
@@ -78,4 +87,5 @@ export const {
   useBulkAssignLeadsToRmMutation,
   useDeleteLeadMutation,
   useScheduleVisitMutation,
+  useGetLeadsByCustomerUuidQuery,
 } = leadsApi;
