@@ -1,7 +1,8 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import { Pencil, Trash2, MoreVertical } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Eye } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,7 +109,14 @@ export const LeadTable = ({
       key: 'lead_id',
       header: 'ID',
       width: '80px',
-      render: (l) => <span className="text-zinc-500 font-medium">#{fallback(l.lead_id)}</span>,
+      render: (l) => (
+        <Link 
+          to={`/leads/${l.uuid}`} 
+          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium hover:underline transition-colors"
+        >
+          #{fallback(l.lead_id)}
+        </Link>
+      ),
     },
     {
       key: 'first_name',
@@ -194,6 +202,12 @@ export const LeadTable = ({
               <DropdownMenuLabel className="font-normal text-zinc-500 uppercase px-3 py-2">
                 Lead Actions
               </DropdownMenuLabel>
+              <Link to={`/leads/${lead.uuid}`}>
+                <DropdownMenuItem className="cursor-pointer gap-2 py-2">
+                  <Eye className="h-4 w-4 text-zinc-500" />
+                  <span>View Details</span>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer gap-2 py-2">
                 <Pencil className="h-4 w-4 text-blue-500" />
                 <span>Edit Lead</span>
