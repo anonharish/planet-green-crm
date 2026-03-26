@@ -25,6 +25,7 @@ export interface Lead {
   state?: string;
   country?: string;
   zip?: string;
+  customer_status_id?: number;
 }
 
 export interface CreateLeadRequest {
@@ -63,3 +64,7 @@ export interface GetLeadsRequest {
 }
 
 export interface GetLeadsResponse extends Array<Lead> {}
+
+export interface GetLeadByIdRequest {
+  uuid: string;
+}

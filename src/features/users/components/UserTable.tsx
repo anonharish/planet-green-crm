@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '../../../components/ui/dropdown-menu';
+import { formatDate } from '../../../utils';
 import { ExperienceManagerListDialog } from './ExperienceManagerListDialog';
 import type { User } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
@@ -51,17 +52,6 @@ export const UserTable = ({
 }: UserTableProps) => {
   const { can } = usePermissions();
   const [viewAgentsManager, setViewAgentsManager] = React.useState<User | null>(null);
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '---';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '---';
-    
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
 
   const columns: ColumnDef<User>[] = [
     {

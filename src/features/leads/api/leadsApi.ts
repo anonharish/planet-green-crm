@@ -4,7 +4,8 @@ import type {
   CreateLeadRequest, 
   UpdateLeadRequest,
   GetLeadsRequest, 
-  GetLeadsResponse 
+  GetLeadsResponse,
+  GetLeadByIdRequest
 } from '../types';
 
 export const leadsApi = baseApi.injectEndpoints({
@@ -16,6 +17,14 @@ export const leadsApi = baseApi.injectEndpoints({
         body,
       }),
       providesTags: ['Leads'],
+    }),
+    getLeadById: builder.query<Lead, GetLeadByIdRequest>({
+      query: (body) => ({
+        url: '/leads/getLeadById',
+        method: 'POST',
+        body,
+      }),
+      providesTags: (result, error, arg) => [{ type: 'Leads', id: arg.uuid }],
     }),
     createLead: builder.mutation<{ message: string }, CreateLeadRequest>({
       query: (body) => ({
@@ -54,6 +63,7 @@ export const leadsApi = baseApi.injectEndpoints({
 
 export const { 
   useGetLeadsQuery,
+  useGetLeadByIdQuery,
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
