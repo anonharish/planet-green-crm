@@ -41,6 +41,14 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
+    deleteLead: builder.mutation<{ message: string }, { uuid: string }>({
+      query: (body) => ({
+        url: '/leads/deleteLead',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Leads'],
+    }),
   }),
 });
 
@@ -49,4 +57,5 @@ export const {
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
+  useDeleteLeadMutation,
 } = leadsApi;

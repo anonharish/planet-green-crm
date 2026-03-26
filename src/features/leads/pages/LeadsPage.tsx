@@ -9,17 +9,21 @@ import { LeadTable } from '../components/LeadTable';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { toast } from 'sonner';
-import { 
-  useGetLeadsQuery, 
-  useCreateLeadMutation, 
+import {
+  useGetLeadsQuery,
+  useCreateLeadMutation,
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
-} from '../api/leadsApi';
-import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
-import { useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
-import { useDebounce } from '../../../shared/hooks/useDebounce';
-import { MultiSelect } from '../../../components/ui/multi-select';
-import { cn } from '../../../utils';
+  useDeleteLeadMutation,
+} from "../api/leadsApi";
+import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
+import {
+  useGetAllUsersByRoleIdQuery,
+  useGetReporteesQuery,
+} from "../../users/api/usersApi";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
+import { MultiSelect } from "../../../components/ui/multi-select";
+import { cn } from "../../../utils";
 import {
   Select,
   SelectContent,
@@ -27,9 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { 
-  setActiveTab as setActiveTabAction, 
-  updateTabFilters, 
+import {
+  setActiveTab as setActiveTabAction,
+  updateTabFilters,
   resetTabFilters,
   setSelectedUuids 
 } from '../store/leadsSlice';
@@ -38,12 +42,13 @@ import type { Lead, CreateLeadRequest } from '../types';
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
   const { currentRole } = useAppSelector((state) => state.auth);
-  const isAdmin = currentRole?.code === 'ADMIN' || currentRole?.code === 'SADMIN';
-  const isRM = currentRole?.code === 'RELMNG';
+  const isAdmin =
+    currentRole?.code === "ADMIN" || currentRole?.code === "SADMIN";
+  const isRM = currentRole?.code === "RELMNG";
   const showTabs = isAdmin || isRM;
 
   const { activeTab, tabFilters } = useAppSelector((state) => state.leads);
-  const tabKey = showTabs ? String(activeTab) : 'all';
+  const tabKey = showTabs ? String(activeTab) : "all";
   const currentFilters = tabFilters[tabKey];
 
   const {
@@ -56,22 +61,31 @@ export const LeadsPage = () => {
     emIds,
     sortField,
     sortOrder,
-    selectedUuids
+    selectedUuids,
   } = currentFilters;
 
-  const [targetRmId, setTargetRmId] = useState<string>('');
+  const [targetRmId, setTargetRmId] = useState<string>("");
 
   // Calculate server-side offset based on 200-record chunks
   const serverOffset = Math.floor(((page - 1) * limit) / 200) * 200;
 
   // Debouncing for API efficiency
   const debouncedSearch = useDebounce(search, 500);
-  const debouncedFilters = useDebounce({ statusIds, projectIds, rmIds, emIds }, 300);
+  const debouncedFilters = useDebounce(
+    { statusIds, projectIds, rmIds, emIds },
+    300,
+  );
 
   // Handlers
   const handleSort = (field: string) => {
-    const newSortOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
-    dispatch(updateTabFilters({ tabKey, updates: { sortField: field, sortOrder: newSortOrder } }));
+    const newSortOrder =
+      sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    dispatch(
+      updateTabFilters({
+        tabKey,
+        updates: { sortField: field, sortOrder: newSortOrder },
+      }),
+    );
   };
 
   const handleResetFilters = () => {
@@ -85,53 +99,74 @@ export const LeadsPage = () => {
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
-  const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
+  const { data: rms = [] } = useGetAllUsersByRoleIdQuery({
+    role_id: 3,
+    offset: 0,
+  });
   const { data: ems = [] } = useGetReporteesQuery(
     { reporting_manager_id: Number(rmIds[0] || 0), offset: 0 },
-    { skip: rmIds.length === 0 }
+    { skip: rmIds.length === 0 },
   );
 
-  const { data: leads = [], isLoading, isFetching } = useGetLeadsQuery({ 
+  const {
+    data: leads = [],
+    isLoading,
+    isFetching,
+  } = useGetLeadsQuery({
     offset: serverOffset,
     is_rm_assigned: isAdmin ? activeTab : undefined,
     is_em_assigned: isRM ? activeTab : undefined,
     search_text: debouncedSearch || undefined,
-    status: debouncedFilters.statusIds.length > 0 ? debouncedFilters.statusIds.map(Number) : undefined,
-    project: debouncedFilters.projectIds.length > 0 ? debouncedFilters.projectIds.map(Number) : undefined,
-    rm: debouncedFilters.rmIds.length > 0 ? debouncedFilters.rmIds.map(Number) : undefined,
-    em: debouncedFilters.emIds.length > 0 ? debouncedFilters.emIds.map(Number) : undefined,
+    status:
+      debouncedFilters.statusIds.length > 0
+        ? debouncedFilters.statusIds.map(Number)
+        : undefined,
+    project:
+      debouncedFilters.projectIds.length > 0
+        ? debouncedFilters.projectIds.map(Number)
+        : undefined,
+    rm:
+      debouncedFilters.rmIds.length > 0
+        ? debouncedFilters.rmIds.map(Number)
+        : undefined,
+    em:
+      debouncedFilters.emIds.length > 0
+        ? debouncedFilters.emIds.map(Number)
+        : undefined,
   });
 
   const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
-  const [bulkAssign, { isLoading: isBulkAssigning }] = useBulkAssignLeadsToRmMutation();
+  const [bulkAssign, { isLoading: isBulkAssigning }] =
+    useBulkAssignLeadsToRmMutation();
+  const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
 
   const handleBulkAssign = async () => {
     if (!targetRmId || selectedUuids.length === 0) return;
     try {
       await bulkAssign({
         lead_uuids: selectedUuids,
-        assigned_to_rm: Number(targetRmId)
+        assigned_to_rm: Number(targetRmId),
       }).unwrap();
-      toast.success('Leads successfully assigned to RM');
+      toast.success("Leads successfully assigned to RM");
       dispatch(setSelectedUuids({ tabKey, uuids: [] }));
-      setTargetRmId('');
+      setTargetRmId("");
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Bulk assignment failed');
+      toast.error(err?.data?.message || "Bulk assignment failed");
     }
   };
 
   const handleRandomAssign = async () => {
     if (leads.length === 0 || rms.length === 0) {
-      toast.error('No leads or RMs available for assignment');
+      toast.error("No leads or RMs available for assignment");
       return;
     }
 
     try {
       // Create a shuffled copy of leads
       const shuffledLeads = [...leads].sort(() => Math.random() - 0.5);
-      const leadUuids = shuffledLeads.map(l => l.uuid);
-      
+      const leadUuids = shuffledLeads.map((l) => l.uuid);
+
       // Calculate chunks
       const chunkSize = Math.ceil(leadUuids.length / rms.length);
       const assignmentPromises = [];
@@ -145,16 +180,18 @@ export const LeadsPage = () => {
           assignmentPromises.push(
             bulkAssign({
               lead_uuids: chunk,
-              assigned_to_rm: rms[i].id
-            }).unwrap()
+              assigned_to_rm: rms[i].id,
+            }).unwrap(),
           );
         }
       }
 
       await Promise.all(assignmentPromises);
-      toast.success(`Successfully distributed ${leadUuids.length} leads across ${rms.length} RMs`);
+      toast.success(
+        `Successfully distributed ${leadUuids.length} leads across ${rms.length} RMs`,
+      );
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Random assignment failed');
+      toast.error(err?.data?.message || "Random assignment failed");
     }
   };
 
@@ -176,14 +213,14 @@ export const LeadsPage = () => {
     try {
       if (editingLead) {
         await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
-        toast.success('Lead updated successfully');
+        toast.success("Lead updated successfully");
       } else {
         await createLead(values).unwrap();
-        toast.success('Lead created successfully');
+        toast.success("Lead created successfully");
       }
       setIsDrawerOpen(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Operation failed');
+      toast.error(err?.data?.message || "Operation failed");
     }
   };
 
@@ -194,38 +231,41 @@ export const LeadsPage = () => {
       let valA: any = (a as any)[sortField];
       let valB: any = (b as any)[sortField];
 
-      if (sortField === 'created_on') {
+      if (sortField === "created_on") {
         valA = a.created_on ? new Date(a.created_on).getTime() : 0;
         valB = b.created_on ? new Date(b.created_on).getTime() : 0;
       } else {
-        valA = typeof valA === 'string' ? valA.toLowerCase() : valA ?? '';
-        valB = typeof valB === 'string' ? valB.toLowerCase() : valB ?? '';
+        valA = typeof valA === "string" ? valA.toLowerCase() : (valA ?? "");
+        valB = typeof valB === "string" ? valB.toLowerCase() : (valB ?? "");
       }
 
-      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
     return result;
   }, [leads, sortField, sortOrder]);
 
-  const totalLeads = leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
+  const totalLeads =
+    leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Leads Dashboard" 
+      <PageHeader
+        title="Leads Dashboard"
         description="Core CRM leads management and assignment platform"
         actions={
           <div className="flex gap-3">
             {isAdmin && activeTab === 0 && (
-              <Button 
-                variant="outline" 
-                onClick={() => setShowRandomConfirm(true)} 
+              <Button
+                variant="outline"
+                onClick={() => setShowRandomConfirm(true)}
                 disabled={isBulkAssigning || leads.length === 0}
                 className="gap-2"
               >
-                {isBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {isBulkAssigning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
                 Random Assign
               </Button>
             )}
@@ -242,9 +282,9 @@ export const LeadsPage = () => {
             onClick={() => dispatch(setActiveTabAction(0))}
             className={cn(
               "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
-              activeTab === 0 
-                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50" 
-                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50"
+              activeTab === 0
+                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50"
+                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
             )}
           >
             Unassigned Leads
@@ -253,9 +293,9 @@ export const LeadsPage = () => {
             onClick={() => dispatch(setActiveTabAction(1))}
             className={cn(
               "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
-              activeTab === 1 
-                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50" 
-                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50"
+              activeTab === 1
+                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50"
+                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
             )}
           >
             Assigned Leads
@@ -265,48 +305,96 @@ export const LeadsPage = () => {
 
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
         <FilterBar onReset={handleResetFilters}>
-          <SearchInput 
-            value={search} 
-            onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))} 
-            placeholder="Search leads..." 
+          <SearchInput
+            value={search}
+            onChange={(v) =>
+              dispatch(
+                updateTabFilters({ tabKey, updates: { search: v, page: 1 } }),
+              )
+            }
+            placeholder="Search leads..."
           />
-          
+
           <div className="w-48">
             <MultiSelect
-              options={masterData?.lead_statuses.map(s => ({ label: s.description, value: String(s.id) })) || []}
+              options={
+                masterData?.lead_statuses.map((s) => ({
+                  label: s.description,
+                  value: String(s.id),
+                })) || []
+              }
               selected={statusIds}
-              onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
+              onChange={(v) =>
+                dispatch(
+                  updateTabFilters({
+                    tabKey,
+                    updates: { statusIds: v, page: 1 },
+                  }),
+                )
+              }
               placeholder="Filter Status"
             />
           </div>
 
           <div className="w-48">
             <MultiSelect
-              options={masterData?.projects.map(p => ({ label: p.description, value: String(p.id) })) || []}
+              options={
+                masterData?.projects.map((p) => ({
+                  label: p.description,
+                  value: String(p.id),
+                })) || []
+              }
               selected={projectIds}
-              onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
+              onChange={(v) =>
+                dispatch(
+                  updateTabFilters({
+                    tabKey,
+                    updates: { projectIds: v, page: 1 },
+                  }),
+                )
+              }
               placeholder="Filter Project"
             />
           </div>
 
-          <Select 
-            value={rmIds[0] || 'all'} 
-            onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === 'all' ? [] : [v], emIds: [], page: 1 } }))}
+          <Select
+            value={rmIds[0] || "all"}
+            onValueChange={(v) =>
+              dispatch(
+                updateTabFilters({
+                  tabKey,
+                  updates: {
+                    rmIds: v === "all" ? [] : [v],
+                    emIds: [],
+                    page: 1,
+                  },
+                }),
+              )
+            }
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select RM" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All RMs</SelectItem>
-              {rms.map(r => (
-                <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+              {rms.map((r) => (
+                <SelectItem key={r.id} value={String(r.id)}>
+                  {r.first_name} {r.last_name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select 
-            value={emIds[0] || 'all'} 
-            onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === 'all' ? [] : [v], page: 1 } }))}
+          <Select
+            value={emIds[0] || "all"}
+            onValueChange={(v) =>
+              dispatch(
+                updateTabFilters({
+                  tabKey,
+                  updates: { emIds: v === "all" ? [] : [v], page: 1 },
+                }),
+              )
+            }
             disabled={rmIds.length === 0}
           >
             <SelectTrigger className="w-40">
@@ -314,8 +402,10 @@ export const LeadsPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All EMs</SelectItem>
-              {ems.map(e => (
-                <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
+              {ems.map((e) => (
+                <SelectItem key={e.id} value={String(e.id)}>
+                  {e.first_name} {e.last_name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -334,23 +424,29 @@ export const LeadsPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {rms.map((r: any) => (
-                      <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                      <SelectItem key={r.id} value={String(r.id)}>
+                        {r.first_name} {r.last_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   disabled={!targetRmId || isBulkAssigning}
                   onClick={handleBulkAssign}
                   className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95 transition-all px-4 font-bold"
                 >
-                  {isBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Assign Selection'}
+                  {isBulkAssigning ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Assign Selection"
+                  )}
                 </Button>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
               className="text-zinc-500 hover:text-zinc-800 font-medium"
             >
@@ -359,14 +455,20 @@ export const LeadsPage = () => {
           </div>
         )}
 
-        <LeadTable 
+        <LeadTable
           data={sortedLeads}
           isLoading={isLoading || isFetching}
           page={page}
           limit={limit}
           total={totalLeads}
-          onPageChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { page: v } }))}
-          onLimitChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }))}
+          onPageChange={(v) =>
+            dispatch(updateTabFilters({ tabKey, updates: { page: v } }))
+          }
+          onLimitChange={(v) =>
+            dispatch(
+              updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }),
+            )
+          }
           onEdit={handleEdit}
           onDelete={handleDelete}
           sortField={sortField}
@@ -374,7 +476,9 @@ export const LeadsPage = () => {
           onSort={handleSort}
           offset={serverOffset}
           selectedUuids={selectedUuids}
-          onSelectUuids={(uuids) => dispatch(setSelectedUuids({ tabKey, uuids }))}
+          onSelectUuids={(uuids) =>
+            dispatch(setSelectedUuids({ tabKey, uuids }))
+          }
         />
       </div>
 
@@ -382,10 +486,14 @@ export const LeadsPage = () => {
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         title={editingLead ? "Edit Lead" : "New Lead"}
-        description={editingLead ? "Modify lead details below." : "Fill in the information to register a new property lead."}
+        description={
+          editingLead
+            ? "Modify lead details below."
+            : "Fill in the information to register a new property lead."
+        }
       >
         {isDrawerOpen && (
-          <LeadForm 
+          <LeadForm
             onSubmit={handleFormSubmit}
             isLoading={isCreating || isUpdating}
             initialValues={editingLead || undefined}
@@ -410,7 +518,17 @@ export const LeadsPage = () => {
       <ConfirmDialog
         open={!!deleteUuid}
         onClose={() => setDeleteUuid(null)}
-        onConfirm={() => {}} 
+        onConfirm={async () => {
+          if (!deleteUuid) return;
+          try {
+            await deleteLead({ uuid: deleteUuid }).unwrap();
+            toast.success("Lead deleted successfully");
+            setDeleteUuid(null);
+          } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to delete lead");
+          }
+        }}
+        isLoading={isDeleting}
         title="Delete Lead"
         description="Are you sure you want to remove this lead? This action cannot be undone."
       />

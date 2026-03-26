@@ -198,14 +198,14 @@ export const LeadTable = ({
                 <Pencil className="h-4 w-4 text-blue-500" />
                 <span>Edit Lead</span>
               </DropdownMenuItem>
-              {/* <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => onDelete(lead.uuid)} 
                 className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600"
               >
                 <Trash2 className="h-4 w-4" />
                 <span>Delete Lead</span>
-              </DropdownMenuItem> */}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
