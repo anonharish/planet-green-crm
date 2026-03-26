@@ -4,7 +4,7 @@ import { Badge } from '../../../components/ui/badge';
 import type { Customer } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
-import { MoreVertical, Eye } from 'lucide-react';
+import { MoreVertical, Eye, Pencil } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ interface CustomerTableProps {
   onSort?: (key: string) => void;
   offset?: number;
   onViewLeads?: (customer: Customer) => void;
+  onEdit?: (customer: Customer) => void;
 }
 
 export const CustomerTable = ({
@@ -41,7 +42,8 @@ export const CustomerTable = ({
   sortOrder,
   onSort,
   offset = 0,
-  onViewLeads
+  onViewLeads,
+  onEdit
 }: CustomerTableProps) => {
   const { getCustomerStatusLabel, isLoading: isLookupLoading } = useMasterDataLookup();
 
@@ -128,6 +130,13 @@ export const CustomerTable = ({
               >
                 <Eye className="h-4 w-4 text-zinc-500" />
                 <span>View Leads</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onEdit?.(c)} 
+                className="cursor-pointer gap-2 py-2"
+              >
+                <Pencil className="h-4 w-4 text-blue-500" />
+                <span>Edit Customer</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

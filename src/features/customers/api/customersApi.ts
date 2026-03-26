@@ -2,7 +2,8 @@ import { baseApi } from '../../../app/api/baseApi';
 import type { 
   Customer, 
   GetCustomersRequest, 
-  GetCustomersResponse 
+  GetCustomersResponse,
+  UpdateCustomerRequest
 } from '../types';
 
 export const customersApi = baseApi.injectEndpoints({
@@ -15,9 +16,18 @@ export const customersApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Customers'],
     }),
+    updateCustomer: builder.mutation<{ message: string }, UpdateCustomerRequest>({
+      query: (body) => ({
+        url: '/customers/updateCustomer',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Customers'],
+    }),
   }),
 });
 
 export const { 
   useGetCustomersQuery,
+  useUpdateCustomerMutation,
 } = customersApi;

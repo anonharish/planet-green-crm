@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { PageHeader } from '../../../shared/components/PageHeader/PageHeader';
 import { FilterBar, SearchInput } from '../../../shared/components/FilterBar/FilterBar';
+import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
 import { CustomerTable } from '../components/CustomerTable';
-import { useGetCustomersQuery } from '../api/customersApi';
-import type { Customer } from '../types';
+import { useGetCustomersQuery, useUpdateCustomerMutation } from '../api/customersApi';
+import type { Customer, UpdateCustomerRequest } from '../types';
 import { CustomerLeadsDialog } from '../components/CustomerLeadsDialog';
+import { EditCustomerForm } from '../components/EditCustomerForm';
+import { toast } from 'sonner';
 
 export const CustomersPage = () => {
   const [page, setPage] = useState(1);
@@ -19,12 +22,25 @@ export const CustomersPage = () => {
   const [sortField, setSortField] = useState<string>('created_on');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Customer Leads Dialog state
+  // States
   const [viewLeadsCustomer, setViewLeadsCustomer] = useState<Customer | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const { data: customers = [], isLoading, isFetching } = useGetCustomersQuery({ 
     offset: serverOffset
   });
+
+  const [updateCustomer, { isLoading: isUpdating }] = useUpdateCustomerMutation();
+
+  const handleUpdateSubmit = async (data: UpdateCustomerRequest) => {
+    try {
+      await updateCustomer(data).unwrap();
+      toast.success('Customer updated successfully!');
+      setEditingCustomer(null);
+    } catch (error: any) {
+      toast.error(error.data?.message || 'Failed to update customer');
+    }
+  };
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -99,6 +115,7 @@ export const CustomersPage = () => {
           onSort={handleSort}
           offset={serverOffset}
           onViewLeads={setViewLeadsCustomer}
+          onEdit={setEditingCustomer}
         />
       </div>
 
@@ -108,6 +125,19 @@ export const CustomersPage = () => {
         customerUuid={viewLeadsCustomer?.uuid || null}
         customerName={viewLeadsCustomer ? `${viewLeadsCustomer.first_name || ''} ${viewLeadsCustomer.last_name || ''}`.trim() : undefined}
       />
+
+      <AppDrawer
+        open={!!editingCustomer}
+        onClose={() => setEditingCustomer(null)}
+        title="Edit Customer"
+      >
+        <EditCustomerForm
+          customer={editingCustomer}
+          onSubmit={handleUpdateSubmit}
+          isLoading={isUpdating}
+          onCancel={() => setEditingCustomer(null)}
+        />
+      </AppDrawer>
     </div>
   );
 };

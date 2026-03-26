@@ -23,3 +23,12 @@ export interface GetCustomersRequest {
 }
 
 export interface GetCustomersResponse extends Array<Customer> {}
+
+export interface UpdateCustomerRequest {
+  uuid: string;
+  first_name: string;
+  last_name: string;
+  email_address: string;
+  occupation?: string;
+  city?: string;
+}
