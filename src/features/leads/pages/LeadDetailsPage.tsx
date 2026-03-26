@@ -7,6 +7,11 @@ import { useGetLeadByIdQuery } from '../api/leadsApi';
 import { formatDate } from '../../../utils';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 import { useGetAllUsersQuery } from '../../users/api/usersApi';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { LeadRemarksTab } from '../components/tabs/LeadRemarksTab';
+import { LeadCallsTab } from '../components/tabs/LeadCallsTab';
+import { LeadVisitsTab } from '../components/tabs/LeadVisitsTab';
+import { LeadChatsTab } from '../components/tabs/LeadChatsTab';
 
 export const LeadDetailsPage = () => {
   const { leadId } = useParams<{ leadId: string }>();
@@ -221,6 +226,36 @@ export const LeadDetailsPage = () => {
           </div>
         </div>
       )}
+      <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
+        <Tabs defaultValue="activity" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="calls">Calls</TabsTrigger>
+            <TabsTrigger value="visits">Visits</TabsTrigger>
+            <TabsTrigger value="chats">Chats</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="activity">
+            <LeadRemarksTab remarks={lead?.remarks} />
+          </TabsContent>
+          
+          <TabsContent value="calls">
+            <LeadCallsTab calls={lead?.calls} />
+          </TabsContent>
+          
+          <TabsContent value="visits">
+            <LeadVisitsTab 
+              visits={lead?.visits} 
+              getSiteVisitStatusLabel={(id) => masterData?.site_visit_status?.find((s: any) => s.id === id)?.description || String(id)} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="chats">
+            <LeadChatsTab chats={lead?.chats} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
+

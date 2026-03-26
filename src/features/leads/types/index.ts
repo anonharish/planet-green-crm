@@ -1,3 +1,57 @@
+export interface LeadRemark {
+  id: number;
+  activity_type: string;
+  remark: string;
+  created_on: string;
+}
+
+export interface LeadCall {
+  id: number;
+  lead_uuid: string;
+  from_number: string | null;
+  to_number: string | null;
+  call_duration_in_seconds: number | null;
+  call_summary: string | null;
+  call_recording_location: string | null;
+  call_remarks: string | null;
+  caller_user_id: number | null;
+  caller_role_id: number | null;
+  call_s3_data: any | null;
+  is_active: number;
+  created_by: number;
+  created_on: string;
+  updated_by: number | null;
+  updated_on: string | null;
+}
+
+export interface LeadVisit {
+  id: number;
+  lead_uuid: string;
+  visit_location_url: string | null;
+  visit_date_time: string | null;
+  visit_remarks: string | null;
+  visit_status: number;
+  visit_assigned_to_rm: number | null;
+  visit_assigned_to_em: number | null;
+  is_active: number;
+  created_by: number;
+  created_on: string;
+  updated_by: number | null;
+  updated_on: string | null;
+}
+
+export interface LeadChat {
+  id: number;
+  lead_uuid: string;
+  chat_summary: string | null;
+  chat_file_location: string | null;
+  is_active: number;
+  created_by: number;
+  created_on: string;
+  updated_by: number | null;
+  updated_on: string | null;
+}
+
 export interface Lead {
   uuid: string;
   lead_id: number;
@@ -26,6 +80,10 @@ export interface Lead {
   country?: string;
   zip?: string;
   customer_status_id?: number;
+  remarks?: LeadRemark[];
+  calls?: LeadCall[];
+  visits?: LeadVisit[];
+  chats?: LeadChat[];
 }
 
 export interface CreateLeadRequest {
