@@ -117,8 +117,8 @@ export const ScheduleVisitDialog = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+      <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[75vh]">
+        <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0">
           <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
             Schedule Visit
           </h2>
@@ -127,7 +127,7 @@ export const ScheduleVisitDialog = ({
           </p>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto min-h-0">
           <form
             id="schedule-visit-form"
             onSubmit={handleSubmit(handleFormSubmit)}
@@ -282,7 +282,7 @@ export const ScheduleVisitDialog = ({
           </form>
         </div>
 
-        <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-end gap-3 rounded-b-xl">
+        <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-end gap-3 rounded-b-xl shrink-0">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
