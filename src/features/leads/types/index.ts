@@ -68,3 +68,13 @@ export interface GetLeadsResponse extends Array<Lead> {}
 export interface GetLeadByIdRequest {
   uuid: string;
 }
+
+export interface ScheduleVisitRequest {
+  lead_uuid: string;
+  visit_location_url: string;
+  visit_date_time: string;
+  visit_remarks?: string;
+  visit_status: number;
+  visit_assigned_to_rm: number;
+  visit_assigned_to_em: number;
+}

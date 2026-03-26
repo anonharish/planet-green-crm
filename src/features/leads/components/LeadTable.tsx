@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import { Pencil, Trash2, MoreVertical, Eye } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Eye, CalendarClock } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Link } from 'react-router-dom';
 import {
@@ -29,6 +29,7 @@ interface LeadTableProps {
   onLimitChange: (limit: number) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (uuid: string) => void;
+  onScheduleVisit: (lead: Lead) => void;
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (key: string) => void;
@@ -48,6 +49,7 @@ export const LeadTable = ({
   onLimitChange,
   onEdit,
   onDelete,
+  onScheduleVisit,
   sortField,
   sortOrder,
   onSort,
@@ -211,6 +213,11 @@ export const LeadTable = ({
               <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer gap-2 py-2">
                 <Pencil className="h-4 w-4 text-blue-500" />
                 <span>Edit Lead</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onScheduleVisit(lead)} className="cursor-pointer gap-2 py-2">
+                <CalendarClock className="h-4 w-4 text-emerald-500" />
+                <span>Schedule Visit</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

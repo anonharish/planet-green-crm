@@ -15,4 +15,5 @@ export interface MasterDataResponse {
   projects: MasterDataItem[];
   sources: MasterDataItem[];
   user_roles: UserRole[];
+  site_visit_status: MasterDataItem[];
 }

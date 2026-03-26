@@ -14,7 +14,6 @@ export const LeadDetailsPage = () => {
 
   const { data: lead, isLoading, isError, error } = useGetLeadByIdQuery(
     { uuid: leadId || '' },
-    { uuid: leadId || '' },
     { skip: !leadId }
   );
 

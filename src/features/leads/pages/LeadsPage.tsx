@@ -1,20 +1,25 @@
-import React, { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { PageHeader } from '../../../shared/components/PageHeader/PageHeader';
-import { FilterBar, SearchInput } from '../../../shared/components/FilterBar/FilterBar';
-import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
-import { ConfirmDialog } from '../../../shared/components/ConfirmDialog/ConfirmDialog';
-import { LeadForm } from '../components/LeadForm';
-import { LeadTable } from '../components/LeadTable';
-import { Plus, Loader2 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { PageHeader } from "../../../shared/components/PageHeader/PageHeader";
+import {
+  FilterBar,
+  SearchInput,
+} from "../../../shared/components/FilterBar/FilterBar";
+import { AppDrawer } from "../../../shared/components/AppDrawer/AppDrawer";
+import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmDialog";
+import { LeadForm } from "../components/LeadForm";
+import { LeadTable } from "../components/LeadTable";
+import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
+import { Plus, Loader2 } from "lucide-react";
+import { Button } from "../../../components/ui/button";
+import { toast } from "sonner";
 import {
   useGetLeadsQuery,
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
   useDeleteLeadMutation,
+  useScheduleVisitMutation,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -35,9 +40,9 @@ import {
   setActiveTab as setActiveTabAction,
   updateTabFilters,
   resetTabFilters,
-  setSelectedUuids 
-} from '../store/leadsSlice';
-import type { Lead, CreateLeadRequest } from '../types';
+  setSelectedUuids,
+} from "../store/leadsSlice";
+import type { Lead, CreateLeadRequest } from "../types";
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -96,6 +101,7 @@ export const LeadsPage = () => {
   const [showRandomConfirm, setShowRandomConfirm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
+  const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -140,6 +146,8 @@ export const LeadsPage = () => {
   const [bulkAssign, { isLoading: isBulkAssigning }] =
     useBulkAssignLeadsToRmMutation();
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
+  const [scheduleVisit, { isLoading: isScheduling }] =
+    useScheduleVisitMutation();
 
   const handleBulkAssign = async () => {
     if (!targetRmId || selectedUuids.length === 0) return;
@@ -205,6 +213,10 @@ export const LeadsPage = () => {
     setIsDrawerOpen(true);
   };
 
+  const handleScheduleVisit = (lead: Lead) => {
+    setSchedulingLead(lead);
+  };
+
   const handleDelete = (uuid: string) => {
     setDeleteUuid(uuid);
   };
@@ -221,6 +233,16 @@ export const LeadsPage = () => {
       setIsDrawerOpen(false);
     } catch (err: any) {
       toast.error(err?.data?.message || "Operation failed");
+    }
+  };
+
+  const handleScheduleVisitSubmit = async (data: any) => {
+    try {
+      await scheduleVisit(data).unwrap();
+      toast.success("Visit scheduled successfully");
+      setSchedulingLead(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to schedule visit");
     }
   };
 
@@ -471,6 +493,7 @@ export const LeadsPage = () => {
           }
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onScheduleVisit={handleScheduleVisit}
           sortField={sortField}
           sortOrder={sortOrder}
           onSort={handleSort}
@@ -531,6 +554,21 @@ export const LeadsPage = () => {
         isLoading={isDeleting}
         title="Delete Lead"
         description="Are you sure you want to remove this lead? This action cannot be undone."
+      />
+
+      <ScheduleVisitDialog
+        open={!!schedulingLead}
+        onClose={() => setSchedulingLead(null)}
+        lead={schedulingLead}
+        siteVisitStatuses={
+          masterData?.site_visit_status ||
+          (masterData as any)?.site_visit_statuses ||
+          []
+        }
+        rms={rms}
+        ems={ems}
+        onSubmit={handleScheduleVisitSubmit}
+        isLoading={isScheduling}
       />
     </div>
   );

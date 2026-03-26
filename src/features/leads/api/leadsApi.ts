@@ -5,7 +5,8 @@ import type {
   UpdateLeadRequest,
   GetLeadsRequest, 
   GetLeadsResponse,
-  GetLeadByIdRequest
+  GetLeadByIdRequest,
+  ScheduleVisitRequest
 } from '../types';
 
 export const leadsApi = baseApi.injectEndpoints({
@@ -58,6 +59,14 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
+    scheduleVisit: builder.mutation<{ message: string }, ScheduleVisitRequest>({
+      query: (body) => ({
+        url: '/leadSiteVisits/createSiteVisit',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Leads'],
+    }),
   }),
 });
 
@@ -68,4 +77,5 @@ export const {
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
   useDeleteLeadMutation,
+  useScheduleVisitMutation,
 } = leadsApi;
