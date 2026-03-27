@@ -11,7 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '../../../components/ui/dropdown-menu';
-import { Badge } from '../../../components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
 import type { Lead } from '../types';
 import { type ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import { useAppSelector } from '../../../app/hooks';
@@ -30,6 +36,7 @@ interface LeadTableProps {
   onEdit: (lead: Lead) => void;
   onDelete: (uuid: string) => void;
   onScheduleVisit: (lead: Lead) => void;
+  onUpdateStatus?: (lead: Lead, newStatusId: number) => void;
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (key: string) => void;
@@ -50,6 +57,7 @@ export const LeadTable = ({
   onEdit,
   onDelete,
   onScheduleVisit,
+  onUpdateStatus,
   sortField,
   sortOrder,
   onSort,
@@ -66,6 +74,7 @@ export const LeadTable = ({
     getRmLabel, 
     getEmLabel,
     getSourceLabel,
+    masterData,
     isLoading: isLookupLoading 
   } = useMasterDataLookup();
 
@@ -157,11 +166,25 @@ export const LeadTable = ({
       key: 'lead_status_id',
       header: 'Status',
       sortable: true,
-      width: '150px',
+      width: '160px',
       render: (l) => (
-        <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-          {getStatusLabel(l.lead_status_id)}
-        </Badge>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Select 
+            value={String(l.lead_status_id)} 
+            onValueChange={(val) => onUpdateStatus?.(l, Number(val))}
+          >
+            <SelectTrigger className="h-7 text-[10px] font-bold uppercase w-[140px] shadow-none bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {masterData?.lead_statuses.map(s => (
+                <SelectItem key={s.id} value={String(s.id)} className="text-[10px] uppercase font-bold">
+                  {s.description}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       ),
     },
     {

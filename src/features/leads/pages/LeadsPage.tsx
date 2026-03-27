@@ -42,7 +42,7 @@ import {
   resetTabFilters,
   setSelectedUuids,
 } from "../store/leadsSlice";
-import type { Lead, CreateLeadRequest } from "../types";
+import type { Lead, CreateLeadRequest, UpdateLeadRequest } from "../types";
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -243,6 +243,36 @@ export const LeadsPage = () => {
       setSchedulingLead(null);
     } catch (err: any) {
       toast.error(err?.data?.message || "Failed to schedule visit");
+    }
+  };
+
+  const handleUpdateStatus = async (lead: Lead, newStatusId: number) => {
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: lead.assigned_to_rm || null,
+        assigned_to_em: lead.assigned_to_em || null,
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: newStatusId,
+      };
+      
+      await updateLead(payload).unwrap();
+      toast.success('Status updated successfully!');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to update status');
     }
   };
 
@@ -494,6 +524,7 @@ export const LeadsPage = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onScheduleVisit={handleScheduleVisit}
+          onUpdateStatus={handleUpdateStatus}
           sortField={sortField}
           sortOrder={sortOrder}
           onSort={handleSort}

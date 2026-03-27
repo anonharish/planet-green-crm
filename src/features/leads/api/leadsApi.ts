@@ -50,7 +50,41 @@ export const leadsApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Leads'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
+        try {
+          await queryFulfilled;
+          const state = getState() as any;
+          const queries = state.baseApi?.queries || {};
+          
+          for (const key of Object.keys(queries)) {
+            if (key.startsWith('getLeads(')) {
+              dispatch(
+                leadsApi.util.updateQueryData('getLeads', queries[key].originalArgs, (draft) => {
+                  const index = draft.findIndex(l => l.uuid === arg.uuid);
+                  if (index !== -1) Object.assign(draft[index], arg);
+                })
+              );
+            }
+            if (key.startsWith('getLeadsByCustomerUuid(')) {
+              dispatch(
+                leadsApi.util.updateQueryData('getLeadsByCustomerUuid', queries[key].originalArgs, (draft) => {
+                  const index = draft.findIndex(l => l.uuid === arg.uuid);
+                  if (index !== -1) Object.assign(draft[index], arg);
+                })
+              );
+            }
+            if (key.startsWith('getLeadById(')) {
+              dispatch(
+                leadsApi.util.updateQueryData('getLeadById', queries[key].originalArgs, (draft) => {
+                  if (draft.uuid === arg.uuid) Object.assign(draft, arg);
+                })
+              );
+            }
+          }
+        } catch {
+          // If the mutation fails, we don't apply the optimistic update anyway
+        }
+      },
     }),
     bulkAssignLeadsToRm: builder.mutation<{ message: string; affectedRows: number }, { lead_uuids: string[]; assigned_to_rm: number }>({
       query: (body) => ({

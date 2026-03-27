@@ -22,9 +22,9 @@ const setPasswordSchema = z
     old_password: z.string().min(1, { message: 'Current (temporary) password is required.' }),
     new_password: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters.' })
-      .regex(/[A-Z]/, { message: 'Must contain at least one uppercase letter.' })
-      .regex(/[0-9]/, { message: 'Must contain at least one number.' }),
+      .min(8, { message: 'Password must be at least 8 characters.' }),
+      // .regex(/[A-Z]/, { message: 'Must contain at least one uppercase letter.' })
+      // .regex(/[0-9]/, { message: 'Must contain at least one number.' }),
     confirmPassword: z.string().min(1, { message: 'Please confirm your password.' }),
   })
   .refine((data) => data.new_password === data.confirmPassword, {

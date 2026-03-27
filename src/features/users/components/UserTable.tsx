@@ -1,6 +1,7 @@
 import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 import { Pencil, Trash2, MoreVertical, Users } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
@@ -51,6 +52,7 @@ export const UserTable = ({
   offset = 0
 }: UserTableProps) => {
   const { can } = usePermissions();
+  const { getRmLabel, isLoading: isLookupLoading } = useMasterDataLookup();
   const [viewAgentsManager, setViewAgentsManager] = React.useState<User | null>(null);
 
   const columns: ColumnDef<User>[] = [
@@ -81,6 +83,11 @@ export const UserTable = ({
       sortable: true,
       render: (user) => <span>{formatDate(user.created_on)}</span>,
     },
+    ...(permissionPrefix === 'agent' ? [{
+      key: 'reporting_manager_id',
+      header: 'Assigned RM',
+      render: (user: User) => <span className="text-zinc-500 font-medium">{getRmLabel(user.reporting_manager_id)}</span>,
+    }] : []),
     {
       key: 'actions',
       header: 'Actions',
@@ -135,7 +142,7 @@ export const UserTable = ({
       <DataTable
         columns={columns as any}
         data={data}
-        isLoading={isLoading}
+        isLoading={isLoading || isLookupLoading}
         page={page}
         limit={limit}
         total={total}
