@@ -597,7 +597,6 @@ export const LeadsPage = () => {
           []
         }
         rms={rms}
-        ems={ems}
         onSubmit={handleScheduleVisitSubmit}
         isLoading={isScheduling}
       />
