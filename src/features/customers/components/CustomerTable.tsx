@@ -14,6 +14,9 @@ import {
   DropdownMenuLabel,
 } from '../../../components/ui/dropdown-menu';
 
+import { usePermissions } from '../../../hooks/usePermissions';
+import { PERMISSIONS } from '../../../config/permissions';
+
 interface CustomerTableProps {
   data: Customer[];
   isLoading: boolean;
@@ -46,6 +49,7 @@ export const CustomerTable = ({
   onEdit
 }: CustomerTableProps) => {
   const { getCustomerStatusLabel, isLoading: isLookupLoading } = useMasterDataLookup();
+  const { can } = usePermissions();
 
   const fallback = (value: any) => value ?? '--';
 
@@ -131,13 +135,15 @@ export const CustomerTable = ({
                 <Eye className="h-4 w-4 text-zinc-500" />
                 <span>View Leads</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onEdit?.(c)} 
-                className="cursor-pointer gap-2 py-2"
-              >
-                <Pencil className="h-4 w-4 text-blue-500" />
-                <span>Edit Customer</span>
-              </DropdownMenuItem>
+              {can(PERMISSIONS.CUSTOMER_EDIT) && (
+                <DropdownMenuItem 
+                  onClick={() => onEdit?.(c)} 
+                  className="cursor-pointer gap-2 py-2"
+                >
+                  <Pencil className="h-4 w-4 text-blue-500" />
+                  <span>Edit Customer</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

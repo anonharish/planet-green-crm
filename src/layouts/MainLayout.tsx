@@ -11,6 +11,8 @@ import {
   ChevronRight,
   FlaskConical
 } from 'lucide-react';
+import { usePermissions } from '../hooks/usePermissions';
+import { PERMISSIONS } from '../config/permissions';
 import { Button } from '../components/ui/button';
 import {
   DropdownMenu,
@@ -35,17 +37,19 @@ export const MainLayout = () => {
     return <Navigate to="/set-password" replace />;
   }
 
+  const { can } = usePermissions();
+
   const allNavItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: [1, 2, 3, 4] },
-    { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} />, roles: [1, 2, 3, 4] },
-    { label: 'Customers', path: '/customers', icon: <Users size={20} />, roles: [1, 2, 3, 4] },
-    { label: 'Relationship Managers', path: '/relationship-managers', icon: <Users size={20} />, roles: [1, 2] },
-    { label: 'Experience Managers', path: '/agents', icon: <UserCircle size={20} />, roles: [1, 2, 3] },
-    { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} />, roles: [1, 2] },
+    { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { label: 'Manage Leads', path: '/leads', icon: <Briefcase size={20} /> },
+    { label: 'Customers', path: '/customers', icon: <Users size={20} />, permission: PERMISSIONS.CUSTOMER_VIEW },
+    { label: 'Relationship Managers', path: '/relationship-managers', icon: <Users size={20} />, permission: PERMISSIONS.MANAGER_VIEW },
+    { label: 'Experience Managers', path: '/agents', icon: <UserCircle size={20} />, permission: PERMISSIONS.AGENT_VIEW },
+    { label: 'UI Playground', path: '/playground', icon: <FlaskConical size={20} />, permission: PERMISSIONS.MANAGER_VIEW },
   ];
 
   const navItems = allNavItems.filter(item => 
-    user?.role_id && item.roles.includes(user.role_id)
+    !item.permission || can(item.permission)
   );
 
   const getInitials = () => {

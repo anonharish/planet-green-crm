@@ -23,6 +23,10 @@ export const PERMISSIONS = {
   MANAGER_EDIT: 'manager.edit',
   MANAGER_DELETE: 'manager.delete',
   MANAGER_ASSIGN: 'manager.assign',
+
+  // Customers
+  CUSTOMER_VIEW: 'customer.view',
+  CUSTOMER_EDIT: 'customer.edit',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -37,6 +41,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.LEAD_VIEW,
     PERMISSIONS.AGENT_VIEW,
     PERMISSIONS.MANAGER_VIEW,
+    PERMISSIONS.CUSTOMER_VIEW,
   ],
 
   // ADMIN — Full control
@@ -59,6 +64,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.MANAGER_EDIT,
     PERMISSIONS.MANAGER_DELETE,
     PERMISSIONS.MANAGER_ASSIGN,
+    PERMISSIONS.CUSTOMER_VIEW,
+    PERMISSIONS.CUSTOMER_EDIT,
   ],
 
   // RELMNG — Relationship Manager: controls agents, manages leads
