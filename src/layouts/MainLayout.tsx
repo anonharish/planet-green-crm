@@ -26,6 +26,7 @@ import { cn } from '../utils';
 
 export const MainLayout = () => {
   const { isAuthenticated, isFirstLogin, user, logout } = useAuth();
+  const { can } = usePermissions();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
 
@@ -36,8 +37,6 @@ export const MainLayout = () => {
   if (isFirstLogin) {
     return <Navigate to="/set-password" replace />;
   }
-
-  const { can } = usePermissions();
 
   const allNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
