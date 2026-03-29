@@ -22,6 +22,7 @@ import {
   useDeleteLeadMutation,
   useScheduleVisitMutation,
   useGetLeadsByRmIdQuery,
+  useGetLeadsByEmIdQuery,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -53,6 +54,7 @@ export const LeadsPage = () => {
   const { currentRole, can, user: currentUser } = usePermissions();
   const isAdmin = currentRole?.code === "ADMIN" || currentRole?.code === "SADMIN";
   const isRM = currentRole?.code === "RELMNG";
+  const isEM = currentRole?.code === "EXPMNG";
   const showTabs = isAdmin || isRM;
 
   const { activeTab, tabFilters } = useAppSelector((state) => state.leads);
@@ -151,9 +153,19 @@ export const LeadsPage = () => {
     is_em_assigned: activeTab,
   }, { skip: !isRM });
 
-  const leads = isAdmin ? adminLeads : rmLeads;
-  const isLoading = isAdmin ? isAdminLoading : isRMLoading;
-  const isFetching = isAdmin ? isAdminFetching : isRMFetching;
+  // EM view uses getLeadsByEmId
+  const {
+    data: emLeads = [],
+    isLoading: isEMLoading,
+    isFetching: isEMFetching,
+  } = useGetLeadsByEmIdQuery({
+    assigned_to_em: Number(currentUser?.id || 0),
+    offset: serverOffset,
+  }, { skip: !isEM });
+
+  const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
+  const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
+  const isFetching = isAdmin ? isAdminFetching : (isRM ? isRMFetching : isEMFetching);
 
   // For EM assignment restricted to RM's reportees
   const { data: emsReportees = [] } = useGetReporteesQuery(
@@ -488,30 +500,32 @@ export const LeadsPage = () => {
             </Select>
           )}
 
-          <Select
-            value={emIds[0] || "all"}
-            onValueChange={(v) =>
-              dispatch(
-                updateTabFilters({
-                  tabKey,
-                  updates: { emIds: v === "all" ? [] : [v], page: 1 },
-                }),
-              )
-            }
-            disabled={isAdmin && rmIds.length === 0}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select EM" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All EMs</SelectItem>
-              {(isAdmin ? ems : emsReportees).map((e) => (
-                <SelectItem key={e.id} value={String(e.id)}>
-                  {e.first_name} {e.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {(isAdmin || isRM) && (
+            <Select
+              value={emIds[0] || "all"}
+              onValueChange={(v) =>
+                dispatch(
+                  updateTabFilters({
+                    tabKey,
+                    updates: { emIds: v === "all" ? [] : [v], page: 1 },
+                  }),
+                )
+              }
+              disabled={isAdmin && rmIds.length === 0}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select EM" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All EMs</SelectItem>
+                {(isAdmin ? ems : emsReportees).map((e) => (
+                  <SelectItem key={e.id} value={String(e.id)}>
+                    {e.first_name} {e.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </FilterBar>
 
         {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (

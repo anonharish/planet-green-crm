@@ -73,6 +73,7 @@ export const LeadForm = ({
   const [sourceOpen, setSourceOpen] = useState(false);
   const { user: currentUser, roleCode } = usePermissions();
   const isRM = roleCode === 'RELMNG';
+  const isEM = roleCode === 'EXPMNG';
 
   // Fetch all users for source autocomplete
   const { data: allUsers = [], isLoading: isLoadingUsers } = useGetAllUsersQuery({ offset: 0 });
@@ -321,8 +322,8 @@ export const LeadForm = ({
           />
         )}
 
-        <div className={cn("grid gap-4", isRM ? "grid-cols-1" : "grid-cols-2")}>
-          {!isRM && (
+        {(!isRM && !isEM) && (
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="assigned_to_rm"
@@ -345,42 +346,81 @@ export const LeadForm = ({
                 </FormItem>
               )}
             />
-          )}
-          <FormField
-            control={form.control}
-            name="assigned_to_em"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className={cn(!selectedRmId && "text-zinc-400")}>Assign to EM</FormLabel>
-                <Select 
-                  onValueChange={(v) => field.onChange(Number(v))} 
-                  value={field.value ? String(field.value) : undefined}
-                  disabled={!selectedRmId || isLoading}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingReportees && (
-                      <div className="flex items-center justify-center p-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    )}
-                    {reportees.map(a => (
-                      <SelectItem key={a.id} value={String(a.id)}>{a.first_name} {a.last_name}</SelectItem>
-                    ))}
-                    {!isLoadingReportees && reportees.length === 0 && (
-                      <div className="p-2 text-xs text-center text-zinc-500">No reportees found</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <FormField
+              control={form.control}
+              name="assigned_to_em"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={cn(!selectedRmId && "text-zinc-400")}>Assign to EM</FormLabel>
+                  <Select 
+                    onValueChange={(v) => field.onChange(Number(v))} 
+                    value={field.value ? String(field.value) : undefined}
+                    disabled={!selectedRmId || isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingReportees && (
+                        <div className="flex items-center justify-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      )}
+                      {reportees.map(a => (
+                        <SelectItem key={a.id} value={String(a.id)}>{a.first_name} {a.last_name}</SelectItem>
+                      ))}
+                      {!isLoadingReportees && reportees.length === 0 && (
+                        <div className="p-2 text-xs text-center text-zinc-500">No reportees found</div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {isRM && (
+          <div className="grid grid-cols-1 gap-4">
+            <FormField
+              control={form.control}
+              name="assigned_to_em"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={cn(!selectedRmId && "text-zinc-400")}>Assign to EM</FormLabel>
+                  <Select 
+                    onValueChange={(v) => field.onChange(Number(v))} 
+                    value={field.value ? String(field.value) : undefined}
+                    disabled={!selectedRmId || isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingReportees && (
+                        <div className="flex items-center justify-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      )}
+                      {reportees.map(a => (
+                        <SelectItem key={a.id} value={String(a.id)}>{a.first_name} {a.last_name}</SelectItem>
+                      ))}
+                      {!isLoadingReportees && reportees.length === 0 && (
+                        <div className="p-2 text-xs text-center text-zinc-500">No reportees found</div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         <FormField
           control={form.control}

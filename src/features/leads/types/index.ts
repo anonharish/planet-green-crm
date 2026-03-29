@@ -147,3 +147,8 @@ export interface GetLeadsByRmIdRequest {
   offset: number;
   is_em_assigned: number;
 }
+
+export interface GetLeadsByEmIdRequest {
+  assigned_to_em: number;
+  offset: number;
+}

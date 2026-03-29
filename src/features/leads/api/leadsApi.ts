@@ -8,7 +8,8 @@ import type {
   GetLeadByIdRequest,
   ScheduleVisitRequest,
   GetCustomerLeadsRequest,
-  GetLeadsByRmIdRequest
+  GetLeadsByRmIdRequest,
+  GetLeadsByEmIdRequest
 } from '../types';
 
 export const leadsApi = baseApi.injectEndpoints({
@@ -40,6 +41,14 @@ export const leadsApi = baseApi.injectEndpoints({
     getLeadsByRmId: builder.query<GetLeadsResponse, GetLeadsByRmIdRequest>({
       query: (body) => ({
         url: '/leads/getLeadsByRmId',
+        method: 'POST',
+        body,
+      }),
+      providesTags: ['Leads'],
+    }),
+    getLeadsByEmId: builder.query<GetLeadsResponse, GetLeadsByEmIdRequest>({
+      query: (body) => ({
+        url: '/leads/getLeadsByEmId',
         method: 'POST',
         body,
       }),
@@ -141,4 +150,5 @@ export const {
   useScheduleVisitMutation,
   useGetLeadsByCustomerUuidQuery,
   useGetLeadsByRmIdQuery,
+  useGetLeadsByEmIdQuery,
 } = leadsApi;
