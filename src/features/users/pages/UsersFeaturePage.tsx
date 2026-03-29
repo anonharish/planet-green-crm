@@ -159,8 +159,7 @@ export const UsersFeaturePage = ({
   // Actions Header
   const actions = can(`${permissionPrefix}.create`) && (
     <Button onClick={handleAddClick}>
-      <Plus className="h-4 w-4 mr-2" />
-      Add {roleLabel}
+      Add 
     </Button>
   );
 
