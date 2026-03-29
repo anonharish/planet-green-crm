@@ -18,8 +18,10 @@ import {
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
+  useBulkAssignLeadsToEmMutation,
   useDeleteLeadMutation,
   useScheduleVisitMutation,
+  useGetLeadsByRmIdQuery,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -48,9 +50,8 @@ import type { Lead, CreateLeadRequest, UpdateLeadRequest } from "../types";
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
-  const { currentRole, can } = usePermissions();
-  const isAdmin =
-    currentRole?.code === "ADMIN" || currentRole?.code === "SADMIN";
+  const { currentRole, can, user: currentUser } = usePermissions();
+  const isAdmin = currentRole?.code === "ADMIN" || currentRole?.code === "SADMIN";
   const isRM = currentRole?.code === "RELMNG";
   const showTabs = isAdmin || isRM;
 
@@ -111,19 +112,15 @@ export const LeadsPage = () => {
     role_id: 3,
     offset: 0,
   });
-  const { data: ems = [] } = useGetReporteesQuery(
-    { reporting_manager_id: Number(rmIds[0] || 0), offset: 0 },
-    { skip: rmIds.length === 0 },
-  );
 
+  // Admin view uses getLeads
   const {
-    data: leads = [],
-    isLoading,
-    isFetching,
+    data: adminLeads = [],
+    isLoading: isAdminLoading,
+    isFetching: isAdminFetching,
   } = useGetLeadsQuery({
     offset: serverOffset,
     is_rm_assigned: isAdmin ? activeTab : undefined,
-    is_em_assigned: isRM ? activeTab : undefined,
     search_text: debouncedSearch || undefined,
     status:
       debouncedFilters.statusIds.length > 0
@@ -141,24 +138,66 @@ export const LeadsPage = () => {
       debouncedFilters.emIds.length > 0
         ? debouncedFilters.emIds.map(Number)
         : undefined,
-  });
+  }, { skip: !isAdmin });
+
+  // RM view uses getLeadsByRmId
+  const {
+    data: rmLeads = [],
+    isLoading: isRMLoading,
+    isFetching: isRMFetching,
+  } = useGetLeadsByRmIdQuery({
+    assigned_to_rm: Number(currentUser?.id || 0),
+    offset: serverOffset,
+    is_em_assigned: activeTab,
+  }, { skip: !isRM });
+
+  const leads = isAdmin ? adminLeads : rmLeads;
+  const isLoading = isAdmin ? isAdminLoading : isRMLoading;
+  const isFetching = isAdmin ? isAdminFetching : isRMFetching;
+
+  // For EM assignment restricted to RM's reportees
+  const { data: emsReportees = [] } = useGetReporteesQuery(
+    { reporting_manager_id: Number(currentUser?.id || 0), offset: 0 },
+    { skip: !isRM }
+  );
+
+  // Users listed in the bulk assignment dropdown: RMs for Admin, EMs for RM
+  const assignmentUsers = isAdmin ? rms : emsReportees;
+  const assignmentLabel = isAdmin ? "Select RM for assignment" : "Select EM for assignment";
+
+  const { data: ems = [] } = useGetReporteesQuery(
+    { reporting_manager_id: Number(rmIds[0] || 0), offset: 0 },
+    { skip: rmIds.length === 0 },
+  );
 
   const [createLead, { isLoading: isCreating }] = useCreateLeadMutation();
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
   const [bulkAssign, { isLoading: isBulkAssigning }] =
     useBulkAssignLeadsToRmMutation();
+  const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] = 
+    useBulkAssignLeadsToEmMutation();
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
   const [scheduleVisit, { isLoading: isScheduling }] =
     useScheduleVisitMutation();
 
+  const isAnyBulkAssigning = isBulkAssigning || isBulkAssignToEm;
+
   const handleBulkAssign = async () => {
     if (!targetRmId || selectedUuids.length === 0) return;
     try {
-      await bulkAssign({
-        lead_uuids: selectedUuids,
-        assigned_to_rm: Number(targetRmId),
-      }).unwrap();
-      toast.success("Leads successfully assigned to RM");
+      if (isAdmin) {
+        await bulkAssign({
+          lead_uuids: selectedUuids,
+          assigned_to_rm: Number(targetRmId),
+        }).unwrap();
+        toast.success("Leads successfully assigned to RM");
+      } else if (isRM) {
+        await bulkAssignToEm({
+          lead_uuids: selectedUuids,
+          assigned_to_em: Number(targetRmId),
+        }).unwrap();
+        toast.success("Leads successfully assigned to EM");
+      }
       dispatch(setSelectedUuids({ tabKey, uuids: [] }));
       setTargetRmId("");
     } catch (err: any) {
@@ -167,38 +206,44 @@ export const LeadsPage = () => {
   };
 
   const handleRandomAssign = async () => {
-    if (leads.length === 0 || rms.length === 0) {
-      toast.error("No leads or RMs available for assignment");
+    if (leads.length === 0 || assignmentUsers.length === 0) {
+      toast.error(`No leads or ${isAdmin ? "RMs" : "EMs"} available for assignment`);
       return;
     }
 
     try {
-      // Create a shuffled copy of leads
       const shuffledLeads = [...leads].sort(() => Math.random() - 0.5);
       const leadUuids = shuffledLeads.map((l) => l.uuid);
-
-      // Calculate chunks
-      const chunkSize = Math.ceil(leadUuids.length / rms.length);
+      const chunkSize = Math.ceil(leadUuids.length / assignmentUsers.length);
       const assignmentPromises = [];
 
-      for (let i = 0; i < rms.length; i++) {
+      for (let i = 0; i < assignmentUsers.length; i++) {
         const start = i * chunkSize;
         const end = Math.min(start + chunkSize, leadUuids.length);
         const chunk = leadUuids.slice(start, end);
 
         if (chunk.length > 0) {
-          assignmentPromises.push(
-            bulkAssign({
-              lead_uuids: chunk,
-              assigned_to_rm: rms[i].id,
-            }).unwrap(),
-          );
+          if (isAdmin) {
+            assignmentPromises.push(
+              bulkAssign({
+                lead_uuids: chunk,
+                assigned_to_rm: assignmentUsers[i].id,
+              }).unwrap(),
+            );
+          } else if (isRM) {
+            assignmentPromises.push(
+              bulkAssignToEm({
+                lead_uuids: chunk,
+                assigned_to_em: assignmentUsers[i].id,
+              }).unwrap(),
+            );
+          }
         }
       }
 
       await Promise.all(assignmentPromises);
       toast.success(
-        `Successfully distributed ${leadUuids.length} leads across ${rms.length} RMs`,
+        `Successfully distributed ${leadUuids.length} leads across ${assignmentUsers.length} ${isAdmin ? "RMs" : "EMs"}`,
       );
     } catch (err: any) {
       toast.error(err?.data?.message || "Random assignment failed");
@@ -314,10 +359,10 @@ export const LeadsPage = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowRandomConfirm(true)}
-                disabled={isBulkAssigning || leads.length === 0}
+                disabled={isAnyBulkAssigning || leads.length === 0}
                 className="gap-2"
               >
-                {isBulkAssigning ? (
+                {isAnyBulkAssigning ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : null}
                 Random Assign
@@ -413,33 +458,35 @@ export const LeadsPage = () => {
             />
           </div>
 
-          <Select
-            value={rmIds[0] || "all"}
-            onValueChange={(v) =>
-              dispatch(
-                updateTabFilters({
-                  tabKey,
-                  updates: {
-                    rmIds: v === "all" ? [] : [v],
-                    emIds: [],
-                    page: 1,
-                  },
-                }),
-              )
-            }
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select RM" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All RMs</SelectItem>
-              {rms.map((r) => (
-                <SelectItem key={r.id} value={String(r.id)}>
-                  {r.first_name} {r.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin && (
+            <Select
+              value={rmIds[0] || "all"}
+              onValueChange={(v) =>
+                dispatch(
+                  updateTabFilters({
+                    tabKey,
+                    updates: {
+                      rmIds: v === "all" ? [] : [v],
+                      emIds: [],
+                      page: 1,
+                    },
+                  }),
+                )
+              }
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select RM" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All RMs</SelectItem>
+                {rms.map((r) => (
+                  <SelectItem key={r.id} value={String(r.id)}>
+                    {r.first_name} {r.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Select
             value={emIds[0] || "all"}
@@ -451,14 +498,14 @@ export const LeadsPage = () => {
                 }),
               )
             }
-            disabled={rmIds.length === 0}
+            disabled={isAdmin && rmIds.length === 0}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select EM" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All EMs</SelectItem>
-              {ems.map((e) => (
+              {(isAdmin ? ems : emsReportees).map((e) => (
                 <SelectItem key={e.id} value={String(e.id)}>
                   {e.first_name} {e.last_name}
                 </SelectItem>
@@ -475,11 +522,11 @@ export const LeadsPage = () => {
               </span>
               <div className="flex items-center gap-2">
                 <Select value={targetRmId} onValueChange={setTargetRmId}>
-                  <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-900 transition-all focus:ring-2 focus:ring-indigo-500">
-                    <SelectValue placeholder="Select RM for assignment" />
+                  <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950 transition-all focus:ring-2 focus:ring-indigo-500">
+                    <SelectValue placeholder={assignmentLabel} />
                   </SelectTrigger>
                   <SelectContent>
-                    {rms.map((r: any) => (
+                    {assignmentUsers.map((r: any) => (
                       <SelectItem key={r.id} value={String(r.id)}>
                         {r.first_name} {r.last_name}
                       </SelectItem>
@@ -488,11 +535,11 @@ export const LeadsPage = () => {
                 </Select>
                 <Button
                   size="sm"
-                  disabled={!targetRmId || isBulkAssigning}
+                  disabled={!targetRmId || isAnyBulkAssigning}
                   onClick={handleBulkAssign}
                   className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95 transition-all px-4 font-bold"
                 >
-                  {isBulkAssigning ? (
+                  {isAnyBulkAssigning ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     "Assign Selection"
@@ -568,7 +615,7 @@ export const LeadsPage = () => {
           setShowRandomConfirm(false);
         }}
         title="Confirm Random Assignment"
-        description={`This will equally and randomly distribute the ${leads.length} currently visible unassigned leads among the ${rms.length} available Relationship Managers. Are you sure?`}
+        description={`This will equally and randomly distribute the ${leads.length} currently visible ${activeTab === 0 ? "unassigned" : "assigned"} leads among the ${assignmentUsers.length} available ${isAdmin ? "Relationship Managers" : "Experience Managers"}. Are you sure?`}
         confirmLabel="Assign Leads"
         variant="primary"
       />

@@ -7,7 +7,8 @@ import type {
   GetLeadsResponse,
   GetLeadByIdRequest,
   ScheduleVisitRequest,
-  GetCustomerLeadsRequest
+  GetCustomerLeadsRequest,
+  GetLeadsByRmIdRequest
 } from '../types';
 
 export const leadsApi = baseApi.injectEndpoints({
@@ -31,6 +32,14 @@ export const leadsApi = baseApi.injectEndpoints({
     getLeadsByCustomerUuid: builder.query<GetLeadsResponse, GetCustomerLeadsRequest>({
       query: (body) => ({
         url: '/leads/getLeadsByCustomerUuid',
+        method: 'POST',
+        body,
+      }),
+      providesTags: ['Leads'],
+    }),
+    getLeadsByRmId: builder.query<GetLeadsResponse, GetLeadsByRmIdRequest>({
+      query: (body) => ({
+        url: '/leads/getLeadsByRmId',
         method: 'POST',
         body,
       }),
@@ -94,6 +103,14 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
+    bulkAssignLeadsToEm: builder.mutation<{ message: string; affectedRows: number }, { lead_uuids: string[]; assigned_to_em: number }>({
+      query: (body) => ({
+        url: '/leads/bulkAssignLeadsToEm',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Leads'],
+    }),
     deleteLead: builder.mutation<{ message: string }, { uuid: string }>({
       query: (body) => ({
         url: '/leads/deleteLead',
@@ -119,7 +136,9 @@ export const {
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useBulkAssignLeadsToRmMutation,
+  useBulkAssignLeadsToEmMutation,
   useDeleteLeadMutation,
   useScheduleVisitMutation,
   useGetLeadsByCustomerUuidQuery,
+  useGetLeadsByRmIdQuery,
 } = leadsApi;

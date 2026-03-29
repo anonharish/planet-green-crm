@@ -141,3 +141,9 @@ export interface ScheduleVisitRequest {
   visit_assigned_to_rm: number;
   visit_assigned_to_em: number;
 }
+
+export interface GetLeadsByRmIdRequest {
+  assigned_to_rm: number;
+  offset: number;
+  is_em_assigned: number;
+}

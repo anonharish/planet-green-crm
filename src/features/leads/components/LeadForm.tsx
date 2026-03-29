@@ -34,7 +34,7 @@ import {
 import { cn } from '../../../utils';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
-import { useAppSelector } from '../../../app/hooks';
+import { usePermissions } from '../../../hooks/usePermissions';
 import type { CreateLeadRequest } from '../types';
 
 const formSchema = z.object({
@@ -71,7 +71,8 @@ export const LeadForm = ({
   isEdit = false 
 }: LeadFormProps) => {
   const [sourceOpen, setSourceOpen] = useState(false);
-  const { user: currentUser } = useAppSelector((state) => state.auth);
+  const { user: currentUser, roleCode } = usePermissions();
+  const isRM = roleCode === 'RELMNG';
 
   // Fetch all users for source autocomplete
   const { data: allUsers = [], isLoading: isLoadingUsers } = useGetAllUsersQuery({ offset: 0 });
@@ -320,29 +321,31 @@ export const LeadForm = ({
           />
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="assigned_to_rm"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Assign to RM</FormLabel>
-                <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value ? String(field.value) : undefined}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select RM" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {managers.map(m => (
-                      <SelectItem key={m.id} value={String(m.id)}>{m.first_name} {m.last_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className={cn("grid gap-4", isRM ? "grid-cols-1" : "grid-cols-2")}>
+          {!isRM && (
+            <FormField
+              control={form.control}
+              name="assigned_to_rm"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign to RM</FormLabel>
+                  <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value ? String(field.value) : undefined}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select RM" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {managers.map(m => (
+                        <SelectItem key={m.id} value={String(m.id)}>{m.first_name} {m.last_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="assigned_to_em"

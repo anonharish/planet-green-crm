@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { useGetReporteesQuery } from "../../users/api/usersApi";
+import { usePermissions } from "../../../hooks/usePermissions";
+import { cn } from "../../../utils";
 
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -49,6 +51,9 @@ export const ScheduleVisitDialog = ({
   onSubmit,
   isLoading,
 }: ScheduleVisitDialogProps) => {
+  const { user: currentUser, roleCode } = usePermissions();
+  const isRM = roleCode === "RELMNG";
+
   const {
     register,
     handleSubmit,
@@ -94,12 +99,14 @@ export const ScheduleVisitDialog = ({
         visit_date_time: "",
         visit_location_url: "",
         visit_status: undefined,
-        visit_assigned_to_rm: lead.assigned_to_rm || undefined,
+        visit_assigned_to_rm: isRM
+          ? Number(currentUser?.id)
+          : lead.assigned_to_rm || undefined,
         visit_assigned_to_em: lead.assigned_to_em || undefined,
         visit_remarks: "",
       });
     }
-  }, [open, lead, reset]);
+  }, [open, lead, reset, isRM, currentUser]);
 
   if (!open || !lead) return null;
 
@@ -193,37 +200,39 @@ export const ScheduleVisitDialog = ({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Assigned RM *</Label>
-                <Select
-                  value={watchRm?.toString() || ""}
-                  onValueChange={(val) =>
-                    setValue("visit_assigned_to_rm", Number(val))
-                  }
-                  disabled={isLoading}
-                >
-                  <SelectTrigger
-                    className={
-                      errors.visit_assigned_to_rm ? "border-red-500" : ""
+            <div className={cn("grid gap-4", isRM ? "grid-cols-1" : "grid-cols-2")}>
+              {!isRM && (
+                <div className="space-y-2">
+                  <Label>Assigned RM *</Label>
+                  <Select
+                    value={watchRm?.toString() || ""}
+                    onValueChange={(val) =>
+                      setValue("visit_assigned_to_rm", Number(val))
                     }
+                    disabled={isLoading}
                   >
-                    <SelectValue placeholder="Select RM" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rms.map((r) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.first_name} {r.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.visit_assigned_to_rm && (
-                  <p className="text-xs text-red-500">
-                    {errors.visit_assigned_to_rm.message}
-                  </p>
-                )}
-              </div>
+                    <SelectTrigger
+                      className={
+                        errors.visit_assigned_to_rm ? "border-red-500" : ""
+                      }
+                    >
+                      <SelectValue placeholder="Select RM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rms.map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>
+                          {r.first_name} {r.last_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.visit_assigned_to_rm && (
+                    <p className="text-xs text-red-500">
+                      {errors.visit_assigned_to_rm.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Assigned EM *</Label>

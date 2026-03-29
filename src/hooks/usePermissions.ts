@@ -11,8 +11,8 @@ import { ROLE_PERMISSIONS, type Permission } from '../config/permissions';
  *   can('agent.delete')  → true / false
  */
 export const usePermissions = () => {
-  const currentRole = useSelector((state: RootState) => state.auth.currentRole);
-
+  const { currentRole, user } = useSelector((state: RootState) => state.auth);
+  
   const roleCode = currentRole?.code ?? '';
   const permissions: Permission[] = ROLE_PERMISSIONS[roleCode] ?? [];
 
@@ -23,5 +23,6 @@ export const usePermissions = () => {
     currentRole,
     roleCode,
     permissions,
+    user,
   };
 };
