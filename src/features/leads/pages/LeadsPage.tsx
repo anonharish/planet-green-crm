@@ -26,6 +26,8 @@ import {
   useGetAllUsersByRoleIdQuery,
   useGetReporteesQuery,
 } from "../../users/api/usersApi";
+import { usePermissions } from "../../../hooks/usePermissions";
+import { PERMISSIONS } from "../../../config/permissions";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
 import { MultiSelect } from "../../../components/ui/multi-select";
 import { cn } from "../../../utils";
@@ -46,7 +48,7 @@ import type { Lead, CreateLeadRequest, UpdateLeadRequest } from "../types";
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
-  const { currentRole } = useAppSelector((state) => state.auth);
+  const { currentRole, can } = usePermissions();
   const isAdmin =
     currentRole?.code === "ADMIN" || currentRole?.code === "SADMIN";
   const isRM = currentRole?.code === "RELMNG";
@@ -308,7 +310,7 @@ export const LeadsPage = () => {
         description="Core CRM leads management and assignment platform"
         actions={
           <div className="flex gap-3">
-            {isAdmin && activeTab === 0 && (
+            {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
               <Button
                 variant="outline"
                 onClick={() => setShowRandomConfirm(true)}
@@ -321,9 +323,11 @@ export const LeadsPage = () => {
                 Random Assign
               </Button>
             )}
-            <Button onClick={handleCreateNew} className="gap-2">
-              Add Lead
-            </Button>
+            {can(PERMISSIONS.LEAD_CREATE) && (
+              <Button onClick={handleCreateNew} className="gap-2">
+                Add Lead
+              </Button>
+            )}
           </div>
         }
       />
@@ -463,7 +467,7 @@ export const LeadsPage = () => {
           </Select>
         </FilterBar>
 
-        {selectedUuids.length > 0 && isAdmin && (
+        {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
           <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-lg animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-4">
               <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">

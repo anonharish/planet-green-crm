@@ -22,6 +22,8 @@ import type { Lead } from '../types';
 import { type ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import { useAppSelector } from '../../../app/hooks';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
+import { usePermissions } from '../../../hooks/usePermissions';
+import { PERMISSIONS } from '../../../config/permissions';
 
 import { Checkbox } from '../../../components/ui/checkbox';
 
@@ -65,7 +67,7 @@ export const LeadTable = ({
   onSelectUuids,
   offset = 0
 }: LeadTableProps) => {
-  const { currentRole } = useAppSelector((state) => state.auth);
+  const { currentRole, can } = usePermissions();
   const roleCode = currentRole?.code || '';
   
   const { 
@@ -81,7 +83,7 @@ export const LeadTable = ({
   const fallback = (value: any) => value ?? '--';
 
   const columns: ColumnDef<Lead>[] = [
-    ...( (roleCode === 'SADMIN' || roleCode === 'ADMIN') ? [
+    ...( can(PERMISSIONS.LEAD_BULK_ACTIONS) ? [
       {
         key: 'selection',
         header: (
@@ -171,6 +173,7 @@ export const LeadTable = ({
         <div onClick={(e) => e.stopPropagation()}>
           <Select 
             value={String(l.lead_status_id)} 
+            disabled={!can(PERMISSIONS.LEAD_STATUS_UPDATE)}
             onValueChange={(val) => onUpdateStatus?.(l, Number(val))}
           >
             <SelectTrigger className="h-7 text-[10px] font-bold uppercase w-[140px] shadow-none bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-0">
@@ -233,23 +236,33 @@ export const LeadTable = ({
                   <span>View Details</span>
                 </DropdownMenuItem>
               </Link>
-              <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer gap-2 py-2">
-                <Pencil className="h-4 w-4 text-blue-500" />
-                <span>Edit Lead</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onScheduleVisit(lead)} className="cursor-pointer gap-2 py-2">
-                <CalendarClock className="h-4 w-4 text-emerald-500" />
-                <span>Schedule Visit</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => onDelete(lead.uuid)} 
-                className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Delete Lead</span>
-              </DropdownMenuItem>
+              {can(PERMISSIONS.LEAD_EDIT) && (
+                <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer gap-2 py-2">
+                  <Pencil className="h-4 w-4 text-blue-500" />
+                  <span>Edit Lead</span>
+                </DropdownMenuItem>
+              )}
+              {can(PERMISSIONS.LEAD_SCHEDULE_VISIT) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onScheduleVisit(lead)} className="cursor-pointer gap-2 py-2">
+                    <CalendarClock className="h-4 w-4 text-emerald-500" />
+                    <span>Schedule Visit</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {can(PERMISSIONS.LEAD_DELETE) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => onDelete(lead.uuid)} 
+                    className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete Lead</span>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
