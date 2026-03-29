@@ -193,7 +193,7 @@ export const LeadForm = ({
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter phone number" {...field} disabled={isLoading} />
+                  <Input placeholder="Enter phone number" {...field} disabled={isLoading || isEdit} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
