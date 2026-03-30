@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LogOut, 
@@ -29,6 +29,7 @@ export const MainLayout = () => {
   const { can } = usePermissions();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate(); 
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -152,10 +153,23 @@ export const MainLayout = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer p-3 focus:bg-zinc-100 dark:focus:bg-zinc-800" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4 text-zinc-500" />
-                  <span className="font-medium text-sm">Log out</span>
-                </DropdownMenuItem>
+                <DropdownMenuItem
+  className="cursor-pointer p-3 focus:bg-zinc-100 dark:focus:bg-zinc-800"
+  onClick={() => navigate('/update-password')}
+>
+  <UserCircle className="mr-2 h-4 w-4 text-zinc-500" />
+  <span className="font-medium text-sm">Update Password</span>
+</DropdownMenuItem>
+
+<DropdownMenuSeparator />
+
+<DropdownMenuItem
+  className="cursor-pointer p-3 focus:bg-zinc-100 dark:focus:bg-zinc-800"
+  onClick={logout}
+>
+  <LogOut className="mr-2 h-4 w-4 text-zinc-500" />
+  <span className="font-medium text-sm">Log out</span>
+</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
