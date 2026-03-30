@@ -83,6 +83,22 @@ export const UserTable = ({
       sortable: true,
       render: (user) => <span>{formatDate(user.created_on)}</span>,
     },
+    {
+      key: 'em_count',
+      header: 'EM Count',
+      render: (user: User) => (
+      <span
+      className="cursor-pointer text-blue-600 hover:underline"
+      onClick={() => {
+        if (user.role_id === 3) {
+          setViewAgentsManager(user);
+        }
+      }}
+     >
+      {user.reportee_count ?? 0}
+     </span>
+    ),
+    },
     ...(permissionPrefix === 'agent' ? [{
       key: 'reporting_manager_id',
       header: 'Assigned RM',
