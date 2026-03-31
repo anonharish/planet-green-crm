@@ -1,17 +1,15 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { PageHeader } from "../../../shared/components/PageHeader/PageHeader";
-import {
-  FilterBar,
-  SearchInput,
-} from "../../../shared/components/FilterBar/FilterBar";
+import { SearchInput } from "../../../shared/components/FilterBar/FilterBar";
 import { AppDrawer } from "../../../shared/components/AppDrawer/AppDrawer";
 import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmDialog";
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { MetricCard } from "../../../shared/components/MetricCard/MetricCard";
-import { Plus, Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
+import { FilterPopover } from "../../../shared/components/FilterPopover/FilterPopover";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -367,280 +365,212 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Leads Dashboard"
         description="Manage and track your sales pipeline efficiency"
         actions={
-          <div className="flex gap-4">
+          can(PERMISSIONS.LEAD_CREATE) ? (
+            <Button onClick={handleCreateNew} className="gap-2">
+              <UserPlus size={18} />
+              Create New Lead
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {/* Search + Tabs Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="w-full sm:w-1/2">
+          <SearchInput
+            value={search}
+            onChange={(v) =>
+              dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
+            }
+            placeholder="Search leads....."
+          />
+        </div>
+
+        {showTabs && (
+          <div className="flex items-center gap-2 p-2 bg-[#f0f2f5] dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200/50 dark:border-zinc-800/50">
+            <button
+              onClick={() => dispatch(setActiveTabAction(0))}
+              className={cn(
+                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                activeTab === 0
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
+                  : "text-slate-500 hover:text-primary",
+              )}
+            >
+              Unassigned Leads
+            </button>
+            <button
+              onClick={() => dispatch(setActiveTabAction(1))}
+              className={cn(
+                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                activeTab === 1
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
+                  : "text-slate-500 hover:text-primary",
+              )}
+            >
+              Assigned Leads
+            </button>
+            <button
+              className="px-5 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-primary transition-all duration-200"
+            >
+              Junk
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Main Table Card */}
+      <div className="rounded-3xl border border-border/40 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
+        {/* Card Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-foreground">Active Leads Queue</h2>
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          </div>
+          <div className="flex items-center gap-3">
+            <FilterPopover
+              onReset={handleResetFilters}
+              activeFilterCount={statusIds.length + projectIds.length + rmIds.length + emIds.length}
+              align="end"
+            >
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Status</p>
+                  <MultiSelect
+                    options={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
+                    selected={statusIds}
+                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
+                    placeholder="Filter Status"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Project</p>
+                  <MultiSelect
+                    options={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
+                    selected={projectIds}
+                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
+                    placeholder="Filter Project"
+                  />
+                </div>
+                {isAdmin && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Relationship Manager</p>
+                    <Select
+                      value={rmIds[0] || "all"}
+                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === "all" ? [] : [v], emIds: [], page: 1 } }))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select RM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All RMs</SelectItem>
+                        {rms.map((r) => (
+                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(isAdmin || isRM) && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Experience Manager</p>
+                    <Select
+                      value={emIds[0] || "all"}
+                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === "all" ? [] : [v], page: 1 } }))}
+                      disabled={isAdmin && rmIds.length === 0}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select EM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All EMs</SelectItem>
+                        {(isAdmin ? ems : emsReportees).map((e) => (
+                          <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </FilterPopover>
+
             {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
               <Button
-                variant="outline"
                 onClick={() => setShowRandomConfirm(true)}
                 disabled={activeTab === 0 || isAnyBulkAssigning || leads.length === 0}
                 className="gap-2"
               >
-                {isAnyBulkAssigning ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
-                Random Assign
-              </Button>
-            )}
-            {can(PERMISSIONS.LEAD_CREATE) && (
-              <Button onClick={handleCreateNew} className="gap-2">
-                <UserPlus size={18} />
-                Create New Lead
+                {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Bulk Auto-Assign
               </Button>
             )}
           </div>
-        }
-      />
-
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          title="Total Leads" 
-          value="1,284" 
-          badge={{ text: "+12%", variant: "neutral" }} 
-        />
-        <MetricCard 
-          title="Assigned Leads" 
-          value="1000" 
-          badge={{ text: "High", variant: "success" }} 
-        />
-        <MetricCard 
-          title="Unassigned Leads" 
-          value="284" 
-          badge={{ text: "Low", variant: "neutral" }} 
-        />
-      </div> */}
-
-      {showTabs && (
-        <div className="flex items-center gap-2 p-2 bg-[#f0f2f5] dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200/50 dark:border-zinc-800/50">
-          <button
-            onClick={() => dispatch(setActiveTabAction(0))}
-            className={cn(
-              "flex items-center gap-3 px-6 py-2.5 text-sm font-bold rounded-md transition-all duration-200",
-              activeTab === 0
-                ? "bg-white dark:bg-zinc-800 text-primary dark:text-primary-foreground shadow-sm"
-                : "text-slate-500 hover:text-primary dark:text-zinc-400 dark:hover:text-zinc-200",
-            )}
-          >
-            Unassigned Leads
-            {/* <span className={cn(
-              "px-1.5 py-0.5 rounded-md text-[10px] font-bold",
-              activeTab === 0 ? "bg-slate-100 text-slate-600" : "bg-slate-200/50 text-slate-500"
-            )}>
-              284
-            </span> */}
-          </button>
-          <button
-            onClick={() => dispatch(setActiveTabAction(1))}
-            className={cn(
-              "flex items-center gap-3 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-200",
-              activeTab === 1
-                ? "bg-white dark:bg-zinc-800 text-primary dark:text-primary-foreground shadow-sm"
-                : "text-slate-500 hover:text-primary dark:text-zinc-400 dark:hover:text-zinc-200",
-            )}
-          >
-            Assigned Leads
-            {/* <span className={cn(
-              "px-1.5 py-0.5 rounded-md text-[10px] font-bold",
-              activeTab === 1 ? "bg-slate-100 text-slate-600" : "bg-slate-200/50 text-slate-500"
-            )}>
-              1000
-            </span> */}
-          </button>
-          <button
-            className="flex items-center gap-3 px-6 py-2.5 text-sm font-bold rounded-xl text-slate-500 hover:text-primary transition-all duration-200"
-          >
-            Junk
-          </button>
         </div>
-      )}
 
-      <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar onReset={handleResetFilters}>
-          <SearchInput
-            value={search}
-            onChange={(v) =>
-              dispatch(
-                updateTabFilters({ tabKey, updates: { search: v, page: 1 } }),
-              )
-            }
-            placeholder="Search leads..."
-          />
-
-          <div className="w-48">
-            <MultiSelect
-              options={
-                masterData?.lead_statuses.map((s) => ({
-                  label: s.description,
-                  value: String(s.id),
-                })) || []
-              }
-              selected={statusIds}
-              onChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: { statusIds: v, page: 1 },
-                  }),
-                )
-              }
-              placeholder="Filter Status"
-            />
-          </div>
-
-          <div className="w-48">
-            <MultiSelect
-              options={
-                masterData?.projects.map((p) => ({
-                  label: p.description,
-                  value: String(p.id),
-                })) || []
-              }
-              selected={projectIds}
-              onChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: { projectIds: v, page: 1 },
-                  }),
-                )
-              }
-              placeholder="Filter Project"
-            />
-          </div>
-
-          {isAdmin && (
-            <Select
-              value={rmIds[0] || "all"}
-              onValueChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: {
-                      rmIds: v === "all" ? [] : [v],
-                      emIds: [],
-                      page: 1,
-                    },
-                  }),
-                )
-              }
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Select RM" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All RMs</SelectItem>
-                {rms.map((r) => (
-                  <SelectItem key={r.id} value={String(r.id)}>
-                    {r.first_name} {r.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {(isAdmin || isRM) && (
-            <Select
-              value={emIds[0] || "all"}
-              onValueChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: { emIds: v === "all" ? [] : [v], page: 1 },
-                  }),
-                )
-              }
-              disabled={isAdmin && rmIds.length === 0}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Select EM" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All EMs</SelectItem>
-                {(isAdmin ? ems : emsReportees).map((e) => (
-                  <SelectItem key={e.id} value={String(e.id)}>
-                    {e.first_name} {e.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FilterBar>
-
-        {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-          <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-lg animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                {selectedUuids.length} leads selected
-              </span>
-              <div className="flex items-center gap-2">
-                <Select value={targetRmId} onValueChange={setTargetRmId}>
-                  <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950 transition-all focus:ring-2 focus:ring-indigo-500">
-                    <SelectValue placeholder={assignmentLabel} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignmentUsers.map((r: any) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.first_name} {r.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="sm"
-                  disabled={!targetRmId || isAnyBulkAssigning}
-                  onClick={handleBulkAssign}
-                  className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95 transition-all px-4 font-bold"
-                >
-                  {isAnyBulkAssigning ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Assign Selection"
-                  )}
-                </Button>
+        <div className="p-4 space-y-4">
+          {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
+            <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                  {selectedUuids.length} leads selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <Select value={targetRmId} onValueChange={setTargetRmId}>
+                    <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950">
+                      <SelectValue placeholder={assignmentLabel} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assignmentUsers.map((r: any) => (
+                        <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    disabled={!targetRmId || isAnyBulkAssigning}
+                    onClick={handleBulkAssign}
+                    className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md px-4 font-bold"
+                  >
+                    {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Assign Selection"}
+                  </Button>
+                </div>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
+                className="text-zinc-500 hover:text-zinc-800 font-medium"
+              >
+                Cancel
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
-              className="text-zinc-500 hover:text-zinc-800 font-medium"
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
+          )}
 
-        <LeadTable
-          data={sortedLeads}
-          isLoading={isLoading || isFetching}
-          page={page}
-          limit={limit}
-          total={totalLeads}
-          onPageChange={(v) =>
-            dispatch(updateTabFilters({ tabKey, updates: { page: v } }))
-          }
-          onLimitChange={(v) =>
-            dispatch(
-              updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }),
-            )
-          }
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onScheduleVisit={handleScheduleVisit}
-          onUpdateStatus={handleUpdateStatus}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          offset={serverOffset}
-          selectedUuids={selectedUuids}
-          onSelectUuids={(uuids) =>
-            dispatch(setSelectedUuids({ tabKey, uuids }))
-          }
-        />
+          <LeadTable
+            data={sortedLeads}
+            isLoading={isLoading || isFetching}
+            page={page}
+            limit={limit}
+            total={totalLeads}
+            onPageChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { page: v } }))}
+            onLimitChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }))}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onScheduleVisit={handleScheduleVisit}
+            onUpdateStatus={handleUpdateStatus}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            offset={serverOffset}
+            selectedUuids={selectedUuids}
+            onSelectUuids={(uuids) => dispatch(setSelectedUuids({ tabKey, uuids }))}
+          />
+        </div>
       </div>
 
       <AppDrawer
