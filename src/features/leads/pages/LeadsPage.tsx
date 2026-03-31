@@ -373,7 +373,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           can(PERMISSIONS.LEAD_CREATE) ? (
             <Button onClick={handleCreateNew} className="gap-2">
               <UserPlus size={18} />
-              Create New Lead
+              Create
             </Button>
           ) : undefined
         }
@@ -387,7 +387,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onChange={(v) =>
               dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
             }
-            placeholder="Search leads....."
+            placeholder="Search leads by name"
           />
         </div>
 
@@ -402,7 +402,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                   : "text-slate-500 hover:text-primary",
               )}
             >
-              Unassigned Leads
+              Unassigned
             </button>
             <button
               onClick={() => dispatch(setActiveTabAction(1))}
@@ -413,7 +413,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                   : "text-slate-500 hover:text-primary",
               )}
             >
-              Assigned Leads
+              Assigned
             </button>
             <button
               className="px-5 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-primary transition-all duration-200"
@@ -429,8 +429,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         {/* Card Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-foreground">Active Leads Queue</h2>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <h2 className="text-base font-bold text-foreground">Leads Queue</h2>
+            {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
           </div>
           <div className="flex items-center gap-3">
             <FilterPopover
@@ -517,7 +517,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl animate-in fade-in slide-in-from-top-2">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                  {selectedUuids.length} leads selected
+                  {selectedUuids.length} selected
                 </span>
                 <div className="flex items-center gap-2">
                   <Select value={targetRmId} onValueChange={setTargetRmId}>
