@@ -38,8 +38,8 @@ import { usePermissions } from '../../../hooks/usePermissions';
 import type { CreateLeadRequest } from '../types';
 
 const formSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
+  first_name: z.string().optional().or(z.literal('')),
+  last_name: z.string().optional().or(z.literal('')),
   phone_number: z.string().min(10, 'Phone number must be at least 10 digits'),
   email_address: z.string().email('Invalid email address').optional().or(z.literal('')),
   source_type: z.string().min(1, 'Source is required'), // UI-only
@@ -58,7 +58,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface LeadFormProps {
-  onSubmit: (values: CreateLeadRequest) => void;
+  onSubmit: (values: any) => void;
   isLoading?: boolean;
   initialValues?: any;
   isEdit?: boolean;
@@ -134,25 +134,35 @@ export const LeadForm = ({
     const { source_type, project_selection, ...rest } = values;
     
     const payload: CreateLeadRequest = {
-      ...rest,
-      // Source employee only if 'internal' selected
-      source_employee_user_id: source_type === 'internal' ? (values.source_employee_user_id ?? null) : null,
-      assigned_to_rm: values.assigned_to_rm ?? null,
-      assigned_to_em: values.assigned_to_em ?? null,
+  ...rest,
+  first_name: values.first_name || '',
+  last_name: values.last_name || '',
+  source_employee_user_id: source_type === 'internal'
+    ? (values.source_employee_user_id ?? null)
+    : null,
+  assigned_to_rm: values.assigned_to_rm ?? null,
+  assigned_to_em: values.assigned_to_em ?? null,
       lead_status_id: initialValues?.lead_status_id || 1, // Default to NEW
       lead_priority_id: initialValues?.lead_priority_id || 1, // Default to NEW
       source_id: source_type === 'internal' ? 4 : (source_type === 'facebook' ? 2 : (source_type === 'whatsapp' ? 1 : 5)),
-      project_id: project_selection === 'planet_green' ? 2 : 1,
-      // Ensure all optional fields are at least empty strings for the API
-      email_address: values.email_address || '',
-      occupation: values.occupation || '',
-      address: values.address || '',
-      city: values.city || '',
-      state: values.state || '',
-      country: values.country || '',
-      zip: values.zip || '',
-    };
-    onSubmit(payload);
+  project_id: project_selection === 'planet_green' ? 2 : 1,
+
+  email_address: values.email_address || '',
+  occupation: values.occupation || '',
+  address: values.address || '',
+  city: values.city || '',
+  state: values.state || '',
+  country: values.country || '',
+  zip: values.zip || '',
+};
+    if (isEdit) {
+      onSubmit({
+        ...payload,
+        uuid: initialValues?.uuid,
+      });
+    } else {
+      onSubmit(payload);
+    }
   };
 
   return (

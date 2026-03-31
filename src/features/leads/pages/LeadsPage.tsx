@@ -120,9 +120,10 @@ export const LeadsPage = () => {
     data: adminLeads = [],
     isLoading: isAdminLoading,
     isFetching: isAdminFetching,
+    refetch,
   } = useGetLeadsQuery({
     offset: serverOffset,
-    is_rm_assigned: isAdmin ? activeTab : undefined,
+    is_rm_assigned: isAdmin ? (activeTab === 1 ? 1 : 0) : undefined,
     search_text: debouncedSearch || undefined,
     status:
       debouncedFilters.statusIds.length > 0
@@ -280,20 +281,24 @@ export const LeadsPage = () => {
     setDeleteUuid(uuid);
   };
 
-  const handleFormSubmit = async (values: CreateLeadRequest) => {
-    try {
-      if (editingLead) {
-        await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
-        toast.success("Lead updated successfully");
-      } else {
-        await createLead(values).unwrap();
-        toast.success("Lead created successfully");
+const handleFormSubmit = async (values: CreateLeadRequest) => {
+  try {
+    if (editingLead) {
+      await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
+      toast.success("Lead updated successfully");
+      if (values.assigned_to_rm) {
+        dispatch(setActiveTabAction(1));
       }
-      setIsDrawerOpen(false);
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Operation failed");
+      refetch();
+    } else {
+      await createLead(values).unwrap();
+      toast.success("Lead created successfully");
     }
-  };
+    setIsDrawerOpen(false);
+  } catch (err: any) {
+    toast.error(err?.data?.message || "Operation failed");
+  }
+};
 
   const handleScheduleVisitSubmit = async (data: any) => {
     try {
@@ -371,7 +376,7 @@ export const LeadsPage = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowRandomConfirm(true)}
-                disabled={isAnyBulkAssigning || leads.length === 0}
+                disabled={activeTab === 0 || isAnyBulkAssigning || leads.length === 0}
                 className="gap-2"
               >
                 {isAnyBulkAssigning ? (
