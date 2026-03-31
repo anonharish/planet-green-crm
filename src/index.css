@@ -35,6 +35,8 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -87,6 +89,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
   
   /* Thin and minimal global scrollbar */
