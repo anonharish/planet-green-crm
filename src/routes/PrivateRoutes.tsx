@@ -2,6 +2,8 @@ import React from 'react';
 import { Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 
+const UpdatePasswordPage = React.lazy(() => import('../features/auth/pages/UpdatePasswordPage').then(m => ({ default: m.UpdatePasswordPage })));
+
 const DashboardPage = React.lazy(() => import('../features/dashboard/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const LeadsPage = React.lazy(() => import('../features/leads/pages/LeadsPage').then(m => ({ default: m.LeadsPage })));
 const LeadDetailsPage = React.lazy(() => import('../features/leads/pages/LeadDetailsPage').then(m => ({ default: m.LeadDetailsPage })));
@@ -13,6 +15,7 @@ const PlaygroundPage = React.lazy(() => import('../features/playground/pages/Pla
 export const PrivateRoutes = (
   <Route element={<MainLayout />}>
     <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/update-password" element={<UpdatePasswordPage />} />
     <Route path="/dashboard" element={<DashboardPage />} />
     <Route path="/leads" element={<LeadsPage />} />
     <Route path="/leads/:leadId" element={<LeadDetailsPage />} />

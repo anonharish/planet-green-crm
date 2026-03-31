@@ -7,6 +7,7 @@ import { ScrollToTop } from '../shared/components/ScrollToTop/ScrollToTop';
 
 const SetPasswordPage = React.lazy(() => import('../features/auth/pages/SetPasswordPage').then(m => ({ default: m.SetPasswordPage })));
 
+
 export const AppRoutes = () => {
   return (
     <BrowserRouter>
@@ -17,6 +18,7 @@ export const AppRoutes = () => {
           {PrivateRoutes}
           <Route element={<SetPasswordLayout />}>
             <Route path="/set-password" element={<SetPasswordPage />} />
+            
           </Route>
         </Routes>
       </Suspense>
