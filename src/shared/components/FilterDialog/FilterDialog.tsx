@@ -176,7 +176,7 @@ export const FilterDialog = ({
           return (
             <span
               key={v}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground"
             >
               {label}
               <button onClick={() => onRemove(v)} className="hover:opacity-70">
@@ -235,9 +235,9 @@ export const FilterDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="p-0 max-w-[50vw] w-[50vw] gap-0 overflow-hidden rounded-2xl">
+      <DialogContent className="p-0 max-w-[50vw] w-[50vw] gap-0 overflow-hidden rounded-2xl border-border-2">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-border/40">
+        <div className="px-6 pt-6 pb-4 border-b border-border-2">
           <h2 className="text-lg font-bold text-foreground">Filter leads</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             Filter by the following options
@@ -247,7 +247,7 @@ export const FilterDialog = ({
         {/* Body */}
         <div className="flex" style={{ height: "calc(75vh - 130px)" }}>
           {/* Left Sidebar */}
-          <div className="w-36 border-r border-border/40 shrink-0">
+          <div className="w-36 border-r border-border-2 shrink-0">
             {sections.map((section) => (
               <button
                 key={section.key}
@@ -256,7 +256,7 @@ export const FilterDialog = ({
                   setUserSearch("");
                 }}
                 className={cn(
-                  "w-full text-left px-4 py-4 text-sm font-medium border-b border-border/20 transition-colors",
+                  "w-full text-left px-4 py-4 text-sm font-medium border-b border-border-2 transition-colors",
                   activeSection === section.key
                     ? "bg-blue-50 dark:bg-blue-950/20 text-primary font-bold border-l-2 border-l-primary"
                     : "text-muted-foreground hover:bg-muted/50",
@@ -292,7 +292,7 @@ export const FilterDialog = ({
                           onClick={() =>
                             toggleMulti(o.value, localStatus, setLocalStatus)
                           }
-                          className="px-3 py-1.5 rounded-full text-xs font-medium border border-border/60 text-foreground hover:border-primary hover:text-primary transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-border-2 text-foreground hover:border-primary hover:text-primary transition-colors"
                         >
                           {o.label}
                         </button>
@@ -326,7 +326,7 @@ export const FilterDialog = ({
                           onClick={() =>
                             toggleMulti(o.value, localProjects, setLocalProjects)
                           }
-                          className="px-3 py-1.5 rounded-full text-xs font-medium border border-border/60 text-foreground hover:border-primary hover:text-primary transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-border-2 text-foreground hover:border-primary hover:text-primary transition-colors"
                         >
                           {o.label}
                         </button>
@@ -386,7 +386,7 @@ export const FilterDialog = ({
                             return (
                               <span
                                 key={v}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground"
                               >
                                 {label}
                                 <button
@@ -446,7 +446,7 @@ export const FilterDialog = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border/40">
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border-2">
           <Button
             variant="ghost"
             onClick={handleReset}

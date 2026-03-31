@@ -4,6 +4,7 @@
 
 @theme {
   --color-border: hsl(var(--border));
+  --color-border-2: hsl(var(--border-2));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-background: hsl(var(--background));
@@ -72,6 +73,7 @@
 
     /* Borders & Inputs */
     --border: 210 16% 85%;
+    --border-2: 211 80% 90%;
     --input: 0 0% 100% / 0.7;
     --ring: 211 89% 22%;
 
@@ -105,6 +107,7 @@
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 16% 85%;
+    --border-2: 211 80% 90%;
     --input: 0 0% 100% / 0.7;
     --ring: 211 89% 22%;
   }
