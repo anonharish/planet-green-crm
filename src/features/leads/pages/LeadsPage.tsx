@@ -469,7 +469,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               statusOptions={(masterData?.lead_statuses || []).map((s) => ({ value: String(s.id), label: s.description }))}
               projectOptions={(masterData?.projects || []).map((p) => ({ value: String(p.id), label: p.description }))}
               rmOptions={rms}
-              emOptions={isAdmin ? ems : emsReportees}
               showRmFilter={isAdmin}
               showEmFilter={isAdmin || isRM}
             />

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { X, Search } from "lucide-react";
+import { X, Search, Check, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { cn } from "../../../utils";
+import { useGetReporteesQuery } from "../../../features/users/api/usersApi";
 
 type FilterSection = "status" | "projects" | "rms" | "ems";
 
@@ -37,7 +38,6 @@ interface FilterDialogProps {
   statusOptions: Option[];
   projectOptions: Option[];
   rmOptions: UserOption[];
-  emOptions: UserOption[];
   // Visibility
   showRmFilter?: boolean;
   showEmFilter?: boolean;
@@ -73,25 +73,30 @@ export const FilterDialog = ({
   statusOptions,
   projectOptions,
   rmOptions,
-  emOptions,
   showRmFilter = true,
   showEmFilter = true,
 }: FilterDialogProps) => {
   const [activeSection, setActiveSection] = useState<FilterSection>("status");
   const [localStatus, setLocalStatus] = useState<string[]>(statusIds);
   const [localProjects, setLocalProjects] = useState<string[]>(projectIds);
-  const [localRms, setLocalRms] = useState<string[]>(rmIds);
-  const [localEms, setLocalEms] = useState<string[]>(emIds);
+  const [localRmId, setLocalRmId] = useState<string>(rmIds[0] || "");
+  const [localEmIds, setLocalEmIds] = useState<string[]>(emIds);
   const [userSearch, setUserSearch] = useState("");
+
+  const { data: liveEms = [], isFetching: isFetchingEms } = useGetReporteesQuery(
+    { reporting_manager_id: Number(localRmId), offset: 0 },
+    { skip: !localRmId },
+  );
 
   // Sync local state when dialog opens
   useEffect(() => {
     if (open) {
       setLocalStatus(statusIds);
       setLocalProjects(projectIds);
-      setLocalRms(rmIds);
-      setLocalEms(emIds);
+      setLocalRmId(rmIds[0] || "");
+      setLocalEmIds(emIds);
       setUserSearch("");
+      setActiveSection("status");
     }
   }, [open]);
 
@@ -102,7 +107,7 @@ export const FilterDialog = ({
     { key: "ems", label: "EM's", show: showEmFilter },
   ].filter((s) => s.show);
 
-  const toggle = (
+  const toggleMulti = (
     value: string,
     current: string[],
     setter: (v: string[]) => void,
@@ -114,12 +119,22 @@ export const FilterDialog = ({
     );
   };
 
+  const handleSelectRm = (id: string) => {
+    if (localRmId === id) {
+      setLocalRmId("");
+      setLocalEmIds([]);
+    } else {
+      setLocalRmId(id);
+      setLocalEmIds([]);
+    }
+  };
+
   const handleApply = () => {
     onApply({
       statusIds: localStatus,
       projectIds: localProjects,
-      rmIds: localRms,
-      emIds: localEms,
+      rmIds: localRmId ? [localRmId] : [],
+      emIds: localEmIds,
     });
     onClose();
   };
@@ -127,8 +142,8 @@ export const FilterDialog = ({
   const handleReset = () => {
     setLocalStatus([]);
     setLocalProjects([]);
-    setLocalRms([]);
-    setLocalEms([]);
+    setLocalRmId("");
+    setLocalEmIds([]);
     onReset();
     onClose();
   };
@@ -139,13 +154,13 @@ export const FilterDialog = ({
       .includes(userSearch.toLowerCase()),
   );
 
-  const filteredEms = emOptions.filter((u) =>
+  const filteredEms = liveEms.filter((u) =>
     `${u.first_name} ${u.last_name}`
       .toLowerCase()
       .includes(userSearch.toLowerCase()),
   );
 
-  const renderSelectedChips = (
+  const renderChips = (
     selected: string[],
     options: Option[],
     onRemove: (v: string) => void,
@@ -174,35 +189,49 @@ export const FilterDialog = ({
     );
   };
 
-  const renderSelectedUserChips = (
-    selected: string[],
-    users: UserOption[],
-    onRemove: (v: string) => void,
-  ) => {
-    if (selected.length === 0)
-      return (
-        <p className="text-sm text-muted-foreground italic">None selected</p>
-      );
-    return (
-      <div className="flex flex-wrap gap-2">
-        {selected.map((v) => {
-          const user = users.find((u) => String(u.id) === v);
-          const label = user ? `${user.first_name} ${user.last_name}` : v;
-          return (
-            <span
-              key={v}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground"
-            >
-              {label}
-              <button onClick={() => onRemove(v)} className="hover:opacity-70">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          );
-        })}
+  const renderUserRow = (
+    u: UserOption,
+    isSelected: boolean,
+    onClick: () => void,
+    role: string,
+  ) => (
+    <button
+      key={u.id}
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150",
+        isSelected
+          ? "bg-primary/8 dark:bg-primary/10"
+          : "hover:bg-muted/40",
+      )}
+    >
+      <div
+        className={cn(
+          "w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold",
+          getAvatarColor(u.id),
+        )}
+      >
+        {getInitials(u.first_name, u.last_name)}
       </div>
-    );
-  };
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground truncate">
+          {u.first_name} {u.last_name}
+        </p>
+        <p className="text-xs text-muted-foreground">{role}</p>
+      </div>
+      {/* Jira-style check indicator */}
+      <div
+        className={cn(
+          "shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+          isSelected
+            ? "border-primary bg-primary"
+            : "border-border/60",
+        )}
+      >
+        {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+      </div>
+    </button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -240,14 +269,13 @@ export const FilterDialog = ({
 
           {/* Right Content */}
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-            {/* Status */}
             {activeSection === "status" && (
               <>
                 <div>
                   <p className="text-sm font-bold text-foreground mb-3">
                     Selected
                   </p>
-                  {renderSelectedChips(localStatus, statusOptions, (v) =>
+                  {renderChips(localStatus, statusOptions, (v) =>
                     setLocalStatus(localStatus.filter((s) => s !== v)),
                   )}
                 </div>
@@ -262,7 +290,7 @@ export const FilterDialog = ({
                         <button
                           key={o.value}
                           onClick={() =>
-                            toggle(o.value, localStatus, setLocalStatus)
+                            toggleMulti(o.value, localStatus, setLocalStatus)
                           }
                           className="px-3 py-1.5 rounded-full text-xs font-medium border border-border/60 text-foreground hover:border-primary hover:text-primary transition-colors"
                         >
@@ -274,14 +302,14 @@ export const FilterDialog = ({
               </>
             )}
 
-            {/* Projects */}
+            {/* ── Projects ── */}
             {activeSection === "projects" && (
               <>
                 <div>
                   <p className="text-sm font-bold text-foreground mb-3">
                     Selected
                   </p>
-                  {renderSelectedChips(localProjects, projectOptions, (v) =>
+                  {renderChips(localProjects, projectOptions, (v) =>
                     setLocalProjects(localProjects.filter((p) => p !== v)),
                   )}
                 </div>
@@ -296,7 +324,7 @@ export const FilterDialog = ({
                         <button
                           key={o.value}
                           onClick={() =>
-                            toggle(o.value, localProjects, setLocalProjects)
+                            toggleMulti(o.value, localProjects, setLocalProjects)
                           }
                           className="px-3 py-1.5 rounded-full text-xs font-medium border border-border/60 text-foreground hover:border-primary hover:text-primary transition-colors"
                         >
@@ -308,63 +336,28 @@ export const FilterDialog = ({
               </>
             )}
 
-            {/* RM's */}
+            {/* ── RM's (single-select, Jira-style) ── */}
             {activeSection === "rms" && (
               <>
-                <div>
-                  <p className="text-sm font-bold text-foreground mb-3">
-                    Selected
-                  </p>
-                  {renderSelectedUserChips(localRms, rmOptions, (v) =>
-                    setLocalRms(localRms.filter((r) => r !== v)),
-                  )}
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Search relationship managers....."
+                    className="pl-9 rounded-lg"
+                  />
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground mb-3">
-                    Select from
-                  </p>
-                  <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={userSearch}
-                      onChange={(e) => setUserSearch(e.target.value)}
-                      placeholder="Search relationship managers....."
-                      className="pl-9 rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-1 max-h-52 overflow-y-auto">
-                    {filteredRms.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() =>
-                          toggle(String(u.id), localRms, setLocalRms)
-                        }
-                        className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors",
-                          localRms.includes(String(u.id))
-                            ? "bg-muted/60"
-                            : "hover:bg-muted/40",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold",
-                            getAvatarColor(u.id),
-                          )}
-                        >
-                          {getInitials(u.first_name, u.last_name)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {u.first_name} {u.last_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Senior Relationship Manager
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                <div className="space-y-1">
+                  {filteredRms.map((u) =>
+                    renderUserRow(
+                      u,
+                      localRmId === String(u.id),
+                      () => handleSelectRm(String(u.id)),
+                      "Relationship Manager",
+                    ),
+                  )}
                 </div>
               </>
             )}
@@ -372,76 +365,101 @@ export const FilterDialog = ({
             {/* EM's */}
             {activeSection === "ems" && (
               <>
-                <div>
-                  <p className="text-sm font-bold text-foreground mb-3">
-                    Selected
-                  </p>
-                  {renderSelectedUserChips(localEms, emOptions, (v) =>
-                    setLocalEms(localEms.filter((e) => e !== v)),
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground mb-3">
-                    Select from
-                  </p>
-                  <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={userSearch}
-                      onChange={(e) => setUserSearch(e.target.value)}
-                      placeholder="Search experience managers....."
-                      className="pl-9 rounded-lg"
-                    />
+                {!localRmId ? (
+                  <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
+                    <p className="text-sm font-medium">Select an RM first</p>
+                    <p className="text-xs">Go to the RM's tab to pick a Relationship Manager.</p>
                   </div>
-                  <div className="space-y-1 max-h-52 overflow-y-auto">
-                    {filteredEms.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() =>
-                          toggle(String(u.id), localEms, setLocalEms)
-                        }
-                        className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors",
-                          localEms.includes(String(u.id))
-                            ? "bg-muted/60"
-                            : "hover:bg-muted/40",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold",
-                            getAvatarColor(u.id),
-                          )}
-                        >
-                          {getInitials(u.first_name, u.last_name)}
+                ) : (
+                  <>
+                    {/* Selected chips */}
+                    <div>
+                      <p className="text-sm font-bold text-foreground mb-3">Selected</p>
+                      {localEmIds.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">None selected</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {localEmIds.map((v) => {
+                            const user = filteredEms.find((u) => String(u.id) === v) ||
+                              liveEms.find((u) => String(u.id) === v);
+                            const label = user ? `${user.first_name} ${user.last_name}` : v;
+                            return (
+                              <span
+                                key={v}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground"
+                              >
+                                {label}
+                                <button
+                                  onClick={() => setLocalEmIds(localEmIds.filter((e) => e !== v))}
+                                  className="hover:opacity-70"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </span>
+                            );
+                          })}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {u.first_name} {u.last_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Experience Manager
-                          </p>
+                      )}
+                    </div>
+
+                    {/* Select from */}
+                    <div>
+                      <p className="text-sm font-bold text-foreground mb-3">Select from</p>
+                      <div className="relative mb-3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          placeholder="Search experience managers....."
+                          className="pl-9 rounded-lg"
+                        />
+                      </div>
+
+                      {isFetchingEms ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                      ) : filteredEms.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">
+                          No experience managers found.
+                        </p>
+                      ) : (
+                        <div className="space-y-1 max-h-52 overflow-y-auto">
+                          {filteredEms
+                            .filter((u) => !localEmIds.includes(String(u.id)))
+                            .map((u) =>
+                              renderUserRow(
+                                u,
+                                false,
+                                () => toggleMulti(String(u.id), localEmIds, setLocalEmIds),
+                                "Experience Manager",
+                              ),
+                            )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border/40">
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border/40">
           <Button
             variant="ghost"
             onClick={handleReset}
-            className="text-muted-foreground"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
           >
-            Cancel
+            Clear filters
           </Button>
-          <Button onClick={handleApply}>Apply filter</Button>
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={onClose} className="text-muted-foreground">
+              Cancel
+            </Button>
+            <Button onClick={handleApply}>Apply filter</Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
