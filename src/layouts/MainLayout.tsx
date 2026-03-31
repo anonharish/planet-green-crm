@@ -46,34 +46,34 @@ export const MainLayout = () => {
   }
 
   const allNavItems = [
-    {
-      label: "Dashboard",
-      path: "/dashboard",
-      icon: <LayoutDashboard size={20} />,
-    },
-    { label: "Manage Leads", path: "/leads", icon: <Briefcase size={20} /> },
+    // {
+    //   label: "Dashboard",
+    //   path: "/dashboard",
+    //   icon: <LayoutDashboard size={22} />,
+    // },
+    { label: "Manage Leads", path: "/leads", icon: <Briefcase size={22} /> },
     {
       label: "Customers",
       path: "/customers",
-      icon: <Users size={20} />,
+      icon: <Users size={22} />,
       permission: PERMISSIONS.CUSTOMER_VIEW,
     },
     {
       label: "Relationship Managers",
       path: "/relationship-managers",
-      icon: <Users size={20} />,
+      icon: <Users size={22} />,
       permission: PERMISSIONS.MANAGER_VIEW,
     },
     {
       label: "Experience Managers",
       path: "/agents",
-      icon: <UserCircle size={20} />,
+      icon: <UserCircle size={22} />,
       permission: PERMISSIONS.AGENT_VIEW,
     },
     {
       label: "UI Playground",
       path: "/playground",
-      icon: <FlaskConical size={20} />,
+      icon: <FlaskConical size={22} />,
       permission: PERMISSIONS.MANAGER_VIEW,
     },
   ];
@@ -96,18 +96,18 @@ export const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-100 dark:bg-zinc-900">
+    <div className="flex h-screen bg-background text-foreground">
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-zinc-900 text-white min-h-screen hidden md:flex flex-col transition-all duration-300 relative",
-          isSidebarOpen ? "w-56" : "w-16",
+          "bg-white/80 dark:bg-white/80 backdrop-blur-md border-r border-border min-h-screen hidden md:flex flex-col transition-all duration-300 relative",
+          isSidebarOpen ? "w-64" : "w-16",
         )}
       >
         {/* Toggle Button */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute -right-3 top-5 bg-zinc-800 rounded-full p-1 border border-zinc-700 text-white hover:bg-zinc-700 transition-colors z-10 shadow-sm"
+          className="absolute -right-3 top-5 bg-white rounded-full p-1 border border-border text-primary hover:bg-accent transition-colors z-10 shadow-sm"
         >
           {isSidebarOpen ? (
             <ChevronLeft size={16} />
@@ -118,21 +118,18 @@ export const MainLayout = () => {
 
         <div
           className={cn(
-            "p-4 flex flex-col justify-center h-16 border-b border-zinc-800 whitespace-nowrap overflow-hidden transition-all duration-300",
+            "p-6 flex flex-col justify-center h-20 whitespace-nowrap overflow-hidden transition-all duration-300",
             isSidebarOpen ? "items-start" : "items-center",
           )}
         >
           {isSidebarOpen ? (
             <div className="flex flex-col opacity-100">
-              <h2 className="text-xl font-bold text-white tracking-tight leading-none">
+              <h2 className="text-2xl font-bold text-primary tracking-tight leading-none">
                 Planet Green
               </h2>
-              <p className="text-zinc-400 text-xs mt-1 font-medium">
-                CRM Platform
-              </p>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center font-bold text-white shrink-0">
+            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center font-bold text-white shrink-0">
               PG
             </div>
           )}
@@ -147,26 +144,24 @@ export const MainLayout = () => {
                 to={item.path}
                 title={!isSidebarOpen ? item.label : undefined}
                 className={cn(
-                  "flex items-center px-3 py-2.5 rounded-md transition-colors",
+                  "flex items-center px-4 py-3 rounded-xl transition-all duration-200 group",
                   isActive
-                    ? "bg-zinc-800 text-white shadow-sm ring-1 ring-zinc-700"
-                    : "text-zinc-300 hover:bg-zinc-800 hover:text-white",
-                  isSidebarOpen ? "space-x-3" : "justify-center",
+                    ? "bg-accent/40 text-primary font-bold"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-primary",
+                  isSidebarOpen ? "space-x-4" : "justify-center px-0",
                 )}
               >
                 <div
                   className={cn(
-                    "shrink-0",
-                    isActive
-                      ? "text-white"
-                      : "text-zinc-400 group-hover:text-white",
+                    "shrink-0 transition-colors duration-200",
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary",
                   )}
                 >
                   {item.icon}
                 </div>
                 <span
                   className={cn(
-                    "font-medium whitespace-nowrap text-sm overflow-hidden transition-all duration-300",
+                    "whitespace-nowrap text-sm overflow-hidden transition-all duration-300",
                     isSidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0",
                   )}
                 >
@@ -181,7 +176,7 @@ export const MainLayout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6 z-0 shadow-sm">
+        <header className="h-16 bg-white/80 dark:bg-white/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 z-0 shadow-sm">
           <div className="md:hidden">
             <h2 className="text-xl font-bold tracking-tight">Planet Green</h2>
           </div>
@@ -234,7 +229,7 @@ export const MainLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-zinc-50 dark:bg-zinc-900 p-6 relative">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background dark:bg-background p-6 relative">
           <Outlet />
         </main>
       </div>
