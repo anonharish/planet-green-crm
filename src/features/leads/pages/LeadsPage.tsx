@@ -415,28 +415,45 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       </div> */}
 
       {showTabs && (
-        <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl w-fit drop-shadow-sm border border-zinc-200/50 dark:border-zinc-800/50">
+        <div className="flex items-center gap-2 p-2 bg-[#f0f2f5] dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200/50 dark:border-zinc-800/50">
           <button
             onClick={() => dispatch(setActiveTabAction(0))}
             className={cn(
-              "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
+              "flex items-center gap-3 px-6 py-2.5 text-sm font-bold rounded-md transition-all duration-200",
               activeTab === 0
-                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50"
-                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
+                ? "bg-white dark:bg-zinc-800 text-primary dark:text-primary-foreground shadow-sm"
+                : "text-slate-500 hover:text-primary dark:text-zinc-400 dark:hover:text-zinc-200",
             )}
           >
             Unassigned Leads
+            {/* <span className={cn(
+              "px-1.5 py-0.5 rounded-md text-[10px] font-bold",
+              activeTab === 0 ? "bg-slate-100 text-slate-600" : "bg-slate-200/50 text-slate-500"
+            )}>
+              284
+            </span> */}
           </button>
           <button
             onClick={() => dispatch(setActiveTabAction(1))}
             className={cn(
-              "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
+              "flex items-center gap-3 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-200",
               activeTab === 1
-                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50"
-                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
+                ? "bg-white dark:bg-zinc-800 text-primary dark:text-primary-foreground shadow-sm"
+                : "text-slate-500 hover:text-primary dark:text-zinc-400 dark:hover:text-zinc-200",
             )}
           >
             Assigned Leads
+            {/* <span className={cn(
+              "px-1.5 py-0.5 rounded-md text-[10px] font-bold",
+              activeTab === 1 ? "bg-slate-100 text-slate-600" : "bg-slate-200/50 text-slate-500"
+            )}>
+              1000
+            </span> */}
+          </button>
+          <button
+            className="flex items-center gap-3 px-6 py-2.5 text-sm font-bold rounded-xl text-slate-500 hover:text-primary transition-all duration-200"
+          >
+            Junk
           </button>
         </div>
       )}
