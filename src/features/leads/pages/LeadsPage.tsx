@@ -10,6 +10,7 @@ import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmD
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
+import { MetricCard } from "../../../shared/components/MetricCard/MetricCard";
 import { Plus, Loader2, UserPlus } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
@@ -394,6 +395,29 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           </div>
         }
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard 
+          title="Total Leads" 
+          value="1,284" 
+          badge={{ text: "+12%", variant: "neutral" }} 
+        />
+        <MetricCard 
+          title="Assigned Leads" 
+          value="1000" 
+          badge={{ text: "High", variant: "success" }} 
+        />
+        <MetricCard 
+          title="Unassigned Leads" 
+          value="284" 
+          badge={{ text: "Low", variant: "neutral" }} 
+        />
+        {/* <MetricCard 
+          title="Pending Actions" 
+          value="42" 
+          badge={{ text: "Urgent", variant: "success" }} 
+        /> */}
+      </div>
 
       {showTabs && (
         <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl w-fit drop-shadow-sm border border-zinc-200/50 dark:border-zinc-800/50">
