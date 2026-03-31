@@ -10,7 +10,7 @@ import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmD
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, UserPlus } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -364,9 +364,9 @@ export const LeadsPage = () => {
     <div className="space-y-6">
       <PageHeader
         title="Leads Dashboard"
-        description="Core CRM leads management and assignment platform"
+        description="Manage and track your sales pipeline efficiency"
         actions={
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
               <Button
                 variant="outline"
@@ -382,7 +382,8 @@ export const LeadsPage = () => {
             )}
             {can(PERMISSIONS.LEAD_CREATE) && (
               <Button onClick={handleCreateNew} className="gap-2">
-                Add Lead
+                <UserPlus size={18} />
+                Create New Lead
               </Button>
             )}
           </div>
