@@ -10,7 +10,8 @@ import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmD
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
-import { Plus, Loader2 } from "lucide-react";
+import { LeadActivityDialog } from "../components/LeadActivityDialog";
+import { Loader2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -21,6 +22,7 @@ import {
   useBulkAssignLeadsToEmMutation,
   useDeleteLeadMutation,
   useScheduleVisitMutation,
+  useAddLeadActivityMutation,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
 } from "../api/leadsApi";
@@ -107,6 +109,7 @@ export const LeadsPage = () => {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+  const [activityLead, setActivityLead] = useState<Lead | null>(null);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -191,6 +194,8 @@ export const LeadsPage = () => {
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
   const [scheduleVisit, { isLoading: isScheduling }] =
     useScheduleVisitMutation();
+  const [addLeadActivity, { isLoading: isAddingActivity }] = 
+    useAddLeadActivityMutation();
 
   const isAnyBulkAssigning = isBulkAssigning || isBulkAssignToEm;
 
@@ -212,8 +217,8 @@ export const LeadsPage = () => {
       }
       dispatch(setSelectedUuids({ tabKey, uuids: [] }));
       setTargetRmId("");
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Bulk assignment failed");
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Bulk assignment failed");
     }
   };
 
@@ -257,8 +262,8 @@ export const LeadsPage = () => {
       toast.success(
         `Successfully distributed ${leadUuids.length} leads across ${assignmentUsers.length} ${isAdmin ? "RMs" : "EMs"}`,
       );
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Random assignment failed");
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Random assignment failed");
     }
   };
 
@@ -276,6 +281,10 @@ export const LeadsPage = () => {
     setSchedulingLead(lead);
   };
 
+  const handleLeadActivity = (lead: Lead) => {
+    setActivityLead(lead);
+  };
+
   const handleDelete = (uuid: string) => {
     setDeleteUuid(uuid);
   };
@@ -290,8 +299,8 @@ export const LeadsPage = () => {
         toast.success("Lead created successfully");
       }
       setIsDrawerOpen(false);
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Operation failed");
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Operation failed");
     }
   };
 
@@ -300,8 +309,18 @@ export const LeadsPage = () => {
       await scheduleVisit(data).unwrap();
       toast.success("Visit scheduled successfully");
       setSchedulingLead(null);
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to schedule visit");
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to schedule visit");
+    }
+  };
+
+  const handleLeadActivitySubmit = async (data: any) => {
+    try {
+      await addLeadActivity(data).unwrap();
+      toast.success("Activity added successfully");
+      setActivityLead(null);
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to add activity");
     }
   };
 
@@ -330,28 +349,31 @@ export const LeadsPage = () => {
       
       await updateLead(payload).unwrap();
       toast.success('Status updated successfully!');
-    } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to update status');
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || 'Failed to update status');
     }
   };
 
   // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
-    let result = [...leads];
+    const result = [...leads];
     result.sort((a, b) => {
-      let valA: any = (a as any)[sortField];
-      let valB: any = (b as any)[sortField];
+      const valA = (a as unknown as Record<string, unknown>)[sortField];
+      const valB = (b as unknown as Record<string, unknown>)[sortField];
+
+      let sortValA: string | number = 0;
+      let sortValB: string | number = 0;
 
       if (sortField === "created_on") {
-        valA = a.created_on ? new Date(a.created_on).getTime() : 0;
-        valB = b.created_on ? new Date(b.created_on).getTime() : 0;
+        sortValA = a.created_on ? new Date(a.created_on).getTime() : 0;
+        sortValB = b.created_on ? new Date(b.created_on).getTime() : 0;
       } else {
-        valA = typeof valA === "string" ? valA.toLowerCase() : (valA ?? "");
-        valB = typeof valB === "string" ? valB.toLowerCase() : (valB ?? "");
+        sortValA = typeof valA === "string" ? valA.toLowerCase() : String(valA ?? "");
+        sortValB = typeof valB === "string" ? valB.toLowerCase() : String(valB ?? "");
       }
 
-      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      if (sortValA < sortValB) return sortOrder === "asc" ? -1 : 1;
+      if (sortValA > sortValB) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
     return result;
@@ -540,7 +562,7 @@ export const LeadsPage = () => {
                     <SelectValue placeholder={assignmentLabel} />
                   </SelectTrigger>
                   <SelectContent>
-                    {assignmentUsers.map((r: any) => (
+                    {assignmentUsers.map((r) => (
                       <SelectItem key={r.id} value={String(r.id)}>
                         {r.first_name} {r.last_name}
                       </SelectItem>
@@ -589,6 +611,7 @@ export const LeadsPage = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onScheduleVisit={handleScheduleVisit}
+          onLeadActivity={handleLeadActivity}
           onUpdateStatus={handleUpdateStatus}
           sortField={sortField}
           sortOrder={sortOrder}
@@ -643,8 +666,8 @@ export const LeadsPage = () => {
             await deleteLead({ uuid: deleteUuid }).unwrap();
             toast.success("Lead deleted successfully");
             setDeleteUuid(null);
-          } catch (err: any) {
-            toast.error(err?.data?.message || "Failed to delete lead");
+          } catch (err: unknown) {
+            toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to delete lead");
           }
         }}
         isLoading={isDeleting}
@@ -658,12 +681,20 @@ export const LeadsPage = () => {
         lead={schedulingLead}
         siteVisitStatuses={
           masterData?.site_visit_status ||
-          (masterData as any)?.site_visit_statuses ||
           []
         }
         rms={rms}
         onSubmit={handleScheduleVisitSubmit}
         isLoading={isScheduling}
+      />
+
+      <LeadActivityDialog
+        key={activityLead?.uuid || 'activity-dialog'}
+        open={!!activityLead}
+        onClose={() => setActivityLead(null)}
+        lead={activityLead}
+        onSubmit={handleLeadActivitySubmit}
+        isLoading={isAddingActivity}
       />
     </div>
   );

@@ -20,7 +20,6 @@ import {
 } from '../../../components/ui/select';
 import type { Lead } from '../types';
 import { type ColumnDef } from '../../../shared/components/DataTable/DataTable';
-import { useAppSelector } from '../../../app/hooks';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { PERMISSIONS } from '../../../config/permissions';
@@ -39,6 +38,7 @@ interface LeadTableProps {
   onDelete: (uuid: string) => void;
   onScheduleVisit: (lead: Lead) => void;
   onUpdateStatus?: (lead: Lead, newStatusId: number) => void;
+  onLeadActivity?: (lead: Lead) => void;
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
   onSort?: (key: string) => void;
@@ -60,6 +60,7 @@ export const LeadTable = ({
   onDelete,
   onScheduleVisit,
   onUpdateStatus,
+  onLeadActivity,
   sortField,
   sortOrder,
   onSort,
@@ -70,8 +71,8 @@ export const LeadTable = ({
   const { currentRole, can } = usePermissions();
   const roleCode = currentRole?.code || '';
   
+  
   const { 
-    getStatusLabel, 
     getProjectLabel, 
     getRmLabel, 
     getEmLabel,
@@ -80,7 +81,7 @@ export const LeadTable = ({
     isLoading: isLookupLoading 
   } = useMasterDataLookup();
 
-  const fallback = (value: any) => value ?? '--';
+  const fallback = (value: React.ReactNode) => value ?? '--';
 
   const columns: ColumnDef<Lead>[] = [
     ...( can(PERMISSIONS.LEAD_BULK_ACTIONS) ? [
@@ -251,6 +252,15 @@ export const LeadTable = ({
                   </DropdownMenuItem>
                 </>
               )}
+
+              <DropdownMenuSeparator />
+<DropdownMenuItem 
+  onClick={() => onLeadActivity?.(lead)}
+  className="cursor-pointer gap-2 py-2"
+>
+  <CalendarClock className="h-4 w-4 text-purple-500" />
+  <span>Lead Activity</span>
+</DropdownMenuItem>
               {can(PERMISSIONS.LEAD_DELETE) && (
                 <>
                   <DropdownMenuSeparator />
@@ -265,6 +275,8 @@ export const LeadTable = ({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          
         </div>
       ),
     },
@@ -272,7 +284,7 @@ export const LeadTable = ({
 
   return (
     <DataTable
-      columns={columns as any}
+      columns={columns as ColumnDef<Lead>[]}
       data={data}
       isLoading={isLoading || isLookupLoading}
       page={page}
@@ -283,7 +295,7 @@ export const LeadTable = ({
       rowKey={(l) => l.uuid}
       sortField={sortField}
       sortOrder={sortOrder}
-      onSort={onSort as any}
+      onSort={onSort as (key: string) => void}
       offset={offset}
     />
   );

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
@@ -55,10 +55,10 @@ export const ScheduleVisitDialog = ({
   const isRM = roleCode === "RELMNG";
 
   const {
+    control,
     register,
     handleSubmit,
     setValue,
-    watch,
     reset,
     formState: { errors },
   } = useForm<ScheduleVisitFormValues>({
@@ -73,9 +73,9 @@ export const ScheduleVisitDialog = ({
     },
   });
 
-  const watchStatus = watch("visit_status");
-  const watchRm = watch("visit_assigned_to_rm");
-  const watchEm = watch("visit_assigned_to_em");
+  const watchStatus = useWatch({ control, name: "visit_status" });
+  const watchRm = useWatch({ control, name: "visit_assigned_to_rm" });
+  const watchEm = useWatch({ control, name: "visit_assigned_to_em" });
 
   const { data: reportees = [], isLoading: isLoadingReportees } =
     useGetReporteesQuery(
@@ -88,7 +88,7 @@ export const ScheduleVisitDialog = ({
     if (watchRm && watchEm) {
       const emExists = reportees.some((r) => r.id === watchEm);
       if (!isLoadingReportees && reportees.length > 0 && !emExists) {
-        setValue("visit_assigned_to_em", undefined as any);
+        setValue("visit_assigned_to_em", undefined as unknown as number);
       }
     }
   }, [watchRm, reportees, isLoadingReportees, watchEm, setValue]);
@@ -215,7 +215,7 @@ export const ScheduleVisitDialog = ({
                       className={
                         errors.visit_assigned_to_rm ? "border-red-500" : ""
                       }
-                    >
+                  >
                       <SelectValue placeholder="Select RM" />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,7 +247,7 @@ export const ScheduleVisitDialog = ({
                     className={
                       errors.visit_assigned_to_em ? "border-red-500" : ""
                     }
-                  >
+                     >
                     <SelectValue
                       placeholder={!watchRm ? "Select RM first" : "Select EM"}
                     />
