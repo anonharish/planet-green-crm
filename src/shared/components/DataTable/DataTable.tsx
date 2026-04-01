@@ -87,27 +87,27 @@ export function DataTable<T>({
       <div className="rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50 dark:bg-zinc-900">
+            <TableRow className="bg-[#F8F9FA] dark:bg-zinc-900/50 border-y border-zinc-100 dark:border-zinc-800">
               {columns.map((col) => (
                 <TableHead 
                   key={col.key} 
                   style={col.width ? { width: col.width } : undefined}
                   className={cn(
-                    "font-semibold text-zinc-700 dark:text-zinc-300 text-xs uppercase tracking-wide",
-                    col.sortable && "p-0" // Remove padding for sortable headers to handle it in the button
+                    "font-bold text-[#6C757D] dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11",
+                    col.sortable && "p-0"
                   )}
                 >
                   {col.sortable ? (
                     <button
                       onClick={() => onSort?.(col.key)}
-                      className="flex items-center gap-1 w-full h-full px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left font-bold"
+                      className="flex items-center gap-1.5 w-full h-full px-4 py-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-800 transition-colors text-left"
                     >
-                      {col.header}
-                      <div className="flex flex-col">
+                      <span>{col.header}</span>
+                      <div className="flex flex-col opacity-40">
                         {sortField === col.key ? (
-                          sortOrder === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                          sortOrder === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
                         ) : (
-                          <ArrowUpDown className="h-3 w-3 opacity-30" />
+                          <ArrowUpDown className="h-2.5 w-2.5" />
                         )}
                       </div>
                     </button>

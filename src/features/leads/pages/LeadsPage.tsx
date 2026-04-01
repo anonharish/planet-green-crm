@@ -368,6 +368,64 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     }
   };
 
+  const handleAssignRm = async (lead: Lead, rmId: number | null) => {
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: rmId,
+        assigned_to_em: rmId !== lead.assigned_to_rm ? null : (lead.assigned_to_em || null),
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: lead.lead_status_id,
+      };
+      await updateLead(payload).unwrap();
+      toast.success(rmId ? 'RM assigned successfully!' : 'RM unassigned');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to assign RM');
+    }
+  };
+
+  const handleAssignEm = async (lead: Lead, emId: number | null) => {
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: lead.assigned_to_rm || null,
+        assigned_to_em: emId,
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: lead.lead_status_id,
+      };
+      await updateLead(payload).unwrap();
+      toast.success(emId ? 'EM assigned successfully!' : 'EM unassigned');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to assign EM');
+    }
+  };
+
   // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
     let result = [...leads];
@@ -557,6 +615,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onScheduleVisit={handleScheduleVisit}
             onLeadActivity={handleLeadActivity}
             onUpdateStatus={handleUpdateStatus}
+            onAssignRm={handleAssignRm}
+            onAssignEm={handleAssignEm}
             sortField={sortField}
             sortOrder={sortOrder}
             onSort={handleSort}
