@@ -7,9 +7,9 @@ import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmD
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
-import { MetricCard } from "../../../shared/components/MetricCard/MetricCard";
+import { LeadActivityDialog } from "../components/LeadActivityDialog";
+import { FilterPopover } from "../../../shared/components/FilterPopover/FilterPopover";
 import { Loader2, UserPlus } from "lucide-react";
-import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -120,6 +120,12 @@ export const LeadsPage = () => {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+  const [activityLead, setActivityLead] = useState<Lead | null>(null);
+
+  // Junk Leads Flow State
+  const [activeView, setActiveView] = useState<string>('leads');
+  const [selectedJunkLead, setSelectedJunkLead] = useState<JunkLead | null>(null);
+  const [showReassignModal, setShowReassignModal] = useState(false);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -469,7 +475,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       </div>
 
       {/* Main Table Card */}
-      <div className="rounded-3xl border border-border/40 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
+      {activeView === 'leads' && (
+        <div className="rounded-3xl border border-border/40 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
         {/* Card Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
@@ -616,6 +623,39 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           />
         </div>
       </div>
+      )}
+
+      {activeView === 'junk' && (
+        <JunkLeadsPage 
+          onVerify={(lead) => {
+            setSelectedJunkLead(lead);
+            setActiveView('junk-review');
+          }} 
+        />
+      )}
+
+      {activeView === 'junk-review' && selectedJunkLead && (
+        <>
+          <LeadJunkReviewPage 
+            lead={selectedJunkLead}
+            onBack={() => setActiveView('junk')}
+            onReassign={() => setShowReassignModal(true)}
+            onApprove={() => {
+              toast.success("Lead junk approved");
+              setActiveView('junk');
+            }}
+          />
+          <ReassignRMModal
+            open={showReassignModal}
+            onClose={() => setShowReassignModal(false)}
+            lead={selectedJunkLead}
+            onConfirm={(rmId) => {
+              toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
+              setActiveView('junk');
+            }}
+          />
+        </>
+      )}
 
       <AppDrawer
         open={isDrawerOpen}
