@@ -402,7 +402,7 @@ export const LeadTable = ({
       width: '140px',
       render: (l: Lead) => (
         <span className="inline-block px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#1A3A5C] text-white">
-          {getSourceLabel(l.source_id)}
+          {getSourceLabel(l.source_id).split(' ')[0]}
         </span>
       ),
     },
