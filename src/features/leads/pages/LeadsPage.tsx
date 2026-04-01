@@ -210,6 +210,7 @@ export const LeadsPage = () => {
     useBulkAssignLeadsToRmMutation();
   const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] = 
     useBulkAssignLeadsToEmMutation();
+  const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
   const [scheduleVisit, { isLoading: isScheduling }] =
     useScheduleVisitMutation();
@@ -298,23 +299,23 @@ export const LeadsPage = () => {
     }
   };
 
-  const handleCreateNew = () => {
+  const handleCreateNew = React.useCallback(() => {
     setEditingLead(null);
     setIsDrawerOpen(true);
-  };
+  }, []);
 
-  const handleEdit = (lead: Lead) => {
+  const handleEdit = React.useCallback((lead: Lead) => {
     setEditingLead(lead);
     setIsDrawerOpen(true);
-  };
+  }, []);
 
-  const handleScheduleVisit = (lead: Lead) => {
+  const handleScheduleVisit = React.useCallback((lead: Lead) => {
     setSchedulingLead(lead);
-  };
+  }, []);
 
-  const handleDelete = (uuid: string) => {
+  const handleDelete = React.useCallback((uuid: string) => {
     setDeleteUuid(uuid);
-  };
+  }, []);
 
 const handleFormSubmit = async (values: CreateLeadRequest) => {
   try {
@@ -345,7 +346,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     }
   };
 
-  const handleUpdateStatus = async (lead: Lead, newStatusId: number) => {
+  const handleUpdateStatus = React.useCallback(async (lead: Lead, newStatusId: number) => {
     try {
       const payload: UpdateLeadRequest = {
         uuid: lead.uuid,
@@ -373,9 +374,9 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
-  };
+  }, [updateLead]);
 
-  const handleAssignRm = async (lead: Lead, rmId: number | null) => {
+  const handleAssignRm = React.useCallback(async (lead: Lead, rmId: number | null) => {
     try {
       const payload: UpdateLeadRequest = {
         uuid: lead.uuid,
@@ -402,9 +403,9 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to assign RM');
     }
-  };
+  }, [updateLead]);
 
-  const handleAssignEm = async (lead: Lead, emId: number | null) => {
+  const handleAssignEm = React.useCallback(async (lead: Lead, emId: number | null) => {
     try {
       const payload: UpdateLeadRequest = {
         uuid: lead.uuid,
@@ -431,7 +432,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to assign EM');
     }
-  };
+  }, [updateLead]);
 
   // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
@@ -666,8 +667,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             page={page}
             limit={limit}
             total={totalLeads}
-            onPageChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { page: v } }))}
-            onLimitChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }))}
+            onPageChange={React.useCallback((v: number) => dispatch(updateTabFilters({ tabKey, updates: { page: v } })), [dispatch, tabKey])}
+            onLimitChange={React.useCallback((v: number) => dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } })), [dispatch, tabKey])}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onScheduleVisit={handleScheduleVisit}
@@ -679,7 +680,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onSort={handleSort}
             offset={serverOffset}
             selectedUuids={selectedUuids}
-            onSelectUuids={(uuids) => dispatch(setSelectedUuids({ tabKey, uuids }))}
+            onSelectUuids={React.useCallback((uuids: string[]) => dispatch(setSelectedUuids({ tabKey, uuids })), [dispatch, tabKey])}
+            managers={managers}
           />
         </div>
       </div>

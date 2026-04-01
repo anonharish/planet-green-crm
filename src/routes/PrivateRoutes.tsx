@@ -14,7 +14,7 @@ const PlaygroundPage = React.lazy(() => import('../features/playground/pages/Pla
 
 export const PrivateRoutes = (
   <Route element={<MainLayout />}>
-    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/" element={<Navigate to="/leads" replace />} />
       <Route path="/update-password" element={<UpdatePasswordPage />} />
     <Route path="/dashboard" element={<DashboardPage />} />
     <Route path="/leads" element={<LeadsPage />} />

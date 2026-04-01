@@ -70,12 +70,12 @@ export const MainLayout = () => {
       icon: <UserCircle size={22} />,
       permission: PERMISSIONS.AGENT_VIEW,
     },
-    {
-      label: "UI Playground",
-      path: "/playground",
-      icon: <FlaskConical size={22} />,
-      permission: PERMISSIONS.MANAGER_VIEW,
-    },
+    // {
+    //   label: "UI Playground",
+    //   path: "/playground",
+    //   icon: <FlaskConical size={22} />,
+    //   permission: PERMISSIONS.MANAGER_VIEW,
+    // },
   ];
 
   const navItems = allNavItems.filter(

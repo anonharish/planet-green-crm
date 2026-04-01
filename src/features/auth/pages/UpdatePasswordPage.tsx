@@ -56,7 +56,7 @@ export const UpdatePasswordPage = () => {
 
         // redirect after delay
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate('/leads');
         }, 1500);
       }
     } catch (err: any) {

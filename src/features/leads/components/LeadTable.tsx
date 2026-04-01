@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import { Pencil, Trash2, MoreVertical, Eye, CalendarClock, ChevronDown, UserCircle2 } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Eye, CalendarClock, ChevronDown, UserCircle2, User } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Link } from 'react-router-dom';
 import {
@@ -54,6 +54,12 @@ const InitialsAvatar = ({ firstName, lastName, size = 'sm' }: { firstName?: stri
   );
 };
 
+const UnassignedAvatar = () => (
+  <div className="h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+    <User className="h-3.5 w-3.5 text-zinc-400" />
+  </div>
+);
+
 // --- Jira-style Assignee Popover for RM ---
 const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
   lead: Lead;
@@ -84,10 +90,8 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
               </>
             ) : (
               <>
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 flex items-center justify-center">
-                  <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
-                </div>
-                <span className="text-zinc-400 italic">Unassigned</span>
+                <UnassignedAvatar />
+                <span className="text-zinc-500 font-medium">Unassigned</span>
               </>
             )}
           </button>
@@ -106,10 +110,8 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
                 }}
                 className="flex items-center gap-2 py-2 cursor-pointer"
               >
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-300 flex items-center justify-center">
-                  <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
-                </div>
-                <span className="text-xs text-zinc-500">Unassigned</span>
+                <UnassignedAvatar />
+                <span className="text-xs text-zinc-500 font-medium">Unassigned</span>
               </CommandItem>
               {managers.map((m: any) => (
                 <CommandItem
@@ -169,10 +171,8 @@ const EmAssigneePopoverContent = ({
           }}
           className="flex items-center gap-2 py-2 cursor-pointer"
         >
-          <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-300 flex items-center justify-center">
-            <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
-          </div>
-          <span className="text-xs text-zinc-500">Unassigned</span>
+          <UnassignedAvatar />
+          <span className="text-xs text-zinc-500 font-medium">Unassigned</span>
         </CommandItem>
         {reportees.map((em: any) => (
           <CommandItem
@@ -233,10 +233,8 @@ const EmAssigneeCell = ({ lead, onAssign, disabled, emLabel }: {
               </>
             ) : (
               <>
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 flex items-center justify-center">
-                  <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
-                </div>
-                <span className="text-zinc-400 italic">
+                <UnassignedAvatar />
+                <span className="text-zinc-500 font-medium">
                   {!lead.assigned_to_rm ? 'Select RM first' : 'Unassigned'}
                 </span>
               </>
@@ -282,6 +280,7 @@ interface LeadTableProps {
   onSelectUuids?: (uuids: string[]) => void;
   offset?: number;
   maxHeight?: string;
+  managers?: any[];
 }
 
 export const LeadTable = ({
@@ -305,7 +304,8 @@ export const LeadTable = ({
   selectedUuids = [],
   onSelectUuids,
   offset = 0,
-  maxHeight
+  maxHeight,
+  managers = []
 }: LeadTableProps) => {
   const { currentRole, can } = usePermissions();
   const roleCode = currentRole?.code || '';
@@ -319,9 +319,6 @@ export const LeadTable = ({
     masterData,
     isLoading: isLookupLoading 
   } = useMasterDataLookup();
-
-  // Fetch all RMs for inline assignment
-  const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
 
   const fallback = (value: React.ReactNode) => value ?? '--';
 
@@ -481,7 +478,7 @@ export const LeadTable = ({
               variant="outline"
               size="sm"
               onClick={() => onEdit(lead)}
-              className="h-8 text-xs font-semibold rounded-lg border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3"
+              className="h-8 text-[11px] font-bold uppercase rounded-xl border-zinc-200 dark:border-zinc-800 text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all px-4 shadow-none"
             >
               Edit Lead
             </Button>
