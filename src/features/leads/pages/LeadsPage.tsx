@@ -8,8 +8,9 @@ import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { MetricCard } from "../../../shared/components/MetricCard/MetricCard";
+import { LeadActivityDialog } from "../components/LeadActivityDialog";
 import { Loader2, UserPlus } from "lucide-react";
-import { FilterPopover } from "../../../shared/components/FilterPopover/FilterPopover";
+import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -22,6 +23,7 @@ import {
   useScheduleVisitMutation,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
+   useAddLeadActivityMutation,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -101,11 +103,22 @@ export const LeadsPage = () => {
     dispatch(resetTabFilters(tabKey));
   };
 
+  const handleApplyFilters = (filters: {
+    statusIds: string[];
+    projectIds: string[];
+    rmIds: string[];
+    emIds: string[];
+  }) => {
+    dispatch(updateTabFilters({ tabKey, updates: { ...filters, page: 1 } }));
+  };
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showRandomConfirm, setShowRandomConfirm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+    const [activityLead, setActivityLead] = useState<Lead | null>(null);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -162,6 +175,8 @@ export const LeadsPage = () => {
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
+  const [addLeadActivity, { isLoading: isAddingActivity }] = 
+    useAddLeadActivityMutation();
 
   const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
   const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
@@ -214,6 +229,20 @@ export const LeadsPage = () => {
       setTargetRmId("");
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk assignment failed");
+    }
+  };
+
+  const handleLeadActivity = (lead: Lead) => {
+    setActivityLead(lead);
+  };
+
+  const handleLeadActivitySubmit = async (data: any) => {
+    try {
+      await addLeadActivity(data).unwrap();
+      toast.success("Activity added successfully");
+      setActivityLead(null);
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to add activity");
     }
   };
 
@@ -433,71 +462,35 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
           </div>
           <div className="flex items-center gap-3">
-            <FilterPopover
-              onReset={handleResetFilters}
-              activeFilterCount={statusIds.length + projectIds.length + rmIds.length + emIds.length}
-              align="end"
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setFilterOpen(true)}
             >
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Status</p>
-                  <MultiSelect
-                    options={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
-                    selected={statusIds}
-                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
-                    placeholder="Filter Status"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Project</p>
-                  <MultiSelect
-                    options={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
-                    selected={projectIds}
-                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
-                    placeholder="Filter Project"
-                  />
-                </div>
-                {isAdmin && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Relationship Manager</p>
-                    <Select
-                      value={rmIds[0] || "all"}
-                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === "all" ? [] : [v], emIds: [], page: 1 } }))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select RM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All RMs</SelectItem>
-                        {rms.map((r) => (
-                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {(isAdmin || isRM) && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Experience Manager</p>
-                    <Select
-                      value={emIds[0] || "all"}
-                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === "all" ? [] : [v], page: 1 } }))}
-                      disabled={isAdmin && rmIds.length === 0}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select EM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All EMs</SelectItem>
-                        {(isAdmin ? ems : emsReportees).map((e) => (
-                          <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </FilterPopover>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" /></svg>
+              Filter
+              {(statusIds.length + projectIds.length + rmIds.length + emIds.length) > 0 && (
+                <span className="px-1.5 py-0.5 text-xs font-bold bg-primary text-primary-foreground rounded-full">
+                  {statusIds.length + projectIds.length + rmIds.length + emIds.length}
+                </span>
+              )}
+            </Button>
+
+            <FilterDialog
+              open={filterOpen}
+              onClose={() => setFilterOpen(false)}
+              onApply={handleApplyFilters}
+              onReset={handleResetFilters}
+              statusIds={statusIds}
+              projectIds={projectIds}
+              rmIds={rmIds}
+              emIds={emIds}
+              statusOptions={(masterData?.lead_statuses || []).map((s) => ({ value: String(s.id), label: s.description }))}
+              projectOptions={(masterData?.projects || []).map((p) => ({ value: String(p.id), label: p.description }))}
+              rmOptions={rms}
+              showRmFilter={isAdmin}
+              showEmFilter={isAdmin || isRM}
+            />
 
             {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
               <Button
@@ -562,6 +555,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onScheduleVisit={handleScheduleVisit}
+            onLeadActivity={handleLeadActivity}
             onUpdateStatus={handleUpdateStatus}
             sortField={sortField}
             sortOrder={sortOrder}
@@ -636,6 +630,15 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         rms={rms}
         onSubmit={handleScheduleVisitSubmit}
         isLoading={isScheduling}
+      />
+
+      <LeadActivityDialog
+        key={activityLead?.uuid || 'activity-dialog'}
+        open={!!activityLead}
+        onClose={() => setActivityLead(null)}
+        lead={activityLead}
+        onSubmit={handleLeadActivitySubmit}
+        isLoading={isAddingActivity}
       />
     </div>
   );

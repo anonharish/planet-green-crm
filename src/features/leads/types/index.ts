@@ -16,7 +16,7 @@ export interface LeadCall {
   call_remarks: string | null;
   caller_user_id: number | null;
   caller_role_id: number | null;
-  call_s3_data: any | null;
+  call_s3_data: Record<string, unknown> | null;
   is_active: number;
   created_by: number;
   created_on: string;
@@ -121,7 +121,7 @@ export interface GetLeadsRequest {
   offset: number;
 }
 
-export interface GetLeadsResponse extends Array<Lead> {}
+export type GetLeadsResponse = Lead[];
 
 export interface GetCustomerLeadsRequest {
   customer_uuid: string;
@@ -151,4 +151,10 @@ export interface GetLeadsByRmIdRequest {
 export interface GetLeadsByEmIdRequest {
   assigned_to_em: number;
   offset: number;
+}
+
+export interface AddLeadActivityRequest {
+  lead_uuid: string;
+  remark: string;
+  activity_type: string;
 }
