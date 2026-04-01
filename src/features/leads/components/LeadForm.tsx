@@ -137,6 +137,8 @@ export const LeadForm = ({
 
     const payload: CreateLeadRequest = {
       ...values,
+      first_name: values.first_name || '',
+      last_name: values.last_name || '',
       // Source employee only if 'internal' selected
       source_employee_user_id: isInternal ? (values.source_employee_user_id ?? null) : null,
       assigned_to_rm: values.assigned_to_rm ?? null,
@@ -151,14 +153,8 @@ export const LeadForm = ({
       country: values.country || '',
       zip: values.zip || '',
     };
-    if (isEdit) {
-      onSubmit({
-        ...payload,
-        uuid: initialValues?.uuid,
-      });
-    } else {
+
     onSubmit(payload);
-    }
   };
 
   return (

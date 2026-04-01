@@ -101,10 +101,10 @@ export const FilterDialog = ({
   }, [open]);
 
   const sections: { key: FilterSection; label: string; show: boolean }[] = [
-    { key: "status", label: "Status", show: true },
-    { key: "projects", label: "Projects", show: true },
-    { key: "rms", label: "RM's", show: showRmFilter },
-    { key: "ems", label: "EM's", show: showEmFilter },
+    { key: "status" as FilterSection, label: "Status", show: true },
+    { key: "projects" as FilterSection, label: "Projects", show: true },
+    { key: "rms" as FilterSection, label: "RM's", show: showRmFilter },
+    { key: "ems" as FilterSection, label: "EM's", show: showEmFilter },
   ].filter((s) => s.show);
 
   const toggleMulti = (
