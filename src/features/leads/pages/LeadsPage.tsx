@@ -8,7 +8,6 @@ import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { MetricCard } from "../../../shared/components/MetricCard/MetricCard";
-import { LeadActivityDialog } from "../components/LeadActivityDialog";
 import { Loader2, UserPlus } from "lucide-react";
 import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
 import { Button } from "../../../components/ui/button";
@@ -49,6 +48,10 @@ import {
   setSelectedUuids,
 } from "../store/leadsSlice";
 import type { Lead, CreateLeadRequest, UpdateLeadRequest } from "../types";
+import { JunkLeadsPage } from './JunkLeadsPage';
+import { LeadJunkReviewPage } from './LeadJunkReviewPage';
+import { ReassignRMModal } from '../components/ReassignRMModal';
+import type { JunkLead } from '../data/junkLeadsData';
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -117,8 +120,6 @@ export const LeadsPage = () => {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
-  const [filterOpen, setFilterOpen] = useState(false);
-    const [activityLead, setActivityLead] = useState<Lead | null>(null);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -395,18 +396,20 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Leads Dashboard"
-        description="Manage and track your sales pipeline efficiency"
-        actions={
-          can(PERMISSIONS.LEAD_CREATE) ? (
-            <Button onClick={handleCreateNew} className="gap-2">
-              <UserPlus size={18} />
-              Create
-            </Button>
-          ) : undefined
-        }
-      />
+      {activeView === 'leads' ? (
+        <PageHeader
+          title="Leads Dashboard"
+          description="Manage and track your sales pipeline efficiency"
+          actions={
+            can(PERMISSIONS.LEAD_CREATE) ? (
+              <Button onClick={handleCreateNew} className="gap-2">
+                <UserPlus size={18} />
+                Create
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : null}
 
       {/* Search + Tabs Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -423,10 +426,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         {showTabs && (
           <div className="flex items-center gap-2 p-2 bg-[#f0f2f5] dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200/50 dark:border-zinc-800/50">
             <button
-              onClick={() => dispatch(setActiveTabAction(0))}
+              onClick={() => {
+                dispatch(setActiveTabAction(0));
+                setActiveView('leads');
+              }}
               className={cn(
                 "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
-                activeTab === 0
+                activeTab === 0 && activeView === 'leads'
                   ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
                   : "text-slate-500 hover:text-primary",
               )}
@@ -434,10 +440,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               Unassigned
             </button>
             <button
-              onClick={() => dispatch(setActiveTabAction(1))}
+              onClick={() => {
+                dispatch(setActiveTabAction(1));
+                setActiveView('leads');
+              }}
               className={cn(
                 "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
-                activeTab === 1
+                activeTab === 1 && activeView === 'leads'
                   ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
                   : "text-slate-500 hover:text-primary",
               )}
@@ -445,7 +454,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               Assigned
             </button>
             <button
-              className="px-5 py-2 text-sm font-bold rounded-md text-slate-500 hover:text-primary transition-all duration-200"
+              onClick={() => setActiveView('junk')}
+              className={cn(
+                "px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                activeView === 'junk' || activeView === 'junk-review'
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
+                  : "text-slate-500 hover:text-primary",
+              )}
             >
               Junk
             </button>
@@ -462,87 +477,123 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => setFilterOpen(true)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" /></svg>
-              Filter
-              {(statusIds.length + projectIds.length + rmIds.length + emIds.length) > 0 && (
-                <span className="px-1.5 py-0.5 text-xs font-bold bg-primary text-primary-foreground rounded-full">
-                  {statusIds.length + projectIds.length + rmIds.length + emIds.length}
-                </span>
-              )}
-            </Button>
-
-            <FilterDialog
-              open={filterOpen}
-              onClose={() => setFilterOpen(false)}
-              onApply={handleApplyFilters}
+            <FilterPopover
               onReset={handleResetFilters}
-              statusIds={statusIds}
-              projectIds={projectIds}
-              rmIds={rmIds}
-              emIds={emIds}
-              statusOptions={(masterData?.lead_statuses || []).map((s) => ({ value: String(s.id), label: s.description }))}
-              projectOptions={(masterData?.projects || []).map((p) => ({ value: String(p.id), label: p.description }))}
-              rmOptions={rms}
-              showRmFilter={isAdmin}
-              showEmFilter={isAdmin || isRM}
-            />
-
-            {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-              <Button
-                onClick={() => setShowRandomConfirm(true)}
-                disabled={activeTab === 0 || isAnyBulkAssigning || leads.length === 0}
-                className="gap-2"
-              >
-                {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Bulk Auto-Assign
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-            <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                  {selectedUuids.length} selected
-                </span>
-                <div className="flex items-center gap-2">
-                  <Select value={targetRmId} onValueChange={setTargetRmId}>
-                    <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950">
-                      <SelectValue placeholder={assignmentLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {assignmentUsers.map((r: any) => (
-                        <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    disabled={!targetRmId || isAnyBulkAssigning}
-                    onClick={handleBulkAssign}
-                    className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md px-4 font-bold"
-                  >
-                    {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Assign Selection"}
-                  </Button>
+              activeFilterCount={statusIds.length + projectIds.length + rmIds.length + emIds.length}
+              align="end"
+            >
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Status</p>
+                  <MultiSelect
+                    options={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
+                    selected={statusIds}
+                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
+                    placeholder="Filter Status"
+                  />
                 </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Project</p>
+                  <MultiSelect
+                    options={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
+                    selected={projectIds}
+                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
+                    placeholder="Filter Project"
+                  />
+                </div>
+                {isAdmin && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Relationship Manager</p>
+                    <Select
+                      value={rmIds[0] || "all"}
+                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === "all" ? [] : [v], emIds: [], page: 1 } }))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select RM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All RMs</SelectItem>
+                        {rms.map((r) => (
+                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(isAdmin || isRM) && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Experience Manager</p>
+                    <Select
+                      value={emIds[0] || "all"}
+                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === "all" ? [] : [v], page: 1 } }))}
+                      disabled={isAdmin && rmIds.length === 0}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select EM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All EMs</SelectItem>
+                        {(isAdmin ? ems : emsReportees).map((e) => (
+                          <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
-                className="text-zinc-500 hover:text-zinc-800 font-medium"
-              >
-                Cancel
-              </Button>
+            </FilterPopover>
+
+              {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
+                <Button
+                  onClick={() => setShowRandomConfirm(true)}
+                  disabled={activeTab === 0 || isAnyBulkAssigning || leads.length === 0}
+                  className="gap-2"
+                >
+                  {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Bulk Auto-Assign
+                </Button>
+              )}
             </div>
-          )}
+          </div>
+
+          <div className="p-4 space-y-4">
+            {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
+              <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                    {selectedUuids.length} selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Select value={targetRmId} onValueChange={setTargetRmId}>
+                      <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950">
+                        <SelectValue placeholder={assignmentLabel} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assignmentUsers.map((r: any) => (
+                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      disabled={!targetRmId || isAnyBulkAssigning}
+                      onClick={handleBulkAssign}
+                      className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md px-4 font-bold"
+                    >
+                      {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Assign Selection"}
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
+                  className="text-zinc-500 hover:text-zinc-800 font-medium"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
 
           <LeadTable
             data={sortedLeads}
@@ -555,7 +606,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onScheduleVisit={handleScheduleVisit}
-            onLeadActivity={handleLeadActivity}
             onUpdateStatus={handleUpdateStatus}
             sortField={sortField}
             sortOrder={sortOrder}
