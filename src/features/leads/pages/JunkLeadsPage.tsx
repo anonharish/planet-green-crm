@@ -83,34 +83,7 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({ onVerify }) => {
         <p className="text-zinc-500 font-medium">Streamline and audit the junk lead restoration process</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 bg-white dark:bg-zinc-950 p-8 rounded-[2.5rem] border border-zinc-200/60 dark:border-zinc-800/60 relative overflow-hidden group shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
-          <div className="relative z-10 space-y-4">
-            <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em]">Pending Reviews</span>
-            <div className="flex items-baseline gap-3">
-              <span className="text-7xl font-black text-[#0f3d6b]">124</span>
-              <span className="text-zinc-400 text-xl font-bold">Leads</span>
-            </div>
-            <p className="text-zinc-500 text-base leading-relaxed max-w-lg font-medium">
-              High-density queue of potential false-negatives marked by Relationship Managers. Verify to restore them to the active pipeline.
-            </p>
-          </div>
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <div className="w-40 h-40 bg-[#0f3d6b] rounded-full blur-[60px]" />
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 bg-white dark:bg-zinc-950 p-8 rounded-[2.5rem] border border-zinc-200/60 dark:border-zinc-800/60 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
-          <div className="space-y-4">
-            <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em]">Accuracy Rate</span>
-            <div className="text-6xl font-black text-zinc-900 dark:text-white tracking-tighter">92.4%</div>
-          </div>
-          <div className="flex items-center gap-2 text-emerald-500 font-black text-sm bg-emerald-50 dark:bg-emerald-500/10 w-fit px-4 py-2 rounded-full mt-6">
-            <ArrowUpRight size={18} strokeWidth={3} />
-            <span>+2.1% from last week</span>
-          </div>
-        </div>
-      </div>
+      
 
       <div className="bg-white dark:bg-zinc-950 rounded-[2.5rem] border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
         <div className="px-8 py-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/30 dark:bg-zinc-900/10">
@@ -118,9 +91,6 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({ onVerify }) => {
             <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Active Junk Leads Queue</h2>
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.4)]" />
           </div>
-          <Button className="bg-[#1e293b] hover:bg-[#0f172a] text-white font-black px-8 py-6 rounded-2xl shadow-lg transition-all hover:translate-y-[-2px] active:translate-y-0">
-            Bulk Verify Leads
-          </Button>
         </div>
         <div className="p-6">
           <DataTable
