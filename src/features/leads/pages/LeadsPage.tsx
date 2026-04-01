@@ -621,6 +621,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             sortOrder={sortOrder}
             onSort={handleSort}
             offset={serverOffset}
+            maxHeight="calc(100vh - 200px)"
             selectedUuids={selectedUuids}
             onSelectUuids={(uuids) => dispatch(setSelectedUuids({ tabKey, uuids }))}
           />

@@ -17,6 +17,12 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { cn } from '../../../utils';
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef as TanStackColumnDef,
+} from '@tanstack/react-table';
 
 export interface ColumnDef<T> {
   key: string;
@@ -44,6 +50,7 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   rowKey: (row: T) => string | number;
   offset?: number;
+  maxHeight?: string;
 }
 
 const SkeletonRow = ({ columns }: { columns: number }) => (
@@ -71,79 +78,122 @@ export function DataTable<T>({
   emptyMessage = 'No records found.',
   rowKey,
   offset = 0,
+  maxHeight,
 }: DataTableProps<T>) {
   const totalPages = Math.ceil(total / limit);
   const globalStart = (page - 1) * limit;
   const from = total === 0 ? 0 : globalStart + 1;
   const to = Math.min(globalStart + limit, total);
 
-  // Relative slicing: calculate where in the provided 'data' array the current 'page' starts
   const relativeStart = Math.max(0, globalStart - offset);
   const slicedData = data.slice(relativeStart, relativeStart + limit);
 
+  const tanstackColumns = React.useMemo<TanStackColumnDef<T, any>[]>(() => {
+    return columns.map((col) => ({
+      id: col.key,
+      header: () => col.header,
+      cell: (info) => col.render(info.row.original, info.row.index),
+      size: col.width ? parseInt(col.width) : undefined,
+      meta: {
+        width: col.width,
+        sortable: col.sortable,
+      },
+    }));
+  }, [columns]);
+
+  const table = useReactTable({
+    data: slicedData,
+    columns: tanstackColumns,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    manualSorting: true,
+  });
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Table */}
-      <div className="rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#F8F9FA] dark:bg-zinc-900/50 border-y border-zinc-100 dark:border-zinc-800">
-              {columns.map((col) => (
-                <TableHead 
-                  key={col.key} 
-                  style={col.width ? { width: col.width } : undefined}
-                  className={cn(
-                    "font-bold text-[#6C757D] dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11",
-                    col.sortable && "p-0"
-                  )}
-                >
-                  {col.sortable ? (
-                    <button
-                      onClick={() => onSort?.(col.key)}
-                      className="flex items-center gap-1.5 w-full h-full px-4 py-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-800 transition-colors text-left"
-                    >
-                      <span>{col.header}</span>
-                      <div className="flex flex-col opacity-40">
-                        {sortField === col.key ? (
-                          sortOrder === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
-                        ) : (
-                          <ArrowUpDown className="h-2.5 w-2.5" />
+      {/* Table Container */}
+      <div 
+        className="rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden relative bg-white dark:bg-zinc-950"
+      >
+        <div 
+          className="overflow-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800" 
+          style={maxHeight ? { maxHeight } : undefined}
+        >
+          <Table className="min-w-full">
+            <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
+                  {headerGroup.headers.map((header) => {
+                    const meta = header.column.columnDef.meta as { width?: string; sortable?: boolean } | undefined;
+                    return (
+                      <TableHead
+                        key={header.id}
+                        style={meta?.width ? { width: meta.width, minWidth: meta.width } : undefined}
+                        className={cn(
+                          "font-bold text-[#6C757D] dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11 whitespace-nowrap",
+                          meta?.sortable && "p-0"
                         )}
-                      </div>
-                    </button>
-                  ) : (
-                    <div className="px-4 py-3">
-                      {col.header}
-                    </div>
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: limit }).map((_, i) => (
-                <SkeletonRow key={i} columns={columns.length} />
-              ))
-            ) : data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-12 text-zinc-400 text-sm">
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            ) : (
-              slicedData.map((row, index) => (
-                <TableRow key={rowKey(row)} className="hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                  {columns.map((col) => (
-                    <TableCell key={col.key} className="text-sm text-zinc-700 dark:text-zinc-300 py-3">
-                      {col.render(row, index)}
-                    </TableCell>
-                  ))}
+                      >
+                        {header.isPlaceholder ? null : (
+                          meta?.sortable ? (
+                            <button
+                              onClick={() => onSort?.(header.id)}
+                              className="flex items-center gap-1.5 w-full h-full px-4 py-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-800 transition-colors text-left whitespace-nowrap"
+                            >
+                              <span className="truncate">
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                              </span>
+                              <div className="flex flex-col opacity-40 shrink-0">
+                                {sortField === header.id ? (
+                                  sortOrder === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
+                                ) : (
+                                  <ArrowUpDown className="h-2.5 w-2.5" />
+                                )}
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="px-4 py-3 whitespace-nowrap">
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                            </div>
+                          )
+                        )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: limit }).map((_, i) => (
+                  <SkeletonRow key={i} columns={columns.length} />
+                ))
+              ) : table.getRowModel().rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="text-center py-12 text-zinc-400 text-sm">
+                    {emptyMessage}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-zinc-100 dark:border-zinc-800">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="text-sm text-zinc-700 dark:text-zinc-300 py-3">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination Controls */}

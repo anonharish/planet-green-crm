@@ -139,23 +139,77 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
   );
 };
 
-// --- Jira-style Assignee Popover for EM ---
-const EmAssigneeCell = ({ lead, onAssign, disabled }: {
-  lead: Lead;
+// --- EM Popover Content (Lazy Loaded) ---
+const EmAssigneePopoverContent = ({ 
+  lead, 
+  onAssign, 
+  setOpen 
+}: { 
+  lead: Lead; 
   onAssign: (lead: Lead, emId: number | null) => void;
-  disabled: boolean;
+  setOpen: (open: boolean) => void;
 }) => {
-  const [open, setOpen] = useState(false);
-
-  // Fetch reportees for this lead's RM
   const { data: reportees = [], isLoading: isLoadingReportees } = useGetReporteesQuery(
     { reporting_manager_id: lead.assigned_to_rm as number, offset: 0 },
     { skip: !lead.assigned_to_rm }
   );
 
-  const assigned = reportees.find((em: any) => em.id === lead.assigned_to_em);
+  return (
+    <Command>
+      <CommandInput placeholder="Search EM..." className="h-9 text-xs" />
+      <CommandEmpty className="py-3 text-xs text-center text-zinc-400">
+        {isLoadingReportees ? 'Loading...' : 'No EM found'}
+      </CommandEmpty>
+      <CommandGroup className="max-h-48 overflow-y-auto">
+        <CommandItem
+          value="unassigned"
+          onSelect={() => {
+            onAssign(lead, null);
+            setOpen(false);
+          }}
+          className="flex items-center gap-2 py-2 cursor-pointer"
+        >
+          <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-300 flex items-center justify-center">
+            <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
+          </div>
+          <span className="text-xs text-zinc-500">Unassigned</span>
+        </CommandItem>
+        {reportees.map((em: any) => (
+          <CommandItem
+            key={em.id}
+            value={`${em.first_name} ${em.last_name}`}
+            onSelect={() => {
+              onAssign(lead, em.id);
+              setOpen(false);
+            }}
+            className={cn(
+              "flex items-center gap-2 py-2 cursor-pointer",
+              lead.assigned_to_em === em.id && "bg-primary/5"
+            )}
+          >
+            <InitialsAvatar firstName={em.first_name} lastName={em.last_name} />
+            <span className="text-xs font-medium">{em.first_name} {em.last_name}</span>
+            {lead.assigned_to_em === em.id && (
+              <span className="ml-auto text-[9px] text-primary font-bold">CURRENT</span>
+            )}
+          </CommandItem>
+        ))}
+      </CommandGroup>
+    </Command>
+  );
+};
 
+// --- Jira-style Assignee Cell for EM ---
+const EmAssigneeCell = ({ lead, onAssign, disabled, emLabel }: {
+  lead: Lead;
+  onAssign: (lead: Lead, emId: number | null) => void;
+  disabled: boolean;
+  emLabel: string;
+}) => {
+  const [open, setOpen] = useState(false);
   const isDisabled = disabled || !lead.assigned_to_rm;
+
+  const initials = emLabel !== '--' ? emLabel.split(' ').map(n => n[0]).join('') : '';
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -168,11 +222,13 @@ const EmAssigneeCell = ({ lead, onAssign, disabled }: {
               isDisabled && "opacity-50 cursor-not-allowed"
             )}
           >
-            {assigned ? (
+            {lead.assigned_to_em ? (
               <>
-                <InitialsAvatar firstName={assigned.first_name} lastName={assigned.last_name} />
+                <div className="h-6 w-6 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center font-bold shrink-0 text-[9px]">
+                  {initials}
+                </div>
                 <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                  {assigned.first_name} {assigned.last_name}
+                  {emLabel}
                 </span>
               </>
             ) : (
@@ -188,53 +244,19 @@ const EmAssigneeCell = ({ lead, onAssign, disabled }: {
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-56 p-0" align="start">
-          <Command>
-            <CommandInput placeholder="Search EM..." className="h-9 text-xs" />
-            <CommandEmpty className="py-3 text-xs text-center text-zinc-400">
-              {isLoadingReportees ? 'Loading...' : 'No EM found'}
-            </CommandEmpty>
-            <CommandGroup className="max-h-48 overflow-y-auto">
-              {/* Unassigned option */}
-              <CommandItem
-                value="unassigned"
-                onSelect={() => {
-                  onAssign(lead, null);
-                  setOpen(false);
-                }}
-                className="flex items-center gap-2 py-2 cursor-pointer"
-              >
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-300 flex items-center justify-center">
-                  <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
-                </div>
-                <span className="text-xs text-zinc-500">Unassigned</span>
-              </CommandItem>
-              {reportees.map((em: any) => (
-                <CommandItem
-                  key={em.id}
-                  value={`${em.first_name} ${em.last_name}`}
-                  onSelect={() => {
-                    onAssign(lead, em.id);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center gap-2 py-2 cursor-pointer",
-                    lead.assigned_to_em === em.id && "bg-primary/5"
-                  )}
-                >
-                  <InitialsAvatar firstName={em.first_name} lastName={em.last_name} />
-                  <span className="text-xs font-medium">{em.first_name} {em.last_name}</span>
-                  {lead.assigned_to_em === em.id && (
-                    <span className="ml-auto text-[9px] text-primary font-bold">CURRENT</span>
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
+          {open && (
+            <EmAssigneePopoverContent 
+              lead={lead} 
+              onAssign={onAssign} 
+              setOpen={setOpen} 
+            />
+          )}
         </PopoverContent>
       </Popover>
     </div>
   );
 };
+
 
 // --- Main LeadTable ---
 interface LeadTableProps {
@@ -259,6 +281,7 @@ interface LeadTableProps {
   selectedUuids?: string[];
   onSelectUuids?: (uuids: string[]) => void;
   offset?: number;
+  maxHeight?: string;
 }
 
 export const LeadTable = ({
@@ -281,7 +304,8 @@ export const LeadTable = ({
   onSort,
   selectedUuids = [],
   onSelectUuids,
-  offset = 0
+  offset = 0,
+  maxHeight
 }: LeadTableProps) => {
   const { currentRole, can } = usePermissions();
   const roleCode = currentRole?.code || '';
@@ -301,7 +325,7 @@ export const LeadTable = ({
 
   const fallback = (value: React.ReactNode) => value ?? '--';
 
-  const columns: ColumnDef<Lead>[] = [
+  const columns: ColumnDef<Lead>[] = React.useMemo(() => [
     ...( can(PERMISSIONS.LEAD_BULK_ACTIONS) ? [
       {
         key: 'selection',
@@ -340,8 +364,8 @@ export const LeadTable = ({
     {
       key: 'lead_id',
       header: 'LEAD ID',
-      width: '100px',
-      render: (l) => (
+      width: '110px',
+      render: (l: Lead) => (
         <Link 
           to={`/leads/${l.uuid}`} 
           className="text-zinc-600 dark:text-zinc-300 font-semibold hover:text-primary transition-colors text-xs"
@@ -354,8 +378,8 @@ export const LeadTable = ({
       key: 'customer_name',
       header: 'CUSTOMER NAME',
       sortable: true,
-      width: '200px',
-      render: (l) => (
+      width: '220px',
+      render: (l: Lead) => (
         <span className="font-semibold text-zinc-800 dark:text-zinc-100 text-xs">
           {fallback(l.first_name)} {l.last_name || ''}
         </span>
@@ -364,8 +388,8 @@ export const LeadTable = ({
     {
       key: 'contact_details',
       header: 'CONTACT DETAILS',
-      width: '220px',
-      render: (l) => (
+      width: '240px',
+      render: (l: Lead) => (
         <div className="flex flex-col gap-0.5">
           <span className="text-zinc-800 dark:text-zinc-100 font-medium text-xs">{fallback(l.phone_number)}</span>
           <span className="text-zinc-400 text-[11px] truncate">{l.email_address || '--'}</span>
@@ -376,7 +400,7 @@ export const LeadTable = ({
       key: 'source_id',
       header: 'SOURCE',
       width: '140px',
-      render: (l) => (
+      render: (l: Lead) => (
         <span className="inline-block px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#1A3A5C] text-white">
           {getSourceLabel(l.source_id)}
         </span>
@@ -386,14 +410,14 @@ export const LeadTable = ({
       key: 'project_id',
       header: 'PROJECT',
       width: '150px',
-      render: (l) => <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{getProjectLabel(l.project_id)}</span>,
+      render: (l: Lead) => <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{getProjectLabel(l.project_id)}</span>,
     },
     {
       key: 'lead_status_id',
       header: 'STATUS',
       sortable: true,
       width: '150px',
-      render: (l) => (
+      render: (l: Lead) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Select 
             value={String(l.lead_status_id)} 
@@ -419,7 +443,7 @@ export const LeadTable = ({
       {
         key: 'assigned_to_rm',
         header: 'ASSIGNED RM',
-        width: '200px',
+        width: '220px',
         render: (l: Lead) => (
           <RmAssigneeCell
             lead={l}
@@ -435,12 +459,13 @@ export const LeadTable = ({
       {
         key: 'assigned_to_em',
         header: 'ASSIGNED EM',
-        width: '200px',
+        width: '220px',
         render: (l: Lead) => (
           <EmAssigneeCell
             lead={l}
             onAssign={onAssignEm || (() => {})}
             disabled={!can(PERMISSIONS.LEAD_EDIT)}
+            emLabel={getEmLabel(l.assigned_to_em)}
           />
         ),
       }
@@ -449,7 +474,7 @@ export const LeadTable = ({
       key: 'actions',
       header: 'ACTIONS',
       width: '120px',
-      render: (lead) => (
+      render: (lead: Lead) => (
         <div className="flex items-center gap-1">
           {can(PERMISSIONS.LEAD_EDIT) && (
             <Button
@@ -511,7 +536,8 @@ export const LeadTable = ({
         </div>
       ),
     },
-  ];
+  ], [data, selectedUuids, can, roleCode, masterData, managers, onAssignRm, onAssignEm, onUpdateStatus, onEdit, onScheduleVisit, onLeadActivity, onDelete, getSourceLabel, getProjectLabel, getEmLabel]);
+
 
   return (
     <DataTable
@@ -528,6 +554,7 @@ export const LeadTable = ({
       sortOrder={sortOrder}
       onSort={onSort as (key: string) => void}
       offset={offset}
+      maxHeight={maxHeight}
     />
   );
 };
