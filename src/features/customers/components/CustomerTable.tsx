@@ -1,5 +1,5 @@
-import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
+import { SearchInput } from '../../../shared/components/FilterBar/FilterBar';
 import { Badge } from '../../../components/ui/badge';
 import type { Customer } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
@@ -31,6 +31,8 @@ interface CustomerTableProps {
   offset?: number;
   onViewLeads?: (customer: Customer) => void;
   onEdit?: (customer: Customer) => void;
+  search: string;
+  onSearchChange: (value: string) => void;
 }
 
 export const CustomerTable = ({
@@ -46,7 +48,9 @@ export const CustomerTable = ({
   onSort,
   offset = 0,
   onViewLeads,
-  onEdit
+  onEdit,
+  search,
+  onSearchChange
 }: CustomerTableProps) => {
   const { getCustomerStatusLabel, isLoading: isLookupLoading } = useMasterDataLookup();
   const { can } = usePermissions();
@@ -55,117 +59,126 @@ export const CustomerTable = ({
 
   const columns: ColumnDef<Customer>[] = [
     {
-      key: 'first_name',
-      header: 'First Name',
+      key: 'uuid',
+      header: 'CUSTOMER ID',
+      width: '120px',
+      render: (c) => (
+        <span className="font-bold text-primary text-xs uppercase tracking-tighter ml-4">
+          #{(c.uuid || '').slice(0, 6)}
+        </span>
+      ),
+    },
+    {
+      key: 'name',
+      header: 'NAME',
       sortable: true,
-      width: '180px',
-      render: (c) => <span className="font-medium text-zinc-900 dark:text-zinc-100">{fallback(c.first_name)}</span>,
+      width: '200px',
+      render: (c) => (
+        <span className="font-bold text-primary text-xs">
+          {c.first_name} {c.last_name}
+        </span>
+      ),
     },
     {
-      key: 'last_name',
-      header: 'Last Name',
-      width: '180px',
-      render: (c) => <span>{fallback(c.last_name)}</span>,
-    },
-    {
-      key: 'phone_number',
-      header: 'Phone Number',
-      width: '160px',
-      render: (c) => <span className="text-zinc-500 font-mono text-xs">{fallback(c.phone_number)}</span>,
-    },
-    {
-      key: 'email_address',
-      header: 'Email',
-      width: '240px',
-      render: (c) => <span className="text-zinc-500">{fallback(c.email_address)}</span>,
+      key: 'contact_info',
+      header: 'CONTACT INFO',
+      width: '220px',
+      render: (c) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-zinc-800 dark:text-zinc-200 text-xs">{fallback(c.phone_number)}</span>
+          <span className="text-[11px] text-zinc-400">{fallback(c.email_address)}</span>
+        </div>
+      ),
     },
     {
       key: 'occupation',
-      header: 'Occupation',
-      width: '200px',
-      render: (c) => <span className="text-xs text-zinc-500 italic">{fallback(c.occupation)}</span>,
+      header: 'OCCUPATION',
+      width: '180px',
+      render: (c) => (
+        <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">
+          {fallback(c.occupation)}
+        </span>
+      ),
     },
     {
       key: 'city',
-      header: 'City',
+      header: 'CITY',
       width: '150px',
-      render: (c) => <span className="text-xs">{fallback(c.city)}</span>,
+      render: (c) => <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">{fallback(c.city)}</span>,
     },
     {
       key: 'customer_status_id',
-      header: 'Status',
-      width: '150px',
+      header: 'STATUS',
+      width: '140px',
       render: (c) => (
-        <Badge variant="outline" className="text-[10px] py-0 px-2 font-bold uppercase bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+        <Badge variant="outline" className="text-[10px] py-0.5 px-3 font-bold uppercase rounded-full border-primary/40 text-primary bg-primary/5">
           {getCustomerStatusLabel(c.customer_status_id)}
         </Badge>
       ),
     },
     {
       key: 'created_on',
-      header: 'Created On',
+      header: 'CREATED ON',
       sortable: true,
-      width: '180px',
+      width: '150px',
       render: (c) => (
-        <span className="text-xs text-zinc-500">
-          {c.created_on ? new Date(c.created_on).toLocaleDateString() : '--'}
+        <span className="text-zinc-500 font-medium text-xs">
+          {c.created_on ? new Date(c.created_on).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '--'}
         </span>
       ),
     },
     {
       key: 'actions',
-      header: 'Actions',
-      width: '60px',
+      header: 'ACTIONS',
+      width: '100px',
       render: (c) => (
-        <div className="flex items-center justify-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 text-xs">
-              <DropdownMenuLabel className="font-normal text-zinc-500 uppercase px-3 py-2">
-                Customer Actions
-              </DropdownMenuLabel>
-              <DropdownMenuItem 
-                onClick={() => onViewLeads?.(c)} 
-                className="cursor-pointer gap-2 py-2"
-              >
-                <Eye className="h-4 w-4 text-zinc-500" />
-                <span>View Leads</span>
-              </DropdownMenuItem>
-              {can(PERMISSIONS.CUSTOMER_EDIT) && (
-                <DropdownMenuItem 
-                  onClick={() => onEdit?.(c)} 
-                  className="cursor-pointer gap-2 py-2"
-                >
-                  <Pencil className="h-4 w-4 text-blue-500" />
-                  <span>Edit Customer</span>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onViewLeads?.(c)}
+          className="h-8 text-[11px] font-bold uppercase rounded-xl border-zinc-200 dark:border-zinc-800 text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all px-4 shadow-none"
+        >
+          View Leads
+        </Button>
       ),
     },
   ];
 
   return (
-    <DataTable
-      columns={columns as any}
-      data={data}
-      isLoading={isLoading || isLookupLoading}
-      page={page}
-      limit={limit}
-      total={total}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      rowKey={(c) => c.uuid}
-      sortField={sortField}
-      sortOrder={sortOrder}
-      onSort={onSort as any}
-      offset={offset}
-    />
+    <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] overflow-hidden shadow-sm">
+      {/* Integrated Header */}
+      <div className="px-8 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Active Customers Queue
+          </h2>
+          <div className="h-2 w-2 rounded-full bg-red-500 mt-1" />
+        </div>
+        <div className="w-full max-w-xs transition-all duration-300 focus-within:max-w-md">
+          <SearchInput 
+            value={search} 
+            onChange={onSearchChange} 
+            placeholder="Search Customers" 
+          />
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns as any}
+        data={data}
+        isLoading={isLoading || isLookupLoading}
+        page={page}
+        limit={limit}
+        total={total}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        rowKey={(c) => c.uuid}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSort={onSort as any}
+        offset={offset}
+        variant="embed"
+      />
+    </div>
   );
 };
