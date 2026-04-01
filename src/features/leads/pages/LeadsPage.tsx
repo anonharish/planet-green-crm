@@ -8,6 +8,7 @@ import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { MetricCard } from "../../../shared/components/MetricCard/MetricCard";
+import { LeadActivityDialog } from "../components/LeadActivityDialog";
 import { Loader2, UserPlus } from "lucide-react";
 import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
 import { Button } from "../../../components/ui/button";
@@ -22,6 +23,7 @@ import {
   useScheduleVisitMutation,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
+   useAddLeadActivityMutation,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -116,6 +118,7 @@ export const LeadsPage = () => {
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+    const [activityLead, setActivityLead] = useState<Lead | null>(null);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -172,6 +175,8 @@ export const LeadsPage = () => {
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
+  const [addLeadActivity, { isLoading: isAddingActivity }] = 
+    useAddLeadActivityMutation();
 
   const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
   const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
@@ -224,6 +229,20 @@ export const LeadsPage = () => {
       setTargetRmId("");
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk assignment failed");
+    }
+  };
+
+  const handleLeadActivity = (lead: Lead) => {
+    setActivityLead(lead);
+  };
+
+  const handleLeadActivitySubmit = async (data: any) => {
+    try {
+      await addLeadActivity(data).unwrap();
+      toast.success("Activity added successfully");
+      setActivityLead(null);
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to add activity");
     }
   };
 
@@ -536,6 +555,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onScheduleVisit={handleScheduleVisit}
+            onLeadActivity={handleLeadActivity}
             onUpdateStatus={handleUpdateStatus}
             sortField={sortField}
             sortOrder={sortOrder}
@@ -610,6 +630,15 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         rms={rms}
         onSubmit={handleScheduleVisitSubmit}
         isLoading={isScheduling}
+      />
+
+      <LeadActivityDialog
+        key={activityLead?.uuid || 'activity-dialog'}
+        open={!!activityLead}
+        onClose={() => setActivityLead(null)}
+        lead={activityLead}
+        onSubmit={handleLeadActivitySubmit}
+        isLoading={isAddingActivity}
       />
     </div>
   );

@@ -35,6 +35,7 @@ import { cn } from '../../../utils';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
 import type { CreateLeadRequest } from '../types';
 
 const formSchema = z.object({
@@ -42,9 +43,9 @@ const formSchema = z.object({
   last_name: z.string().optional().or(z.literal('')),
   phone_number: z.string().min(10, 'Phone number must be at least 10 digits'),
   email_address: z.string().email('Invalid email address').optional().or(z.literal('')),
-  source_type: z.string().min(1, 'Source is required'), // UI-only
+  source_id: z.number().min(1, 'Source is required'),
   source_employee_user_id: z.number().nullable().optional(),
-  project_selection: z.string().min(1, 'Project is required'), // UI-only
+  project_id: z.number().min(1, 'Project is required'),
   assigned_to_rm: z.number().nullable().optional(),
   assigned_to_em: z.number().nullable().optional(),
   occupation: z.string().optional().or(z.literal('')),
@@ -58,7 +59,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface LeadFormProps {
-  onSubmit: (values: any) => void;
+  onSubmit: (values: CreateLeadRequest) => void;
   isLoading?: boolean;
   initialValues?: any;
   isEdit?: boolean;
@@ -74,11 +75,11 @@ export const LeadForm = ({
   const { user: currentUser, roleCode } = usePermissions();
   const isRM = roleCode === 'RELMNG';
   const isEM = roleCode === 'EXPMNG';
-
-  // Fetch all users for source autocomplete
+  
+  const { data: masterData } = useGetAllMasterDataQuery();
+  
   const { data: allUsers = [], isLoading: isLoadingUsers } = useGetAllUsersQuery({ offset: 0 });
   
-  // Fetch Managers/Agents for assignment dropdowns
   const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
   
   const form = useForm<FormValues>({
@@ -88,9 +89,9 @@ export const LeadForm = ({
       last_name: initialValues?.last_name || '',
       phone_number: initialValues?.phone_number || '',
       email_address: initialValues?.email_address || '',
-      source_type: initialValues?.source_employee_user_id ? 'internal' : (initialValues?.source_id === 1 ? 'facebook' : 'internal'),
+      source_id: initialValues?.source_id || undefined,
       source_employee_user_id: initialValues?.source_employee_user_id || (isEdit ? null : Number(currentUser?.id)),
-      project_selection: initialValues?.project_id === 1 ? 'dates_county' : 'planet_green',
+      project_id: initialValues?.project_id || undefined,
       assigned_to_rm: initialValues?.assigned_to_rm || null,
       assigned_to_em: initialValues?.assigned_to_em || null,
       occupation: initialValues?.occupation || '',
@@ -102,7 +103,7 @@ export const LeadForm = ({
     },
   });
 
-  const sourceType = form.watch('source_type');
+  const sourceId = form.watch('source_id');
   const selectedRmId = form.watch('assigned_to_rm');
 
   // Fetch reportees (EMs) for the selected RM
@@ -130,38 +131,33 @@ export const LeadForm = ({
   }, [selectedRmId, form]);
 
   const handleInternalSubmit = (values: FormValues) => {
-    // Explicitly exclude UI-only fields from the spread
-    const { source_type, project_selection, ...rest } = values;
-    
-    const payload: CreateLeadRequest = {
-  ...rest,
-  first_name: values.first_name || '',
-  last_name: values.last_name || '',
-  source_employee_user_id: source_type === 'internal'
-    ? (values.source_employee_user_id ?? null)
-    : null,
-  assigned_to_rm: values.assigned_to_rm ?? null,
-  assigned_to_em: values.assigned_to_em ?? null,
-      lead_status_id: initialValues?.lead_status_id || 1, // Default to NEW
-      lead_priority_id: initialValues?.lead_priority_id || 1, // Default to NEW
-      source_id: source_type === 'internal' ? 4 : (source_type === 'facebook' ? 2 : (source_type === 'whatsapp' ? 1 : 5)),
-  project_id: project_selection === 'planet_green' ? 2 : 1,
+    // Explicitly exclude Internal Employee logic check based on master data code
+    const internalSource = masterData?.sources.find(s => s.code === 'INTERNAL' || s.description.toLowerCase().includes('internal'));
+    const isInternal = values.source_id === internalSource?.id;
 
-  email_address: values.email_address || '',
-  occupation: values.occupation || '',
-  address: values.address || '',
-  city: values.city || '',
-  state: values.state || '',
-  country: values.country || '',
-  zip: values.zip || '',
-};
+    const payload: CreateLeadRequest = {
+      ...values,
+      // Source employee only if 'internal' selected
+      source_employee_user_id: isInternal ? (values.source_employee_user_id ?? null) : null,
+      assigned_to_rm: values.assigned_to_rm ?? null,
+      assigned_to_em: values.assigned_to_em ?? null,
+      lead_status_id: initialValues?.lead_status_id || 1, // Default to NEW
+      lead_priority_id: initialValues?.lead_priority_id || 1,
+      email_address: values.email_address || '',
+      occupation: values.occupation || '',
+      address: values.address || '',
+      city: values.city || '',
+      state: values.state || '',
+      country: values.country || '',
+      zip: values.zip || '',
+    };
     if (isEdit) {
       onSubmit({
         ...payload,
         uuid: initialValues?.uuid,
       });
     } else {
-      onSubmit(payload);
+    onSubmit(payload);
     }
   };
 
@@ -229,20 +225,25 @@ export const LeadForm = ({
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="source_type"
+            name="source_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Source</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select 
+                  onValueChange={(v) => field.onChange(Number(v))} 
+                  value={field.value ? String(field.value) : ""}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Source" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="facebook">Facebook</SelectItem>
-                    <SelectItem value="whatsapp">Whatsapp</SelectItem>
-                    <SelectItem value="internal">Internal Employee</SelectItem>
+                    {masterData?.sources.map((source) => (
+                      <SelectItem key={source.id} value={String(source.id)}>
+                        {source.description}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -252,19 +253,26 @@ export const LeadForm = ({
 
           <FormField
             control={form.control}
-            name="project_selection"
+            name="project_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Project</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select 
+                  onValueChange={(v) => field.onChange(Number(v))} 
+                  value={field.value ? String(field.value) : ""}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Project" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="dates_county">Dates County</SelectItem>
-                    <SelectItem value="planet_green">Planet Green</SelectItem>
+                    
+                    {masterData?.projects.map((project) => (
+                      <SelectItem key={project.id} value={String(project.id)}>
+                        {project.description}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -273,7 +281,10 @@ export const LeadForm = ({
           />
         </div>
 
-        {sourceType === 'internal' && (
+        {(() => {
+          const internalSource = masterData?.sources.find(s => s.code === 'INTERNAL' || s.description.toLowerCase().includes('internal'));
+          return sourceId === internalSource?.id;
+        })() && (
           <FormField
             control={form.control}
             name="source_employee_user_id"

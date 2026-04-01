@@ -9,7 +9,8 @@ import type {
   ScheduleVisitRequest,
   GetCustomerLeadsRequest,
   GetLeadsByRmIdRequest,
-  GetLeadsByEmIdRequest
+  GetLeadsByEmIdRequest,
+  AddLeadActivityRequest
 } from '../types';
 
 export const leadsApi = baseApi.injectEndpoints({
@@ -71,7 +72,7 @@ export const leadsApi = baseApi.injectEndpoints({
       async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
         try {
           await queryFulfilled;
-          const state = getState() as any;
+          const state = getState() as { baseApi?: { queries?: Record<string, any> } };
           const queries = state.baseApi?.queries || {};
           
           for (const key of Object.keys(queries)) {
@@ -136,6 +137,14 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
+    addLeadActivity: builder.mutation<{ message: string }, AddLeadActivityRequest>({
+      query: (body) => ({
+        url: '/leads/addLeadActivity',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Leads'],
+    }),
   }),
 });
 
@@ -151,4 +160,5 @@ export const {
   useGetLeadsByCustomerUuidQuery,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
+  useAddLeadActivityMutation,
 } = leadsApi;
