@@ -368,7 +368,7 @@ export const LeadTable = ({
       render: (l: Lead) => (
         <Link 
           to={`/leads/${l.uuid}`} 
-          className="text-zinc-600 dark:text-zinc-300 font-semibold hover:text-primary transition-colors text-xs"
+          className="text-secondary-foreground font-semibold hover:text-primary transition-colors text-xs"
         >
           #{fallback(l.lead_id)}
         </Link>
@@ -378,9 +378,9 @@ export const LeadTable = ({
       key: 'customer_name',
       header: 'CUSTOMER NAME',
       sortable: true,
-      width: '220px',
+      width: '150px',
       render: (l: Lead) => (
-        <span className="font-semibold text-zinc-800 dark:text-zinc-100 text-xs">
+        <span className="font-bold text-primary text-xs">
           {fallback(l.first_name)} {l.last_name || ''}
         </span>
       ),
@@ -388,7 +388,7 @@ export const LeadTable = ({
     {
       key: 'contact_details',
       header: 'CONTACT DETAILS',
-      width: '240px',
+      width: '150px',
       render: (l: Lead) => (
         <div className="flex flex-col gap-0.5">
           <span className="text-zinc-800 dark:text-zinc-100 font-medium text-xs">{fallback(l.phone_number)}</span>
@@ -401,7 +401,7 @@ export const LeadTable = ({
       header: 'SOURCE',
       width: '140px',
       render: (l: Lead) => (
-        <span className="inline-block px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#1A3A5C] text-white">
+        <span className="inline-block px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-source-bg text-primary">
           {getSourceLabel(l.source_id).split(' ')[0]}
         </span>
       ),
@@ -424,7 +424,7 @@ export const LeadTable = ({
             disabled={!can(PERMISSIONS.LEAD_STATUS_UPDATE)}
             onValueChange={(val) => onUpdateStatus?.(l, Number(val))}
           >
-            <SelectTrigger className="h-7 text-[10px] font-bold uppercase w-32 shadow-none bg-transparent border-zinc-300 dark:border-zinc-700 rounded-full focus:ring-0 px-3">
+            <SelectTrigger className="h-8 text-[11px] font-bold uppercase w-36 bg-source-bg text-primary border-2 border-primary/40 rounded-full focus:ring-0 px-4 hover:border-primary transition-colors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

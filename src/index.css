@@ -35,6 +35,8 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  --color-source-bg: hsl(var(--source-bg));
 }
 
 @layer base {
@@ -76,6 +78,7 @@
     --input: 0 0% 100% / 0.7;
     --ring: 211 89% 22%;
 
+    --source-bg: 224 100% 92%;
     --radius: 0.5rem;
   }
 
@@ -109,6 +112,7 @@
     --border-2: 211 80% 90%;
     --input: 0 0% 100% / 0.7;
     --ring: 211 89% 22%;
+    --source-bg: 224 100% 92%;
   }
 }
 
