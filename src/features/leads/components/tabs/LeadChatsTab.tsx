@@ -1,6 +1,5 @@
 import React from 'react';
 import { formatDate } from '../../../../utils';
-import { MessageSquare, Paperclip } from 'lucide-react';
 import type { LeadChat } from '../../types';
 
 interface LeadChatsTabProps {
@@ -17,42 +16,65 @@ export const LeadChatsTab = ({ chats }: LeadChatsTabProps) => {
   }
 
   return (
-    <div className="space-y-4 mt-4">
-      {chats.map((c) => (
-        <div key={c.id} className="flex gap-4 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm transition-all hover:shadow-md">
-          <div className="mt-1 bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full h-fit shrink-0">
-            <MessageSquare className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div className="flex-1 space-y-2">
-            <div className="flex justify-between items-start">
-              <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
-                Chat Interaction
-              </p>
-              <span className="text-xs text-zinc-500 font-medium">
-                {formatDate(c.created_on)}
-              </span>
-            </div>
-            
-            {c.chat_summary && (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                {c.chat_summary}
-              </p>
-            )}
+    <div className="mt-6 px-2">
 
-            {c.chat_file_location && (
-              <a 
-                href={c.chat_file_location}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-2 py-1.5 rounded-md font-medium transition-colors"
-              >
-                <Paperclip className="h-3.5 w-3.5" />
-                Attached File
-              </a>
-            )}
-          </div>
-        </div>
-      ))}
+      {/* TODAY LABEL */}
+      <div className="text-center text-xs text-zinc-400 mb-6 font-medium">
+        TODAY
+      </div>
+
+      <div className="space-y-6">
+        {chats.map((c, index) => {
+          const isSender = index % 2 === 1; // TEMP (replace later with real sender logic)
+
+          return (
+            <div
+              key={c.id}
+              className={`flex items-end gap-2 ${
+                isSender ? 'justify-end' : 'justify-start'
+              }`}
+            >
+
+              {/* LEFT SIDE (Customer) */}
+              {!isSender && (
+                <div className="flex items-center justify-center w-7 h-7 rounded-md bg-zinc-200 text-[10px] font-semibold text-zinc-700">
+                  AS
+                </div>
+              )}
+
+              {/* MESSAGE */}
+              <div className="max-w-[420px]">
+
+                <div
+                  className={`px-4 py-2 rounded-xl text-sm leading-relaxed ${
+                    isSender
+                      ? 'bg-blue-900 text-white rounded-br-sm'
+                      : 'bg-zinc-100 text-zinc-800 rounded-bl-sm'
+                  }`}
+                >
+                  {c.chat_summary || 'No message'}
+                </div>
+
+                <div
+                  className={`text-[10px] mt-1 ${
+                    isSender ? 'text-right text-zinc-400' : 'text-left text-zinc-400'
+                  }`}
+                >
+                  {formatDate(c.created_on)}
+                </div>
+              </div>
+
+              {/* RIGHT SIDE (Agent) */}
+              {isSender && (
+                <div className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-900 text-white text-[10px] font-semibold">
+                  VS
+                </div>
+              )}
+
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
