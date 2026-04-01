@@ -434,6 +434,18 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     }
   }, [updateLead]);
 
+  const handlePageChange = React.useCallback((v: number) => {
+    dispatch(updateTabFilters({ tabKey, updates: { page: v } }));
+  }, [dispatch, tabKey]);
+
+  const handleLimitChange = React.useCallback((v: number) => {
+    dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }));
+  }, [dispatch, tabKey]);
+
+  const handleSelectUuids = React.useCallback((uuids: string[]) => {
+    dispatch(setSelectedUuids({ tabKey, uuids }));
+  }, [dispatch, tabKey]);
+
   // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
     let result = [...leads];
@@ -667,8 +679,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             page={page}
             limit={limit}
             total={totalLeads}
-            onPageChange={React.useCallback((v: number) => dispatch(updateTabFilters({ tabKey, updates: { page: v } })), [dispatch, tabKey])}
-            onLimitChange={React.useCallback((v: number) => dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } })), [dispatch, tabKey])}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onScheduleVisit={handleScheduleVisit}
@@ -680,7 +692,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onSort={handleSort}
             offset={serverOffset}
             selectedUuids={selectedUuids}
-            onSelectUuids={React.useCallback((uuids: string[]) => dispatch(setSelectedUuids({ tabKey, uuids })), [dispatch, tabKey])}
+            onSelectUuids={handleSelectUuids}
             managers={managers}
           />
         </div>
