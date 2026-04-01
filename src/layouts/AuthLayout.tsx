@@ -10,7 +10,7 @@ export const AuthLayout = () => {
   }
 
   if (isAuthenticated && !isFirstLogin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/leads" replace />;
   }
 
   return (

@@ -113,87 +113,83 @@ export function DataTable<T>({
     <div className="flex flex-col gap-3">
       {/* Table Container */}
       <div 
-        className="rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden relative bg-white dark:bg-zinc-950"
+        className="rounded-md border border-zinc-200 dark:border-zinc-800 relative bg-white dark:bg-zinc-950 overflow-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800"
+        style={maxHeight ? { maxHeight } : undefined}
       >
-        <div 
-          className="overflow-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800" 
-          style={maxHeight ? { maxHeight } : undefined}
-        >
-          <Table className="min-w-full">
-            <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
-                  {headerGroup.headers.map((header) => {
-                    const meta = header.column.columnDef.meta as { width?: string; sortable?: boolean } | undefined;
-                    return (
-                      <TableHead
-                        key={header.id}
-                        style={meta?.width ? { width: meta.width, minWidth: meta.width } : undefined}
-                        className={cn(
-                          "font-bold text-[#6C757D] dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11 whitespace-nowrap",
-                          meta?.sortable && "p-0"
-                        )}
-                      >
-                        {header.isPlaceholder ? null : (
-                          meta?.sortable ? (
-                            <button
-                              onClick={() => onSort?.(header.id)}
-                              className="flex items-center gap-1.5 w-full h-full px-4 py-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-800 transition-colors text-left whitespace-nowrap"
-                            >
-                              <span className="truncate">
-                                {flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                              </span>
-                              <div className="flex flex-col opacity-40 shrink-0">
-                                {sortField === header.id ? (
-                                  sortOrder === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
-                                ) : (
-                                  <ArrowUpDown className="h-2.5 w-2.5" />
-                                )}
-                              </div>
-                            </button>
-                          ) : (
-                            <div className="px-4 py-3 whitespace-nowrap">
+        <Table className="min-w-full border-separate border-spacing-0">
+          <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
+                {headerGroup.headers.map((header) => {
+                  const meta = header.column.columnDef.meta as { width?: string; sortable?: boolean } | undefined;
+                  return (
+                    <TableHead
+                      key={header.id}
+                      style={meta?.width ? { width: meta.width, minWidth: meta.width } : undefined}
+                      className={cn(
+                        "font-bold text-[#6C757D] dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11 whitespace-nowrap bg-inherit",
+                        meta?.sortable && "p-0"
+                      )}
+                    >
+                      {header.isPlaceholder ? null : (
+                        meta?.sortable ? (
+                          <button
+                            onClick={() => onSort?.(header.id)}
+                            className="flex items-center gap-1.5 w-full h-full px-4 py-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-800 transition-colors text-left whitespace-nowrap"
+                          >
+                            <span className="truncate">
                               {flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
                               )}
+                            </span>
+                            <div className="flex flex-col opacity-40 shrink-0">
+                              {sortField === header.id ? (
+                                sortOrder === 'asc' ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />
+                              ) : (
+                                <ArrowUpDown className="h-2.5 w-2.5" />
+                              )}
                             </div>
-                          )
-                        )}
-                      </TableHead>
-                    );
-                  })}
+                          </button>
+                        ) : (
+                          <div className="px-4 py-3 whitespace-nowrap">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </div>
+                        )
+                      )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: limit }).map((_, i) => (
+                <SkeletonRow key={i} columns={columns.length} />
+              ))
+            ) : table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-12 text-zinc-400 text-sm">
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-zinc-100 dark:border-zinc-800">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="text-sm text-zinc-700 dark:text-zinc-300 py-3">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: limit }).map((_, i) => (
-                  <SkeletonRow key={i} columns={columns.length} />
-                ))
-              ) : table.getRowModel().rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center py-12 text-zinc-400 text-sm">
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-zinc-100 dark:border-zinc-800">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="text-sm text-zinc-700 dark:text-zinc-300 py-3">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination Controls */}
