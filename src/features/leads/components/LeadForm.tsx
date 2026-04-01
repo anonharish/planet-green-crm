@@ -32,7 +32,7 @@ import {
   PopoverTrigger,
 } from '../../../components/ui/popover';
 import { cn } from '../../../utils';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, User, ClipboardList, Building2, Tag, MapPin, Briefcase } from 'lucide-react';
 import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
@@ -159,375 +159,388 @@ export const LeadForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleInternalSubmit)} className="space-y-4 pb-10">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="first_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter first name" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="last_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter last name" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phone_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter phone number" {...field} disabled={isLoading || isEdit} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email_address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter email" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="source_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Source</FormLabel>
-                <Select 
-                  onValueChange={(v) => field.onChange(Number(v))} 
-                  value={field.value ? String(field.value) : ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Source" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {masterData?.sources.map((source) => (
-                      <SelectItem key={source.id} value={String(source.id)}>
-                        {source.description}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="project_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Project</FormLabel>
-                <Select 
-                  onValueChange={(v) => field.onChange(Number(v))} 
-                  value={field.value ? String(field.value) : ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Project" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    
-                    {masterData?.projects.map((project) => (
-                      <SelectItem key={project.id} value={String(project.id)}>
-                        {project.description}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {(() => {
-          const internalSource = masterData?.sources.find(s => s.code === 'INTERNAL' || s.description.toLowerCase().includes('internal'));
-          return sourceId === internalSource?.id;
-        })() && (
-          <FormField
-            control={form.control}
-            name="source_employee_user_id"
-            render={({ field }) => (
-              <FormItem className="flex flex-col animate-in fade-in slide-in-from-top-2 duration-300">
-                <FormLabel>Internal Employees</FormLabel>
-                <Popover open={sourceOpen} onOpenChange={setSourceOpen}>
-                  <PopoverTrigger asChild>
+      <form onSubmit={form.handleSubmit(handleInternalSubmit)} className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-10 bg-zinc-50/30 dark:bg-zinc-950/30">
+          {/* Section: Personal Details */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-primary">
+              <User className="h-4 w-4" />
+              <h3 className="text-sm font-bold tracking-tight">Personal Details</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="first_name"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">First Name</FormLabel>
                     <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn(
-                          "w-full justify-between font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                        disabled={isLoading || isLoadingUsers}
-                      >
-                        {field.value
-                          ? `${allUsers.find((u) => u.id === field.value)?.first_name} ${allUsers.find((u) => u.id === field.value)?.last_name}`
-                          : "Select employee..."}
-                        {isLoadingUsers ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
-                      </Button>
+                      <Input 
+                        placeholder="e.g. Jonathan" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
                     </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search users..." />
-                      <CommandEmpty>No user found.</CommandEmpty>
-                      <CommandGroup className="max-h-60 overflow-y-auto">
-                        {allUsers.map((user) => (
-                          <CommandItem
-                            key={user.id}
-                            value={`${user.first_name} ${user.last_name}`}
-                            onSelect={() => {
-                              field.onChange(user.id);
-                              setSourceOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                user.id === field.value ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {user.first_name} {user.last_name} ({user.email})
-                          </CommandItem>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Last Name</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g. Wick" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phone_number"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Phone Number</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="+00 000 000 0000" 
+                        {...field} 
+                        disabled={isLoading || isEdit} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email_address"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Email Address</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="j.wick@continental.com" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="occupation"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Occupation</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Consultant, Designer, etc." 
+                      {...field} 
+                      disabled={isLoading} 
+                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Section: Classification */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-primary">
+              <ClipboardList className="h-4 w-4" />
+              <h3 className="text-sm font-bold tracking-tight">Classification</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="source_id"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Source</FormLabel>
+                    <Select 
+                      onValueChange={(v) => field.onChange(Number(v))} 
+                      value={field.value ? String(field.value) : ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                          <SelectValue placeholder="Select Source" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {masterData?.sources.map((source) => (
+                          <SelectItem key={source.id} value={String(source.id)}>
+                            {source.description}
+                          </SelectItem>
                         ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        {(!isRM && !isEM) && (
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="assigned_to_rm"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assign to RM</FormLabel>
-                  <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value ? String(field.value) : undefined}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select RM" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {managers.map(m => (
-                        <SelectItem key={m.id} value={String(m.id)}>{m.first_name} {m.last_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="assigned_to_em"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={cn(!selectedRmId && "text-zinc-400")}>Assign to EM</FormLabel>
-                  <Select 
-                    onValueChange={(v) => field.onChange(Number(v))} 
-                    value={field.value ? String(field.value) : undefined}
-                    disabled={!selectedRmId || isLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingReportees && (
-                        <div className="flex items-center justify-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      )}
-                      {reportees.map(a => (
-                        <SelectItem key={a.id} value={String(a.id)}>{a.first_name} {a.last_name}</SelectItem>
-                      ))}
-                      {!isLoadingReportees && reportees.length === 0 && (
-                        <div className="p-2 text-xs text-center text-zinc-500">No reportees found</div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="project_id"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Project</FormLabel>
+                    <Select 
+                      onValueChange={(v) => field.onChange(Number(v))} 
+                      value={field.value ? String(field.value) : ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                          <SelectValue placeholder="Select Project" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {masterData?.projects.map((project) => (
+                          <SelectItem key={project.id} value={String(project.id)}>
+                            {project.description}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {(() => {
+              const internalSource = masterData?.sources.find(s => s.code === 'INTERNAL' || s.description.toLowerCase().includes('internal'));
+              return sourceId === internalSource?.id;
+            })() && (
+              <FormField
+                control={form.control}
+                name="source_employee_user_id"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Source Employee</FormLabel>
+                    <Select 
+                      onValueChange={(v) => field.onChange(Number(v))} 
+                      value={field.value ? String(field.value) : ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                          <SelectValue placeholder="Select Employee" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {allUsers.map((user) => (
+                          <SelectItem key={user.id} value={String(user.id)}>
+                            {user.first_name} {user.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {!isEM && (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="assigned_to_rm"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Assign to RM</FormLabel>
+                      <Select 
+                        onValueChange={(v) => field.onChange(Number(v))} 
+                        value={field.value ? String(field.value) : ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                            <SelectValue placeholder="Select RM" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {managers.map((manager: any) => (
+                            <SelectItem key={manager.id} value={String(manager.id)}>
+                              {manager.first_name} {manager.last_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="assigned_to_em"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Assign to EM</FormLabel>
+                      <Select 
+                        onValueChange={(v) => field.onChange(Number(v))} 
+                        value={field.value ? String(field.value) : ""}
+                        disabled={!selectedRmId || isLoadingReportees}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                            <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {reportees.map((em: any) => (
+                            <SelectItem key={em.id} value={String(em.id)}>
+                              {em.first_name} {em.last_name} 
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </div>
-        )}
 
-        {isRM && (
-          <div className="grid grid-cols-1 gap-4">
+          {/* Section: Address Details */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-primary">
+              <MapPin className="h-4 w-4" />
+              <h3 className="text-sm font-bold tracking-tight">Address Details</h3>
+            </div>
+
             <FormField
               control={form.control}
-              name="assigned_to_em"
+              name="address"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={cn(!selectedRmId && "text-zinc-400")}>Assign to EM</FormLabel>
-                  <Select 
-                    onValueChange={(v) => field.onChange(Number(v))} 
-                    value={field.value ? String(field.value) : undefined}
-                    disabled={!selectedRmId || isLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingReportees && (
-                        <div className="flex items-center justify-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      )}
-                      {reportees.map(a => (
-                        <SelectItem key={a.id} value={String(a.id)}>{a.first_name} {a.last_name}</SelectItem>
-                      ))}
-                      {!isLoadingReportees && reportees.length === 0 && (
-                        <div className="p-2 text-xs text-center text-zinc-500">No reportees found</div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. 123 Main St" 
+                      {...field} 
+                      disabled={isLoading} 
+                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">City</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="City" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">State</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="State" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Country</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Country" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="zip"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Zip Code</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Zip" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-        )}
-
-        <FormField
-          control={form.control}
-          name="occupation"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Occupation</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Software Engineer" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter address" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input placeholder="City" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <Input placeholder="State" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="country"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Country</FormLabel>
-                <FormControl>
-                  <Input placeholder="Country" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+        <div className="px-6 py-3 pb-5 bg-white dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800 shrink-0 sticky bottom-0 rounded-t-xl shadow-[0_-4px_20px_rgb(0,0,0,0.03)]">
+          <Button type="submit" disabled={isLoading} className="w-full h-10 rounded-xl bg-[#1A4B84] hover:bg-[#143965] text-white font-bold text-sm shadow-md active:scale-[0.98] transition-all">
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{isEdit ? 'Updating...' : 'Creating...'}</span>
+              </div>
+            ) : (
+              isEdit ? 'Update Lead' : 'Create Lead'
             )}
-          />
-          <FormField
-            control={form.control}
-            name="zip"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Zip Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="Zip" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-6 mt-6 border-t pb-8">
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Lead' : 'Create Lead')}
           </Button>
         </div>
       </form>

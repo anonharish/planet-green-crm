@@ -25,12 +25,14 @@ const WIDTH_MAP = {
 export const AppDrawer = ({ open, onClose, title, description, children, width = 'md' }: AppDrawerProps) => {
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <SheetContent className={`${WIDTH_MAP[width]} overflow-y-auto`}>
-        <SheetHeader className="mb-6">
-          <SheetTitle>{title}</SheetTitle>
-          {description && <SheetDescription>{description}</SheetDescription>}
+      <SheetContent className={`${WIDTH_MAP[width]} p-0 flex flex-col h-full overflow-hidden`}>
+        <SheetHeader className="px-6 py-3.5 border-b shrink-0 space-y-0">
+          <SheetTitle className="text-lg font-bold">{title}</SheetTitle>
+          {description && <SheetDescription className="text-xs">{description}</SheetDescription>}
         </SheetHeader>
-        {children}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {children}
+        </div>
       </SheetContent>
     </Sheet>
   );
