@@ -121,12 +121,15 @@ export const ScheduleVisitDialog = ({
     }
   }, [watchRm, reportees, isLoadingReportees, watchEm, setValue]);
 
+  const scheduledStatus = siteVisitStatuses.find(s => s.description.toUpperCase() === 'SCHEDULED' || (s as any).code === 'SCHDLD');
+  const scheduledStatusId = scheduledStatus?.id || 1;
+
   useEffect(() => {
     if (open && lead) {
       reset({
         visit_date_time: "",
         visit_location_url: "",
-        visit_status: undefined,
+        visit_status: scheduledStatusId,
         visit_assigned_to_rm: isRM
           ? Number(currentUser?.id)
           : lead.assigned_to_rm || undefined,
@@ -134,12 +137,10 @@ export const ScheduleVisitDialog = ({
         visit_remarks: "",
       });
     }
-  }, [open, lead, reset, isRM, currentUser]);
-
-  if (!open || !lead) return null;
+  }, [open, lead, reset, isRM, currentUser, scheduledStatusId]);
 
   const handleFormSubmit = async (data: ScheduleVisitFormValues) => {
-      if (!date) return;
+      if (!lead || !date) return;
 
     let hrs = parseInt(hour);
 
@@ -152,10 +153,13 @@ export const ScheduleVisitDialog = ({
 
     await onSubmit({
       ...data,
+      visit_status: scheduledStatusId,
       visit_date_time: formattedDate,
-      lead_uuid: lead.uuid,
+      lead_uuid: (lead as Lead).uuid,
     });
   };
+
+  if (!open || !lead) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -250,32 +254,8 @@ export const ScheduleVisitDialog = ({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Visit Status *</Label>
-              <Select
-                value={watchStatus?.toString() || ""}
-                onValueChange={(val) => setValue("visit_status", Number(val))}
-                disabled={isLoading}
-              >
-                <SelectTrigger
-                  className={errors.visit_status ? "border-red-500" : ""}
-                >
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {siteVisitStatuses.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.visit_status && (
-                <p className="text-xs text-red-500">
-                  {errors.visit_status.message}
-                </p>
-              )}
-            </div>
+            {/* Hidden Status - forced to 'SCHDLD' */}
+            <input type="hidden" {...register("visit_status")} />
 
             <div className={cn("grid gap-4", isRM ? "grid-cols-1" : "grid-cols-2")}>
               {!isRM && (
