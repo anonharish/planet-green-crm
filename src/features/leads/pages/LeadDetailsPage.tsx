@@ -383,7 +383,6 @@ export const LeadDetailsPage = () => {
               visits={lead?.visits}
               lead={lead}
               siteVisitStatuses={masterData?.site_visit_status || []}
-              rms={users}  // ✅ Now always populated — no longer gated by isInternalEmployeeSource
               getSiteVisitStatusLabel={(id) =>
                 masterData?.site_visit_status?.find((s: any) => s.id === id)?.description || String(id)
               }
