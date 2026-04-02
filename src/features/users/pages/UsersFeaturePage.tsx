@@ -15,6 +15,7 @@ import {
 } from '../api/usersApi';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { toast } from 'sonner';
+import { cn } from '../../../utils';
 import type { User } from '../types';
 
 interface UsersFeaturePageProps {
@@ -173,14 +174,18 @@ export const UsersFeaturePage = ({
         actions={actions}
       />
 
-      <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar>
-          <SearchInput 
-            value={search} 
-            onChange={setSearch} 
-            placeholder={searchPlaceholder || `Search ${roleLabel.toLowerCase()}s...`} 
-          />
-        </FilterBar>
+      <div className={cn(
+        !searchPlaceholder && "border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4"
+      )}>
+        {!searchPlaceholder && (
+          <FilterBar>
+            <SearchInput 
+              value={search} 
+              onChange={setSearch} 
+              placeholder={searchPlaceholder || `Search ${roleLabel.toLowerCase()}s...`} 
+            />
+          </FilterBar>
+        )}
 
         <UserTable
           data={sortedAndFilteredData}
@@ -200,6 +205,10 @@ export const UsersFeaturePage = ({
           sortOrder={sortOrder}
           onSort={handleSort}
           offset={serverOffset}
+          search={search}
+          onSearchChange={setSearch}
+          title={searchPlaceholder ? "Active Experience Managers" : title}
+          showIntegratedHeader={!!searchPlaceholder}
         />
       </div>
 
