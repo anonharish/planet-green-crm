@@ -1,7 +1,18 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Phone, TrendingUp, UserPlus, Webhook, MessageSquare, FileText, Clock } from "lucide-react";
-// TODO: Replace the placeholders below with your Figma icon imports, e.g.:
-// import { CallIcon, StageIcon, AssignIcon, WebhookIcon, RemarkIcon, DefaultIcon } from "../../../assets/icons";
+import { cn } from "../../../../utils";
+import { 
+  Phone, 
+  TrendingUp, 
+  UserPlus, 
+  Webhook, 
+  MessageSquare, 
+  FileText, 
+  Clock, 
+  Edit, 
+  UserCheck, 
+  CheckCircle,
+  MessageCircle
+} from "lucide-react";
 
 interface Remark {
   id: number;
@@ -17,39 +28,75 @@ interface LeadRemarksTabProps {
 
 const getActivityMeta = (activityType: string) => {
   switch (activityType) {
-    case "CALL_ATTEMPTED":
-    case "CALL":
+    case "CREATED":
+    case "LEAD_CREATED":
+    case "WEBHOOK":
       return {
-        icon: <Phone className="h-3.5 w-3.5 text-[#063669]" />, // TODO: Replace with your Figma icon
-        label: "Call Attempted",
+        icon: <UserPlus className="h-3.5 w-3.5 text-blue-600" />,
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(37,99,235,0.08)]",
+        label: "Lead Created",
       };
-    case "STAGE_CHANGED":
-    case "STATUS_CHANGED":
+    case "FIELD_CHANGED":
       return {
-        icon: <TrendingUp className="h-3.5 w-3.5 text-[#063669]" />, // TODO: Replace with your Figma icon
-        label: "Stage moved to In Progress",
+        icon: <Edit className="h-3.5 w-3.5 text-amber-600" />,
+        bgColor: "bg-amber-50",
+        borderColor: "border-amber-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(217,119,6,0.08)]",
+        label: "Field Updated",
+      };
+    case "STATUS_CHANGED":
+    case "STAGE_CHANGED":
+      return {
+        icon: <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />,
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(5,150,105,0.08)]",
+        label: "Status Changed",
       };
     case "ASSIGNED":
     case "RM_ASSIGNED":
       return {
-        icon: <UserPlus className="h-3.5 w-3.5 text-[#063669]" />, // TODO: Replace with your Figma icon
-        label: "Assigned to RM",
-      };
-    case "LEAD_CREATED":
-    case "WEBHOOK":
-      return {
-        icon: <Webhook className="h-3.5 w-3.5 text-[#063669]" />, // TODO: Replace with your Figma icon
-        label: "Lead Created",
+        icon: <UserCheck className="h-3.5 w-3.5 text-purple-600" />,
+        bgColor: "bg-purple-50",
+        borderColor: "border-purple-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(147,51,234,0.08)]",
+        label: "Lead Assigned",
       };
     case "REMARK_ADDED":
     case "NOTE":
       return {
-        icon: <MessageSquare className="h-3.5 w-3.5 text-[#063669]" />, // TODO: Replace with your Figma icon
+        icon: <MessageSquare className="h-3.5 w-3.5 text-slate-600" />,
+        bgColor: "bg-slate-50",
+        borderColor: "border-slate-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(71,85,105,0.08)]",
         label: "Remark Added",
+      };
+    case "CALL_SUMMARY":
+    case "CALL":
+    case "CALL_ATTEMPTED":
+      return {
+        icon: <Phone className="h-3.5 w-3.5 text-indigo-600" />,
+        bgColor: "bg-indigo-50",
+        borderColor: "border-indigo-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(79,70,229,0.08)]",
+        label: "Call Summary",
+      };
+    case "CHAT_SUMMARY":
+      return {
+        icon: <MessageCircle className="h-3.5 w-3.5 text-sky-600" />,
+        bgColor: "bg-sky-50",
+        borderColor: "border-sky-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(2,132,199,0.08)]",
+        label: "Chat Summary",
       };
     default:
       return {
-        icon: <FileText className="h-3.5 w-3.5 text-[#063669]" />, // TODO: Replace with your Figma icon
+        icon: <FileText className="h-3.5 w-3.5 text-zinc-500" />,
+        bgColor: "bg-zinc-50",
+        borderColor: "border-zinc-200",
+        shadowColor: "shadow-[0_0_0_6px_rgba(113,113,122,0.08)]",
         label: "Activity",
       };
   }
@@ -90,36 +137,47 @@ const dummyRemarks: Remark[] = [
   {
     id: 4,
     remark: "Inbound lead captured from 'Q4 Luxury Living' campaign. Meta ID: fb_9921_x32.",
-    activity_type: "LEAD_CREATED",
+    activity_type: "CREATED",
     created_on: new Date(Date.now() - 15.5 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
 const activityLabelMap: Record<string, string> = {
-  CALL_ATTEMPTED: "Call Attempted",
-  CALL: "Call Attempted",
-  STAGE_CHANGED: "Stage moved to In Progress",
-  STATUS_CHANGED: "Status Changed",
-  ASSIGNED: "Assigned to RM",
-  RM_ASSIGNED: "Assigned to RM",
-  LEAD_CREATED: "Lead created via Facebook webhook",
+  CREATED: "Lead Created",
+  LEAD_CREATED: "Lead Created",
   WEBHOOK: "Lead created via Webhook",
-  REMARK_ADDED: "Remark Added",
+  FIELD_CHANGED: "Information Updated",
+  STATUS_CHANGED: "Lead Status Changed",
+  STAGE_CHANGED: "Lead Stage Changed",
+  ASSIGNED: "Assignee Updated",
+  RM_ASSIGNED: "RM Assigned",
+  REMARK_ADDED: "New Remark Added",
   NOTE: "Note Added",
+  CALL_SUMMARY: "Call Recording Summary",
+  CALL: "Call Recorded",
+  CALL_ATTEMPTED: "Call Attempted",
+  CHAT_SUMMARY: "Chat Transcript Summary",
 };
 
-const ICON_SIZE = 32;
-const ICON_TOP_OFFSET = 14;
+const ICON_SIZE = 42; // Increased for matching screenshot
+const ICON_TOP_OFFSET = 18;
 const ICON_CENTER = ICON_TOP_OFFSET + ICON_SIZE / 2;
 
 export const LeadRemarksTab = ({ remarks }: LeadRemarksTabProps) => {
+  // Use dummyRemarks if no data is provided to showcase the UI match
   const data = remarks && remarks.length > 0 ? remarks : dummyRemarks;
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [lineStyle, setLineStyle] = useState<{ top: number; height: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current || data.length < 2) return;
+    if (!containerRef.current || data.length < 1) return;
+
+    // Handle single item line (show a small bit of line if needed, or just hide)
+    if (data.length === 1) {
+      setLineStyle(null);
+      return;
+    }
 
     const firstRow = rowRefs.current[0];
     const lastRow = rowRefs.current[data.length - 1];
@@ -152,13 +210,13 @@ export const LeadRemarksTab = ({ remarks }: LeadRemarksTabProps) => {
       {/* Absolute line from center of first icon to center of last icon */}
       {lineStyle && (
         <div
-          className="absolute left-[1.25rem] w-px bg-zinc-200 dark:bg-zinc-700 z-0"
+          className="absolute left-6 w-px bg-zinc-200/60 dark:bg-zinc-800 z-0"
           style={{ top: lineStyle.top, height: lineStyle.height }}
         />
       )}
 
-      <div className="space-y-6 relative z-10">
-        {data.map((item, index) => {
+      <div className="space-y-8 relative z-10">
+        {data.map((item: Remark, index: number) => {
           const meta = getActivityMeta(item.activity_type);
           const label = activityLabelMap[item.activity_type] || meta.label;
 
@@ -166,23 +224,35 @@ export const LeadRemarksTab = ({ remarks }: LeadRemarksTabProps) => {
             <div
               key={item.id ?? index}
               ref={(el) => { rowRefs.current[index] = el; }}
-              className="flex items-start gap-4"
+              className="flex items-start gap-6"
             >
-              {/* Icon — no background, just border + white fill to sit on the line */}
-              <div className="flex-shrink-0 mt-3.5 z-10">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 shadow-[0_0_0_6px_rgba(99,102,241,0.08)]">
-                  {meta.icon}
+              {/* Icon Container - matched to screenshot size and soft shadow */}
+              <div className="shrink-0 mt-4.5 z-10">
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center border bg-white dark:bg-zinc-950 transition-all",
+                  "border-zinc-100 dark:border-zinc-800",
+                  "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.02)]",
+                  meta.shadowColor // Keep the colored glow but subtle
+                )}>
+                  {/* Properly scale the lucide icon */}
+                  <div className="scale-[1.15]">
+                    {meta.icon}
+                  </div>
                 </div>
               </div>
 
-              {/* Card */}
-              <div className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-xl px-5 py-4 shadow-sm">
+              {/* Card - rounded-2xl matched to screenshot */}
+              <div className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-100/80 dark:border-zinc-800/80 rounded-2xl px-6 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.02),0_1px_2px_rgba(0,0,0,0.04)]">
                 <div className="flex items-start justify-between gap-6">
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">{item.remark}</p>
+                  <div className="space-y-1.5 flex-1">
+                    <p className="text-[15px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                      {label}
+                    </p>
+                    <p className="text-sm text-zinc-500/90 dark:text-zinc-400 leading-relaxed max-w-2xl">
+                      {item.remark}
+                    </p>
                   </div>
-                  <span className="text-[11px] font-medium text-zinc-400 uppercase whitespace-nowrap flex-shrink-0 mt-0.5">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest whitespace-nowrap shrink-0 mt-1">
                     {formatActivityDate(item.created_on)}
                   </span>
                 </div>
@@ -194,4 +264,4 @@ export const LeadRemarksTab = ({ remarks }: LeadRemarksTabProps) => {
       </div>
     </div>
   );
-};
+};
