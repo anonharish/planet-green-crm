@@ -21,6 +21,7 @@ import {
   useBulkAssignLeadsToEmMutation,
   useDeleteLeadMutation,
   useScheduleVisitMutation,
+  useGetLeadByIdQuery,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
    useAddLeadActivityMutation,
@@ -132,14 +133,25 @@ export const LeadsPage = () => {
 
   // Junk Reason State
   const [isJunkReasonDialogOpen, setIsJunkReasonDialogOpen] = useState(false);
+  const [selectedJunkLeadUuid, setSelectedJunkLeadUuid] = useState<string | null>(null);
+  const [reviewReassignReason, setReviewReassignReason] = useState("");
   const [pendingJunkAction, setPendingJunkAction] = useState<{
     type: 'single' | 'bulk';
     lead?: Lead;
     statusId?: number;
   } | null>(null);
 
+  // Fetch full lead data when in review mode
+  const { data: fullLeadData } = useGetLeadByIdQuery(
+    { uuid: selectedJunkLeadUuid! },
+    { skip: !selectedJunkLeadUuid || activeView !== 'junk-review' }
+  );
+
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
+  const junkStatusId = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE')?.id;
+  const newLeadStatusId = masterData?.lead_statuses?.find(s => s.code === 'NEWLED')?.id;
+  const junkCompleteStatusId = masterData?.lead_statuses?.find(s => s.code === 'JUNKCM')?.id;
   const { data: rms = [] } = useGetAllUsersByRoleIdQuery({
     role_id: 3,
     offset: 0,
@@ -194,8 +206,6 @@ export const LeadsPage = () => {
     offset: serverOffset,
   }, { skip: !isEM });
 
-  // Junk Leads logic: Fetch leads with status code 'JUNKPE'
-  const junkStatusId = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE')?.id;
   const { data: junkLeadsData = [], isLoading: isJunkLoading } = useGetLeadsQuery({
     offset: (junkPage - 1) * junkLimit,
     status: junkStatusId ? [junkStatusId] : undefined,
@@ -726,55 +736,97 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           onPageChange={setJunkPage}
           onLimitChange={setJunkLimit}
           onVerify={(lead) => {
-            setSelectedJunkLead(lead);
+            setSelectedJunkLeadUuid(lead.uuid);
             setActiveView('junk-review');
           }} 
         />
       )}
 
-      {activeView === 'junk-review' && selectedJunkLead && (
+      {activeView === 'junk-review' && (fullLeadData || selectedJunkLeadUuid) && (
         <>
           <LeadJunkReviewPage 
-            lead={selectedJunkLead}
-            onBack={() => setActiveView('junk')}
-            onReassign={() => setShowReassignModal(true)}
-            onApprove={() => {
-              toast.success("Lead junk approved (archived)");
+            lead={fullLeadData || (leads.find(l => l.uuid === selectedJunkLeadUuid) as Lead)}
+            onBack={() => {
               setActiveView('junk');
+              setSelectedJunkLeadUuid(null);
+            }}
+            onReassign={(reason) => {
+              setReviewReassignReason(reason);
+              setShowReassignModal(true);
+            }}
+            onApprove={async (reason) => {
+              try {
+                if (!junkCompleteStatusId || !selectedJunkLeadUuid) return;
+                const leadToApprove = fullLeadData || leads.find(l => l.uuid === selectedJunkLeadUuid);
+                if (!leadToApprove) return;
+
+                await updateLead({
+                  uuid: leadToApprove.uuid,
+                  first_name: leadToApprove.first_name || '',
+                  last_name: leadToApprove.last_name || '',
+                  phone_number: leadToApprove.phone_number || '',
+                  email_address: leadToApprove.email_address || '',
+                  occupation: leadToApprove.occupation || '',
+                  address: leadToApprove.address || '',
+                  city: leadToApprove.city || '',
+                  state: leadToApprove.state || '',
+                  country: leadToApprove.country || '',
+                  zip: leadToApprove.zip || '',
+                  source_id: leadToApprove.source_id,
+                  source_employee_user_id: leadToApprove.source_employee_user_id || null,
+                  project_id: leadToApprove.project_id,
+                  assigned_to_rm: leadToApprove.assigned_to_rm || null,
+                  assigned_to_em: leadToApprove.assigned_to_em || null,
+                  lead_priority_id: leadToApprove.lead_priority_id || 1,
+                  lead_status_id: junkCompleteStatusId,
+                  // In some systems, we might add an activity for the "Approval Reason"
+                }).unwrap();
+
+                toast.success("Lead junk approved (Moved to JUNKCM)");
+                setActiveView('junk');
+                setSelectedJunkLeadUuid(null);
+              } catch (err: any) {
+                toast.error(err?.data?.message || "Approval failed");
+              }
             }}
           />
           <ReassignRMModal
             open={showReassignModal}
             onClose={() => setShowReassignModal(false)}
-            lead={selectedJunkLead}
+            lead={fullLeadData || (leads.find(l => l.uuid === selectedJunkLeadUuid) as Lead)}
             rms={rms}
+            initialReason={reviewReassignReason}
             onConfirm={async (rmId, reason) => {
               try {
-                // Restoration logic: Change RM and potentially status
-                // Find a non-junk status to move it to, e.g. status ID 1 or current
+                if (!newLeadStatusId || !selectedJunkLeadUuid) return;
+                const currentLead = fullLeadData || leads.find(l => l.uuid === selectedJunkLeadUuid);
+                if (!currentLead) return;
+
                 await updateLead({
-                  uuid: selectedJunkLead.uuid,
-                  first_name: selectedJunkLead.first_name || '',
-                  last_name: selectedJunkLead.last_name || '',
-                  phone_number: selectedJunkLead.phone_number || '',
-                  email_address: selectedJunkLead.email_address || '',
-                  occupation: selectedJunkLead.occupation || '',
-                  address: selectedJunkLead.address || '',
-                  city: selectedJunkLead.city || '',
-                  state: selectedJunkLead.state || '',
-                  country: selectedJunkLead.country || '',
-                  zip: selectedJunkLead.zip || '',
-                  source_id: selectedJunkLead.source_id,
-                  source_employee_user_id: selectedJunkLead.source_employee_user_id || null,
-                  project_id: selectedJunkLead.project_id,
+                  uuid: currentLead.uuid,
+                  first_name: currentLead.first_name || '',
+                  last_name: currentLead.last_name || '',
+                  phone_number: currentLead.phone_number || '',
+                  email_address: currentLead.email_address || '',
+                  occupation: currentLead.occupation || '',
+                  address: currentLead.address || '',
+                  city: currentLead.city || '',
+                  state: currentLead.state || '',
+                  country: currentLead.country || '',
+                  zip: currentLead.zip || '',
+                  source_id: currentLead.source_id,
+                  source_employee_user_id: currentLead.source_employee_user_id || null,
+                  project_id: currentLead.project_id,
                   assigned_to_rm: rmId,
                   assigned_to_em: null,
-                  lead_priority_id: selectedJunkLead.lead_priority_id || 1,
-                  lead_status_id: selectedJunkLead.lead_status_id,
+                  lead_priority_id: currentLead.lead_priority_id || 1,
+                  lead_status_id: newLeadStatusId,
+                  // Capture the reason here if needed by the API, but typically it might be an activity log
                 }).unwrap();
                 
-                toast.success(`Lead successfully reassigned to RM. It will now appear in Assigned leads.`);
+                toast.success(`Lead restored and assigned to RM. Status: NEWLED`);
                 setActiveView('junk');
+                setSelectedJunkLeadUuid(null);
                 refetch();
               } catch (err: any) {
                 toast.error(err?.data?.message || "Restoration failed");

@@ -40,7 +40,7 @@ export const JunkReasonDialog: React.FC<JunkReasonDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[420px] bg-white dark:bg-zinc-950 p-0 overflow-hidden border-none rounded-3xl shadow-2xl">
+      <DialogContent className="sm:max-w-[420px] max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-950 p-0 border-none rounded-3xl shadow-2xl scrollbar-hide">
         <div className="p-8 space-y-6">
           <DialogHeader className="space-y-2">
             <div className="flex items-center gap-2">
@@ -65,14 +65,14 @@ export const JunkReasonDialog: React.FC<JunkReasonDialogProps> = ({
             <Button 
               variant="ghost" 
               onClick={handleClose}
-              className="px-6 font-bold text-zinc-500 hover:bg-zinc-50 transition-all text-xs"
+              className="px-6 h-[52px] text-sm font-bold text-zinc-500 hover:bg-zinc-50 transition-all"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleConfirm}
               disabled={!reason.trim() || isLoading}
-              className="px-8 bg-[#0f3d6b] hover:bg-[#0c3156] text-white rounded-xl font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 text-xs"
+              className="px-8 h-[52px] text-sm bg-[#0f3d6b] hover:bg-[#0c3156] text-white rounded-xl font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
             >
               {isLoading ? "Updating..." : "Mark as Junk"}
             </Button>
