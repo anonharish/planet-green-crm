@@ -6,6 +6,7 @@ import { AppDrawer } from "../../../shared/components/AppDrawer/AppDrawer";
 import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmDialog";
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
+import { BulkActionsBar } from "../components/BulkActionsBar";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { LeadActivityDialog } from "../components/LeadActivityDialog";
 import { FilterPopover } from "../../../shared/components/FilterPopover/FilterPopover";
@@ -78,7 +79,6 @@ export const LeadsPage = () => {
     selectedUuids,
   } = currentFilters;
 
-  const [targetRmId, setTargetRmId] = useState<string>("");
 
   // Calculate server-side offset based on 200-record chunks
   const serverOffset = Math.floor(((page - 1) * limit) / 200) * 200;
@@ -195,9 +195,9 @@ export const LeadsPage = () => {
     { skip: !isRM }
   );
 
+
   // Users listed in the bulk assignment dropdown: RMs for Admin, EMs for RM
   const assignmentUsers = isAdmin ? rms : emsReportees;
-  const assignmentLabel = isAdmin ? "Select RM for assignment" : "Select EM for assignment";
 
   const { data: ems = [] } = useGetReporteesQuery(
     { reporting_manager_id: Number(rmIds[0] || 0), offset: 0 },
@@ -217,26 +217,37 @@ export const LeadsPage = () => {
 
   const isAnyBulkAssigning = isBulkAssigning || isBulkAssignToEm;
 
-  const handleBulkAssign = async () => {
-    if (!targetRmId || selectedUuids.length === 0) return;
+  const handleBulkAssign = async (targetId: number, type: 'rm' | 'em') => {
+    if (selectedUuids.length === 0) return;
     try {
-      if (isAdmin) {
+      if (type === 'rm') {
         await bulkAssign({
           lead_uuids: selectedUuids,
-          assigned_to_rm: Number(targetRmId),
+          assigned_to_rm: targetId,
         }).unwrap();
         toast.success("Leads successfully assigned to RM");
-      } else if (isRM) {
+      } else {
         await bulkAssignToEm({
           lead_uuids: selectedUuids,
-          assigned_to_em: Number(targetRmId),
+          assigned_to_em: targetId,
         }).unwrap();
         toast.success("Leads successfully assigned to EM");
       }
       dispatch(setSelectedUuids({ tabKey, uuids: [] }));
-      setTargetRmId("");
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk assignment failed");
+    }
+  };
+
+  const handleBulkMarkAsJunk = async () => {
+    if (selectedUuids.length === 0) return;
+    try {
+      const promises = selectedUuids.map(uuid => deleteLead({ uuid }).unwrap());
+      await Promise.all(promises);
+      toast.success(`${selectedUuids.length} leads marked as junk`);
+      dispatch(setSelectedUuids({ tabKey, uuids: [] }));
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Bulk action failed");
     }
   };
 
@@ -635,43 +646,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           </div>
 
           <div className="p-4 space-y-4">
-            {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-              <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                    {selectedUuids.length} selected
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Select value={targetRmId} onValueChange={setTargetRmId}>
-                      <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950">
-                        <SelectValue placeholder={assignmentLabel} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assignmentUsers.map((r: any) => (
-                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="sm"
-                      disabled={!targetRmId || isAnyBulkAssigning}
-                      onClick={handleBulkAssign}
-                      className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md px-4 font-bold"
-                    >
-                      {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Assign Selection"}
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
-                  className="text-zinc-500 hover:text-zinc-800 font-medium"
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
 
           <LeadTable
             data={sortedLeads}
@@ -795,6 +769,19 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         onSubmit={handleScheduleVisitSubmit}
         isLoading={isScheduling}
       />
+
+      {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
+        <BulkActionsBar 
+          selectedCount={selectedUuids.length}
+          rms={rms}
+          ems={isAdmin ? ems : emsReportees}
+          onAssignRm={(id) => handleBulkAssign(id, 'rm')}
+          onAssignEm={(id) => handleBulkAssign(id, 'em')}
+          onMarkAsJunk={handleBulkMarkAsJunk}
+          onCancel={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
+          isLoading={isAnyBulkAssigning || isDeleting}
+        />
+      )}
 
       <LeadActivityDialog
         key={activityLead?.uuid || 'activity-dialog'}

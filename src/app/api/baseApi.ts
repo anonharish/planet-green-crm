@@ -10,13 +10,17 @@ const baseQuery = fetchBaseQuery({
   // baseUrl: 'http://localhost:3000',
   baseUrl: 'https://y7lidobvl7.execute-api.ap-south-1.amazonaws.com',
   prepareHeaders: (headers, { getState }) => {
-    // We can get the token from Redux state instead of localStorage directly
-    const token = (getState() as any).auth.token;
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
+  const stateToken = (getState() as any).auth.token;
+  const localToken = localStorage.getItem('token');
+
+  const token = stateToken || localToken;
+
+  if (token) {
+    headers.set('authorization', `Bearer ${token}`);
+  }
+
+  return headers;
+},
 });
 
 export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
