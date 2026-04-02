@@ -12,6 +12,8 @@ export interface User {
   created_on: string;
   updated_on: string | null;
   reporting_manager_id?: number | null;
+  active_leads?: number;
+  em_count?: number;
 }
 
 export interface CreateUserRequest {
