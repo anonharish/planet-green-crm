@@ -91,7 +91,7 @@ export const LeadsPage = () => {
   );
 
   // Handlers
-  const handleSort = (field: string) => {
+  const handleSort = React.useCallback((field: string) => {
     const newSortOrder =
       sortField === field && sortOrder === "asc" ? "desc" : "asc";
     dispatch(
@@ -100,20 +100,20 @@ export const LeadsPage = () => {
         updates: { sortField: field, sortOrder: newSortOrder },
       }),
     );
-  };
+  }, [dispatch, sortField, sortOrder, tabKey]);
 
-  const handleResetFilters = () => {
+  const handleResetFilters = React.useCallback(() => {
     dispatch(resetTabFilters(tabKey));
-  };
+  }, [dispatch, tabKey]);
 
-  const handleApplyFilters = (filters: {
+  const handleApplyFilters = React.useCallback((filters: {
     statusIds: string[];
     projectIds: string[];
     rmIds: string[];
     emIds: string[];
   }) => {
     dispatch(updateTabFilters({ tabKey, updates: { ...filters, page: 1 } }));
-  };
+  }, [dispatch, tabKey]);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showRandomConfirm, setShowRandomConfirm] = useState(false);
@@ -217,7 +217,7 @@ export const LeadsPage = () => {
 
   const isAnyBulkAssigning = isBulkAssigning || isBulkAssignToEm;
 
-  const handleBulkAssign = async (targetId: number, type: 'rm' | 'em') => {
+  const handleBulkAssign = React.useCallback(async (targetId: number, type: 'rm' | 'em') => {
     if (selectedUuids.length === 0) return;
     try {
       if (type === 'rm') {
@@ -237,9 +237,9 @@ export const LeadsPage = () => {
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk assignment failed");
     }
-  };
+  }, [bulkAssign, bulkAssignToEm, dispatch, selectedUuids, tabKey]);
 
-  const handleBulkMarkAsJunk = async () => {
+  const handleBulkMarkAsJunk = React.useCallback(async () => {
     if (selectedUuids.length === 0) return;
     try {
       const promises = selectedUuids.map(uuid => deleteLead({ uuid }).unwrap());
@@ -249,13 +249,13 @@ export const LeadsPage = () => {
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk action failed");
     }
-  };
+  }, [deleteLead, dispatch, selectedUuids, tabKey]);
 
-  const handleLeadActivity = (lead: Lead) => {
+  const handleLeadActivity = React.useCallback((lead: Lead) => {
     setActivityLead(lead);
-  };
+  }, []);
 
-  const handleLeadActivitySubmit = async (data: any) => {
+  const handleLeadActivitySubmit = React.useCallback(async (data: any) => {
     try {
       await addLeadActivity(data).unwrap();
       toast.success("Activity added successfully");
@@ -263,9 +263,9 @@ export const LeadsPage = () => {
     } catch (err: unknown) {
       toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to add activity");
     }
-  };
+  }, [addLeadActivity]);
 
-  const handleRandomAssign = async () => {
+  const handleRandomAssign = React.useCallback(async () => {
     if (leads.length === 0 || assignmentUsers.length === 0) {
       toast.error(`No leads or ${isAdmin ? "RMs" : "EMs"} available for assignment`);
       return;
@@ -308,7 +308,7 @@ export const LeadsPage = () => {
     } catch (err: any) {
       toast.error(err?.data?.message || "Random assignment failed");
     }
-  };
+  }, [assignmentUsers, bulkAssign, bulkAssignToEm, isAdmin, isRM, leads]);
 
   const handleCreateNew = React.useCallback(() => {
     setEditingLead(null);
@@ -658,6 +658,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onScheduleVisit={handleScheduleVisit}
+            onLeadActivity={handleLeadActivity}
             onUpdateStatus={handleUpdateStatus}
             onAssignRm={handleAssignRm}
             onAssignEm={handleAssignEm}
