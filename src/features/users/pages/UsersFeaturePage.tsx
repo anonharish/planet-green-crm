@@ -23,6 +23,7 @@ interface UsersFeaturePageProps {
   title: string;
   description: string;
   permissionPrefix: 'manager' | 'agent';
+  searchPlaceholder?: string;
 }
 
 export const UsersFeaturePage = ({
@@ -30,7 +31,8 @@ export const UsersFeaturePage = ({
   roleLabel,
   title,
   description,
-  permissionPrefix
+  permissionPrefix,
+  searchPlaceholder
 }: UsersFeaturePageProps) => {
   const { can } = usePermissions();
   
@@ -159,7 +161,7 @@ export const UsersFeaturePage = ({
   // Actions Header
   const actions = can(`${permissionPrefix}.create`) && (
     <Button onClick={handleAddClick}>
-      Add 
+      Create
     </Button>
   );
 
@@ -176,7 +178,7 @@ export const UsersFeaturePage = ({
           <SearchInput 
             value={search} 
             onChange={setSearch} 
-            placeholder={`Search ${roleLabel.toLowerCase()}s...`} 
+            placeholder={searchPlaceholder || `Search ${roleLabel.toLowerCase()}s...`} 
           />
         </FilterBar>
 
