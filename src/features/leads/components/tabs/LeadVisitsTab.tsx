@@ -141,7 +141,7 @@ export const LeadVisitsTab = ({
                 </div>
               </div>
 
-              <button
+              {/* <button
                 onClick={() => {
                   setSelectedVisit(v);
                   setOpenDialog(true);
@@ -149,7 +149,7 @@ export const LeadVisitsTab = ({
                 className="p-3 rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all opacity-0 group-hover:opacity-100"
               >
                 <Pencil className="h-5 w-5" />
-              </button>
+              </button> */}
             </div>
           );
         })}
