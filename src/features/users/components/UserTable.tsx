@@ -137,7 +137,7 @@ export const UserTable = ({
 
               <DropdownMenuSeparator />
               
-              {can(`${permissionPrefix}.delete` as Permission) && (
+              {/* {can(`${permissionPrefix}.delete` as Permission) && (
                 <DropdownMenuItem 
                   onClick={() => onDelete(user.id)} 
                   className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
@@ -145,7 +145,7 @@ export const UserTable = ({
                   <Trash2 className="h-4 w-4" />
                   <span>Delete User</span>
                 </DropdownMenuItem>
-              )}
+              )} */}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
