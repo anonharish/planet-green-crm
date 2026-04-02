@@ -52,7 +52,7 @@ import type { Lead, CreateLeadRequest, UpdateLeadRequest } from "../types";
 import { JunkLeadsPage } from './JunkLeadsPage';
 import { LeadJunkReviewPage } from './LeadJunkReviewPage';
 import { ReassignRMModal } from '../components/ReassignRMModal';
-import type { JunkLead } from '../data/junkLeadsData';
+import { JunkReasonDialog } from '../components/JunkReasonDialog';
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -125,8 +125,18 @@ export const LeadsPage = () => {
 
   // Junk Leads Flow State
   const [activeView, setActiveView] = useState<string>('leads');
-  const [selectedJunkLead, setSelectedJunkLead] = useState<JunkLead | null>(null);
+  const [selectedJunkLead, setSelectedJunkLead] = useState<Lead | null>(null);
   const [showReassignModal, setShowReassignModal] = useState(false);
+  const [junkPage, setJunkPage] = useState(1);
+  const [junkLimit, setJunkLimit] = useState(10);
+
+  // Junk Reason State
+  const [isJunkReasonDialogOpen, setIsJunkReasonDialogOpen] = useState(false);
+  const [pendingJunkAction, setPendingJunkAction] = useState<{
+    type: 'single' | 'bulk';
+    lead?: Lead;
+    statusId?: number;
+  } | null>(null);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -183,6 +193,13 @@ export const LeadsPage = () => {
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
+
+  // Junk Leads logic: Fetch leads with status code 'JUNKPE'
+  const junkStatusId = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE')?.id;
+  const { data: junkLeadsData = [], isLoading: isJunkLoading } = useGetLeadsQuery({
+    offset: (junkPage - 1) * junkLimit,
+    status: junkStatusId ? [junkStatusId] : undefined,
+  }, { skip: !junkStatusId || activeView === 'leads' });
   const [addLeadActivity, { isLoading: isAddingActivity }] = 
     useAddLeadActivityMutation();
 
@@ -240,17 +257,41 @@ export const LeadsPage = () => {
     }
   }, [bulkAssign, bulkAssignToEm, dispatch, selectedUuids, tabKey]);
 
-  const handleBulkMarkAsJunk = React.useCallback(async () => {
-    if (selectedUuids.length === 0) return;
+  const handleBulkMarkAsJunk = React.useCallback(async (reason: string) => {
+    if (selectedUuids.length === 0 || !junkStatusId) return;
     try {
-      const promises = selectedUuids.map(uuid => deleteLead({ uuid }).unwrap());
+      const promises = selectedUuids.map(uuid => {
+        const lead = leads.find(l => l.uuid === uuid);
+        if (!lead) return Promise.resolve();
+        return updateLead({
+          uuid: lead.uuid,
+          first_name: lead.first_name || '',
+          last_name: lead.last_name || '',
+          phone_number: lead.phone_number || '',
+          email_address: lead.email_address || '',
+          occupation: lead.occupation || '',
+          address: lead.address || '',
+          city: lead.city || '',
+          state: lead.state || '',
+          country: lead.country || '',
+          zip: lead.zip || '',
+          source_id: lead.source_id,
+          source_employee_user_id: lead.source_employee_user_id || null,
+          project_id: lead.project_id,
+          assigned_to_rm: lead.assigned_to_rm || null,
+          assigned_to_em: lead.assigned_to_em || null,
+          lead_priority_id: lead.lead_priority_id || 1,
+          lead_status_id: junkStatusId,
+          junk_reason: reason,
+        }).unwrap();
+      });
       await Promise.all(promises);
       toast.success(`${selectedUuids.length} leads marked as junk`);
       dispatch(setSelectedUuids({ tabKey, uuids: [] }));
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk action failed");
     }
-  }, [deleteLead, dispatch, selectedUuids, tabKey]);
+  }, [deleteLead, dispatch, selectedUuids, tabKey, junkStatusId, leads, updateLead]);
 
   const handleLeadActivity = React.useCallback((lead: Lead) => {
     setActivityLead(lead);
@@ -379,14 +420,65 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         assigned_to_em: lead.assigned_to_em || null,
         lead_priority_id: lead.lead_priority_id || 1,
         lead_status_id: newStatusId,
+        junk_reason: pendingJunkAction?.statusId === junkStatusId ? (pendingJunkAction as any).reason : undefined,
       };
       
+      if (newStatusId === junkStatusId && !pendingJunkAction?.lead) {
+        setPendingJunkAction({ type: 'single', lead, statusId: newStatusId });
+        setIsJunkReasonDialogOpen(true);
+        return;
+      }
+
       await updateLead(payload).unwrap();
+      if (newStatusId === junkStatusId) {
+        setPendingJunkAction(null);
+        setIsJunkReasonDialogOpen(false);
+      }
       toast.success('Status updated successfully!');
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
-  }, [updateLead]);
+  }, [updateLead, junkStatusId, pendingJunkAction]);
+
+  const handleJunkReasonConfirm = async (reason: string) => {
+    if (!pendingJunkAction) return;
+    
+    if (pendingJunkAction.type === 'bulk') {
+      await handleBulkMarkAsJunk(reason);
+      setIsJunkReasonDialogOpen(false);
+      setPendingJunkAction(null);
+    } else if (pendingJunkAction.type === 'single' && pendingJunkAction.lead) {
+      const lead = pendingJunkAction.lead;
+      try {
+        await updateLead({
+          uuid: lead.uuid,
+          first_name: lead.first_name || '',
+          last_name: lead.last_name || '',
+          phone_number: lead.phone_number || '',
+          email_address: lead.email_address || '',
+          occupation: lead.occupation || '',
+          address: lead.address || '',
+          city: lead.city || '',
+          state: lead.state || '',
+          country: lead.country || '',
+          zip: lead.zip || '',
+          source_id: lead.source_id,
+          source_employee_user_id: lead.source_employee_user_id || null,
+          project_id: lead.project_id,
+          assigned_to_rm: lead.assigned_to_rm || null,
+          assigned_to_em: lead.assigned_to_em || null,
+          lead_priority_id: lead.lead_priority_id || 1,
+          lead_status_id: junkStatusId!,
+          junk_reason: reason,
+        }).unwrap();
+        toast.success('Lead marked as junk');
+        setIsJunkReasonDialogOpen(false);
+        setPendingJunkAction(null);
+      } catch (err: any) {
+        toast.error(err?.data?.message || 'Failed to update status');
+      }
+    }
+  };
 
   const handleAssignRm = React.useCallback(async (lead: Lead, rmId: number | null) => {
     try {
@@ -626,6 +718,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
       {activeView === 'junk' && (
         <JunkLeadsPage 
+          leads={junkLeadsData}
+          isLoading={isJunkLoading}
+          page={junkPage}
+          limit={junkLimit}
+          total={junkLeadsData.length < junkLimit ? (junkPage - 1) * junkLimit + junkLeadsData.length : (junkPage) * junkLimit + 1}
+          onPageChange={setJunkPage}
+          onLimitChange={setJunkLimit}
           onVerify={(lead) => {
             setSelectedJunkLead(lead);
             setActiveView('junk-review');
@@ -640,7 +739,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onBack={() => setActiveView('junk')}
             onReassign={() => setShowReassignModal(true)}
             onApprove={() => {
-              toast.success("Lead junk approved");
+              toast.success("Lead junk approved (archived)");
               setActiveView('junk');
             }}
           />
@@ -648,9 +747,38 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             open={showReassignModal}
             onClose={() => setShowReassignModal(false)}
             lead={selectedJunkLead}
-            onConfirm={(rmId) => {
-              toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
-              setActiveView('junk');
+            rms={rms}
+            onConfirm={async (rmId, reason) => {
+              try {
+                // Restoration logic: Change RM and potentially status
+                // Find a non-junk status to move it to, e.g. status ID 1 or current
+                await updateLead({
+                  uuid: selectedJunkLead.uuid,
+                  first_name: selectedJunkLead.first_name || '',
+                  last_name: selectedJunkLead.last_name || '',
+                  phone_number: selectedJunkLead.phone_number || '',
+                  email_address: selectedJunkLead.email_address || '',
+                  occupation: selectedJunkLead.occupation || '',
+                  address: selectedJunkLead.address || '',
+                  city: selectedJunkLead.city || '',
+                  state: selectedJunkLead.state || '',
+                  country: selectedJunkLead.country || '',
+                  zip: selectedJunkLead.zip || '',
+                  source_id: selectedJunkLead.source_id,
+                  source_employee_user_id: selectedJunkLead.source_employee_user_id || null,
+                  project_id: selectedJunkLead.project_id,
+                  assigned_to_rm: rmId,
+                  assigned_to_em: null,
+                  lead_priority_id: selectedJunkLead.lead_priority_id || 1,
+                  lead_status_id: selectedJunkLead.lead_status_id,
+                }).unwrap();
+                
+                toast.success(`Lead successfully reassigned to RM. It will now appear in Assigned leads.`);
+                setActiveView('junk');
+                refetch();
+              } catch (err: any) {
+                toast.error(err?.data?.message || "Restoration failed");
+              }
             }}
           />
         </>
@@ -728,11 +856,24 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           ems={isAdmin ? ems : emsReportees}
           onAssignRm={(id) => handleBulkAssign(id, 'rm')}
           onAssignEm={(id) => handleBulkAssign(id, 'em')}
-          onMarkAsJunk={handleBulkMarkAsJunk}
+          onMarkAsJunk={() => {
+            setPendingJunkAction({ type: 'bulk' });
+            setIsJunkReasonDialogOpen(true);
+          }}
           onCancel={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
-          isLoading={isAnyBulkAssigning || isDeleting}
+          isLoading={isAnyBulkAssigning || isDeleting || isUpdating}
         />
       )}
+
+      <JunkReasonDialog 
+        open={isJunkReasonDialogOpen}
+        onClose={() => {
+          setIsJunkReasonDialogOpen(false);
+          setPendingJunkAction(null);
+        }}
+        onConfirm={handleJunkReasonConfirm}
+        isLoading={isUpdating}
+      />
 
       <LeadActivityDialog
         key={activityLead?.uuid || 'activity-dialog'}
