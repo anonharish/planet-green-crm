@@ -2,7 +2,7 @@ import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
-import { Pencil, Trash2, MoreVertical, Users } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Users, Phone } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,8 @@ import {
 } from '../../../components/ui/dropdown-menu';
 import { formatDate } from '../../../utils';
 import { ExperienceManagerListDialog } from './ExperienceManagerListDialog';
+import { UserLeadsDialog } from './UserLeadsDialog';
+import { LayoutList } from 'lucide-react';
 import type { User } from '../types';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import type { Permission } from '../../../config/permissions';
@@ -54,28 +56,45 @@ export const UserTable = ({
   const { can } = usePermissions();
   const { getRmLabel, isLoading: isLookupLoading } = useMasterDataLookup();
   const [viewAgentsManager, setViewAgentsManager] = React.useState<User | null>(null);
+  const [selectedLeadsUser, setSelectedLeadsUser] = React.useState<User | null>(null);
 
   const columns: ColumnDef<User>[] = [
     {
       key: 'first_name',
-      header: 'First Name',
+      header: permissionPrefix === 'manager' ? 'RM Name' : 'EM Name',
       sortable: true,
-      render: (user) => <span className="font-medium">{user.first_name}</span>,
-    },
-    {
-      key: 'last_name',
-      header: 'Last Name',
-      render: (user) => <span>{user.last_name}</span>,
+      render: (user) => {
+        const initials = `${user.first_name[0] || ''}${user.last_name[0] || ''}`.toUpperCase();
+        return (
+          <div className="flex items-center gap-3 py-1">
+            <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0 border border-blue-100 dark:border-blue-800">
+              {initials || '??'}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-black text-zinc-900 dark:text-zinc-100 truncate">
+                {user.first_name} {user.last_name}
+              </span>
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'phone_number',
-      header: 'Phone',
-      render: (user) => <span>{user.phone_number}</span>,
-    },
-    {
-      key: 'email',
-      header: 'Email',
-      render: (user) => <span className="text-zinc-500">{user.email}</span>,
+      header: 'Contact Info',
+      render: (user) => (
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5">
+            <Phone size={12} className="text-zinc-400" />
+            <span className="font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+              {user.phone_number}
+            </span>
+          </div>
+          <span className="text-zinc-400 font-medium text-xs">
+            {user.email}
+          </span>
+        </div>
+      ),
     },
     {
       key: 'created_on',
@@ -83,22 +102,22 @@ export const UserTable = ({
       sortable: true,
       render: (user) => <span>{formatDate(user.created_on)}</span>,
     },
-    {
+    ...(permissionPrefix === 'manager' ? [{
       key: 'em_count',
       header: 'EM Count',
       render: (user: User) => (
-      <span
-      className="cursor-pointer text-blue-600 hover:underline"
-      onClick={() => {
-        if (user.role_id === 3) {
-          setViewAgentsManager(user);
-        }
-      }}
-     >
-      {user.reportee_count ?? 0}
-     </span>
-    ),
-    },
+        <span
+          className="cursor-pointer text-[#0f3d6b] font-black hover:underline px-4"
+          onClick={() => {
+            if (user.role_id === 3) {
+              setViewAgentsManager(user);
+            }
+          }}
+        >
+          {user.reportee_count ?? 0}
+        </span>
+      ),
+    }] : []),
     ...(permissionPrefix === 'agent' ? [{
       key: 'reporting_manager_id',
       header: 'Assigned RM',
@@ -127,6 +146,11 @@ export const UserTable = ({
                   <span>Edit Details</span>
                 </DropdownMenuItem>
               )}
+
+              <DropdownMenuItem onClick={() => setSelectedLeadsUser(user)} className="cursor-pointer gap-2 py-2">
+                <LayoutList className="h-4 w-4 text-[#0f3d6b]" />
+                <span>View Assigned Leads</span>
+              </DropdownMenuItem>
 
               {user.role_id === 3 && (
                 <DropdownMenuItem onClick={() => setViewAgentsManager(user)} className="cursor-pointer gap-2 py-2">
@@ -175,6 +199,14 @@ export const UserTable = ({
         open={!!viewAgentsManager}
         onClose={() => setViewAgentsManager(null)}
         manager={viewAgentsManager}
+      />
+
+      <UserLeadsDialog
+        open={!!selectedLeadsUser}
+        onClose={() => setSelectedLeadsUser(null)}
+        userId={selectedLeadsUser?.id || null}
+        userName={selectedLeadsUser ? `${selectedLeadsUser.first_name} ${selectedLeadsUser.last_name}` : ''}
+        type={permissionPrefix === 'manager' ? 'RM' : 'EM'}
       />
     </>
   );

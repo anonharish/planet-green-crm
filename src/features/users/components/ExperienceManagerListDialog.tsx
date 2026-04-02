@@ -46,42 +46,42 @@ export const ExperienceManagerListDialog = ({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-white/95 backdrop-blur-md dark:bg-zinc-950/95">
-        {/* Header Section */}
-        <DialogHeader className="p-5 bg-linear-to-r from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/5 dark:to-teal-500/5 border-b">
+        {/* Header Section - Emerald Theme */}
+        <DialogHeader className="p-6 bg-[#f0f9f6] dark:bg-emerald-950/20 border-b border-emerald-100 dark:border-emerald-900/30">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+            <div className="w-12 h-12 rounded-full bg-[#34d399] flex items-center justify-center text-white font-black text-sm shadow-sm">
               {manager?.first_name[0]}{manager?.last_name[0]}
             </div>
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 truncate">
+              <DialogTitle className="text-xl font-black text-[#0f3d6b] dark:text-zinc-100 truncate tracking-tight">
                 Direct Reports
               </DialogTitle>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                Managed by <span className="font-semibold text-emerald-600 dark:text-emerald-400">{manager?.first_name} {manager?.last_name}</span>
+              <p className="text-xs text-zinc-500 font-bold dark:text-zinc-400 truncate">
+                Managed by <span className="text-[#10b981]">{manager?.first_name} {manager?.last_name}</span>
               </p>
             </div>
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800 uppercase tracking-tight">
-              {filteredReports.length} Reports
+            <div className="bg-white dark:bg-emerald-900/30 px-3 py-1 rounded-full text-[10px] font-black text-[#10b981] border border-[#d1fae5] dark:border-emerald-800 uppercase tracking-widest shadow-sm">
+              {filteredReports.length} REPORTS
             </div>
           </div>
         </DialogHeader>
 
-        {/* Search Bar Section */}
-        <div className="px-5 py-3 border-b bg-zinc-50/50 dark:bg-zinc-900/50">
+        {/* Search Bar Section - Pill Style */}
+        <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 group-focus-within:text-emerald-500 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#10b981] opacity-60" />
             <Input 
               placeholder="Search reports by name or email..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-9 h-9 text-xs bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500/50 transition-all"
+              className="pl-11 pr-11 h-11 text-sm bg-white dark:bg-zinc-900 border-[#10b981]/30 dark:border-zinc-800 rounded-full focus-visible:ring-[#10b981]/10 focus-visible:border-[#10b981] transition-all shadow-sm font-medium"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-400"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -95,14 +95,14 @@ export const ExperienceManagerListDialog = ({
               <p className="text-[11px] font-medium animate-pulse tracking-wide uppercase">Updating results...</p>
             </div>
           ) : filteredReports.length === 0 ? (
-            <div className="text-center py-16 px-6">
-              <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-3 border border-zinc-100 dark:border-zinc-800">
-                <UserIcon className="h-6 w-6 text-zinc-200 dark:text-zinc-800" />
+            <div className="text-center py-20 px-10">
+              <div className="w-20 h-20 bg-[#f0f9f6] dark:bg-emerald-900/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-50 dark:border-emerald-900/30">
+                <UserIcon size={32} className="text-[#10b981] opacity-30" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h3 className="text-lg font-black text-[#0f3d6b] dark:text-zinc-100 tracking-tight">
                 {searchQuery ? 'No results found' : 'No reports yet'}
               </h3>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-medium max-w-[200px] mx-auto leading-relaxed">
                 {searchQuery 
                   ? `We couldn't find any reports matching "${searchQuery}"`
                   : 'This relationship manager has no experience managers assigned.'}
@@ -140,8 +140,11 @@ export const ExperienceManagerListDialog = ({
         </div>
 
         {/* Footer Section */}
-        <div className="p-3 bg-zinc-50 dark:bg-zinc-900/10 border-t flex justify-end items-center px-5">
-           <Button variant="outline" onClick={onClose} className="h-8 text-xs px-5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all font-bold">
+        <div className="p-5 bg-zinc-50 dark:bg-zinc-900/10 border-t border-zinc-100 dark:border-zinc-800 flex justify-end items-center px-6">
+           <Button 
+            onClick={onClose} 
+            className="h-11 px-8 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[#0f3d6b] dark:text-zinc-300 font-black text-sm shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all active:scale-95"
+          >
             Close
           </Button>
         </div>
