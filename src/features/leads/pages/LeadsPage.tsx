@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { PageHeader } from "../../../shared/components/PageHeader/PageHeader";
-import {
-  FilterBar,
-  SearchInput,
-} from "../../../shared/components/FilterBar/FilterBar";
+import { SearchInput } from "../../../shared/components/FilterBar/FilterBar";
 import { AppDrawer } from "../../../shared/components/AppDrawer/AppDrawer";
 import { ConfirmDialog } from "../../../shared/components/ConfirmDialog/ConfirmDialog";
 import { LeadForm } from "../components/LeadForm";
 import { LeadTable } from "../components/LeadTable";
+import { BulkActionsBar } from "../components/BulkActionsBar";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
-import { Plus, Loader2 } from "lucide-react";
+import { LeadActivityDialog } from "../components/LeadActivityDialog";
+import { FilterPopover } from "../../../shared/components/FilterPopover/FilterPopover";
+import { Loader2, UserPlus } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -23,6 +23,7 @@ import {
   useScheduleVisitMutation,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
+   useAddLeadActivityMutation,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -48,6 +49,10 @@ import {
   setSelectedUuids,
 } from "../store/leadsSlice";
 import type { Lead, CreateLeadRequest, UpdateLeadRequest } from "../types";
+import { JunkLeadsPage } from './JunkLeadsPage';
+import { LeadJunkReviewPage } from './LeadJunkReviewPage';
+import { ReassignRMModal } from '../components/ReassignRMModal';
+import type { JunkLead } from '../data/junkLeadsData';
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -74,7 +79,6 @@ export const LeadsPage = () => {
     selectedUuids,
   } = currentFilters;
 
-  const [targetRmId, setTargetRmId] = useState<string>("");
 
   // Calculate server-side offset based on 200-record chunks
   const serverOffset = Math.floor(((page - 1) * limit) / 200) * 200;
@@ -87,7 +91,7 @@ export const LeadsPage = () => {
   );
 
   // Handlers
-  const handleSort = (field: string) => {
+  const handleSort = React.useCallback((field: string) => {
     const newSortOrder =
       sortField === field && sortOrder === "asc" ? "desc" : "asc";
     dispatch(
@@ -96,17 +100,32 @@ export const LeadsPage = () => {
         updates: { sortField: field, sortOrder: newSortOrder },
       }),
     );
-  };
+  }, [dispatch, sortField, sortOrder, tabKey]);
 
-  const handleResetFilters = () => {
+  const handleResetFilters = React.useCallback(() => {
     dispatch(resetTabFilters(tabKey));
-  };
+  }, [dispatch, tabKey]);
+
+  const handleApplyFilters = React.useCallback((filters: {
+    statusIds: string[];
+    projectIds: string[];
+    rmIds: string[];
+    emIds: string[];
+  }) => {
+    dispatch(updateTabFilters({ tabKey, updates: { ...filters, page: 1 } }));
+  }, [dispatch, tabKey]);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showRandomConfirm, setShowRandomConfirm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+  const [activityLead, setActivityLead] = useState<Lead | null>(null);
+
+  // Junk Leads Flow State
+  const [activeView, setActiveView] = useState<string>('leads');
+  const [selectedJunkLead, setSelectedJunkLead] = useState<JunkLead | null>(null);
+  const [showReassignModal, setShowReassignModal] = useState(false);
 
   // Data Fetching
   const { data: masterData } = useGetAllMasterDataQuery();
@@ -120,9 +139,10 @@ export const LeadsPage = () => {
     data: adminLeads = [],
     isLoading: isAdminLoading,
     isFetching: isAdminFetching,
+    refetch,
   } = useGetLeadsQuery({
     offset: serverOffset,
-    is_rm_assigned: isAdmin ? activeTab : undefined,
+    is_rm_assigned: isAdmin ? (activeTab === 1 ? 1 : 0) : undefined,
     search_text: debouncedSearch || undefined,
     status:
       debouncedFilters.statusIds.length > 0
@@ -162,6 +182,8 @@ export const LeadsPage = () => {
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
+  const [addLeadActivity, { isLoading: isAddingActivity }] = 
+    useAddLeadActivityMutation();
 
   const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
   const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
@@ -173,9 +195,9 @@ export const LeadsPage = () => {
     { skip: !isRM }
   );
 
+
   // Users listed in the bulk assignment dropdown: RMs for Admin, EMs for RM
   const assignmentUsers = isAdmin ? rms : emsReportees;
-  const assignmentLabel = isAdmin ? "Select RM for assignment" : "Select EM for assignment";
 
   const { data: ems = [] } = useGetReporteesQuery(
     { reporting_manager_id: Number(rmIds[0] || 0), offset: 0 },
@@ -188,36 +210,62 @@ export const LeadsPage = () => {
     useBulkAssignLeadsToRmMutation();
   const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] = 
     useBulkAssignLeadsToEmMutation();
+  const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
   const [scheduleVisit, { isLoading: isScheduling }] =
     useScheduleVisitMutation();
 
   const isAnyBulkAssigning = isBulkAssigning || isBulkAssignToEm;
 
-  const handleBulkAssign = async () => {
-    if (!targetRmId || selectedUuids.length === 0) return;
+  const handleBulkAssign = React.useCallback(async (targetId: number, type: 'rm' | 'em') => {
+    if (selectedUuids.length === 0) return;
     try {
-      if (isAdmin) {
+      if (type === 'rm') {
         await bulkAssign({
           lead_uuids: selectedUuids,
-          assigned_to_rm: Number(targetRmId),
+          assigned_to_rm: targetId,
         }).unwrap();
         toast.success("Leads successfully assigned to RM");
-      } else if (isRM) {
+      } else {
         await bulkAssignToEm({
           lead_uuids: selectedUuids,
-          assigned_to_em: Number(targetRmId),
+          assigned_to_em: targetId,
         }).unwrap();
         toast.success("Leads successfully assigned to EM");
       }
       dispatch(setSelectedUuids({ tabKey, uuids: [] }));
-      setTargetRmId("");
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk assignment failed");
     }
-  };
+  }, [bulkAssign, bulkAssignToEm, dispatch, selectedUuids, tabKey]);
 
-  const handleRandomAssign = async () => {
+  const handleBulkMarkAsJunk = React.useCallback(async () => {
+    if (selectedUuids.length === 0) return;
+    try {
+      const promises = selectedUuids.map(uuid => deleteLead({ uuid }).unwrap());
+      await Promise.all(promises);
+      toast.success(`${selectedUuids.length} leads marked as junk`);
+      dispatch(setSelectedUuids({ tabKey, uuids: [] }));
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Bulk action failed");
+    }
+  }, [deleteLead, dispatch, selectedUuids, tabKey]);
+
+  const handleLeadActivity = React.useCallback((lead: Lead) => {
+    setActivityLead(lead);
+  }, []);
+
+  const handleLeadActivitySubmit = React.useCallback(async (data: any) => {
+    try {
+      await addLeadActivity(data).unwrap();
+      toast.success("Activity added successfully");
+      setActivityLead(null);
+    } catch (err: unknown) {
+      toast.error((err as { data?: { message?: string } })?.data?.message || "Failed to add activity");
+    }
+  }, [addLeadActivity]);
+
+  const handleRandomAssign = React.useCallback(async () => {
     if (leads.length === 0 || assignmentUsers.length === 0) {
       toast.error(`No leads or ${isAdmin ? "RMs" : "EMs"} available for assignment`);
       return;
@@ -260,40 +308,44 @@ export const LeadsPage = () => {
     } catch (err: any) {
       toast.error(err?.data?.message || "Random assignment failed");
     }
-  };
+  }, [assignmentUsers, bulkAssign, bulkAssignToEm, isAdmin, isRM, leads]);
 
-  const handleCreateNew = () => {
+  const handleCreateNew = React.useCallback(() => {
     setEditingLead(null);
     setIsDrawerOpen(true);
-  };
+  }, []);
 
-  const handleEdit = (lead: Lead) => {
+  const handleEdit = React.useCallback((lead: Lead) => {
     setEditingLead(lead);
     setIsDrawerOpen(true);
-  };
+  }, []);
 
-  const handleScheduleVisit = (lead: Lead) => {
+  const handleScheduleVisit = React.useCallback((lead: Lead) => {
     setSchedulingLead(lead);
-  };
+  }, []);
 
-  const handleDelete = (uuid: string) => {
+  const handleDelete = React.useCallback((uuid: string) => {
     setDeleteUuid(uuid);
-  };
+  }, []);
 
-  const handleFormSubmit = async (values: CreateLeadRequest) => {
-    try {
-      if (editingLead) {
-        await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
-        toast.success("Lead updated successfully");
-      } else {
-        await createLead(values).unwrap();
-        toast.success("Lead created successfully");
+const handleFormSubmit = async (values: CreateLeadRequest) => {
+  try {
+    if (editingLead) {
+      await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
+      toast.success("Lead updated successfully");
+      if (values.assigned_to_rm) {
+        dispatch(setActiveTabAction(1));
       }
-      setIsDrawerOpen(false);
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Operation failed");
+      refetch();
+    } else {
+      await createLead(values).unwrap();
+      toast.success("Lead created successfully");
     }
-  };
+    setIsDrawerOpen(false);
+  } catch (err: any) {
+    toast.error(err?.data?.message || "Operation failed");
+  }
+};
 
   const handleScheduleVisitSubmit = async (data: any) => {
     try {
@@ -305,7 +357,7 @@ export const LeadsPage = () => {
     }
   };
 
-  const handleUpdateStatus = async (lead: Lead, newStatusId: number) => {
+  const handleUpdateStatus = React.useCallback(async (lead: Lead, newStatusId: number) => {
     try {
       const payload: UpdateLeadRequest = {
         uuid: lead.uuid,
@@ -333,7 +385,77 @@ export const LeadsPage = () => {
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
-  };
+  }, [updateLead]);
+
+  const handleAssignRm = React.useCallback(async (lead: Lead, rmId: number | null) => {
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: rmId,
+        assigned_to_em: rmId !== lead.assigned_to_rm ? null : (lead.assigned_to_em || null),
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: lead.lead_status_id,
+      };
+      await updateLead(payload).unwrap();
+      toast.success(rmId ? 'RM assigned successfully!' : 'RM unassigned');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to assign RM');
+    }
+  }, [updateLead]);
+
+  const handleAssignEm = React.useCallback(async (lead: Lead, emId: number | null) => {
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: lead.assigned_to_rm || null,
+        assigned_to_em: emId,
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: lead.lead_status_id,
+      };
+      await updateLead(payload).unwrap();
+      toast.success(emId ? 'EM assigned successfully!' : 'EM unassigned');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to assign EM');
+    }
+  }, [updateLead]);
+
+  const handlePageChange = React.useCallback((v: number) => {
+    dispatch(updateTabFilters({ tabKey, updates: { page: v } }));
+  }, [dispatch, tabKey]);
+
+  const handleLimitChange = React.useCallback((v: number) => {
+    dispatch(updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }));
+  }, [dispatch, tabKey]);
+
+  const handleSelectUuids = React.useCallback((uuids: string[]) => {
+    dispatch(setSelectedUuids({ tabKey, uuids }));
+  }, [dispatch, tabKey]);
 
   // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
@@ -361,245 +483,228 @@ export const LeadsPage = () => {
     leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Leads Dashboard"
-        description="Core CRM leads management and assignment platform"
-        actions={
-          <div className="flex gap-3">
-            {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-              <Button
-                variant="outline"
-                onClick={() => setShowRandomConfirm(true)}
-                disabled={isAnyBulkAssigning || leads.length === 0}
-                className="gap-2"
-              >
-                {isAnyBulkAssigning ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
-                Random Assign
-              </Button>
-            )}
-            {can(PERMISSIONS.LEAD_CREATE) && (
+    <div className="space-y-4">
+      {activeView === 'leads' ? (
+        <PageHeader
+          title="Leads Dashboard"
+          description="Manage and track your sales pipeline efficiency"
+          actions={
+            can(PERMISSIONS.LEAD_CREATE) ? (
               <Button onClick={handleCreateNew} className="gap-2">
-                Add Lead
+                <UserPlus size={18} />
+                Create
               </Button>
-            )}
-          </div>
-        }
-      />
+            ) : undefined
+          }
+        />
+      ) : null}
 
-      {showTabs && (
-        <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl w-fit drop-shadow-sm border border-zinc-200/50 dark:border-zinc-800/50">
-          <button
-            onClick={() => dispatch(setActiveTabAction(0))}
-            className={cn(
-              "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
-              activeTab === 0
-                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50"
-                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
-            )}
-          >
-            Unassigned Leads
-          </button>
-          <button
-            onClick={() => dispatch(setActiveTabAction(1))}
-            className={cn(
-              "px-6 py-2.5 text-xs font-bold rounded-lg transition-all duration-200 uppercase tracking-wider",
-              activeTab === 1
-                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-700/50"
-                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50",
-            )}
-          >
-            Assigned Leads
-          </button>
-        </div>
-      )}
-
-      <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar onReset={handleResetFilters}>
+      {/* Search + Tabs Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="w-full sm:w-1/2">
           <SearchInput
             value={search}
             onChange={(v) =>
-              dispatch(
-                updateTabFilters({ tabKey, updates: { search: v, page: 1 } }),
-              )
+              dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
             }
-            placeholder="Search leads..."
+            placeholder="Search leads by name"
           />
+        </div>
 
-          <div className="w-48">
-            <MultiSelect
-              options={
-                masterData?.lead_statuses.map((s) => ({
-                  label: s.description,
-                  value: String(s.id),
-                })) || []
-              }
-              selected={statusIds}
-              onChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: { statusIds: v, page: 1 },
-                  }),
-                )
-              }
-              placeholder="Filter Status"
-            />
-          </div>
-
-          <div className="w-48">
-            <MultiSelect
-              options={
-                masterData?.projects.map((p) => ({
-                  label: p.description,
-                  value: String(p.id),
-                })) || []
-              }
-              selected={projectIds}
-              onChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: { projectIds: v, page: 1 },
-                  }),
-                )
-              }
-              placeholder="Filter Project"
-            />
-          </div>
-
-          {isAdmin && (
-            <Select
-              value={rmIds[0] || "all"}
-              onValueChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: {
-                      rmIds: v === "all" ? [] : [v],
-                      emIds: [],
-                      page: 1,
-                    },
-                  }),
-                )
-              }
+        {showTabs && (
+          <div className="flex items-center gap-2 p-2 bg-[#f0f2f5] dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200/50 dark:border-zinc-800/50">
+            <button
+              onClick={() => {
+                dispatch(setActiveTabAction(0));
+                setActiveView('leads');
+              }}
+              className={cn(
+                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                activeTab === 0 && activeView === 'leads'
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
+                  : "text-slate-500 hover:text-primary",
+              )}
             >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Select RM" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All RMs</SelectItem>
-                {rms.map((r) => (
-                  <SelectItem key={r.id} value={String(r.id)}>
-                    {r.first_name} {r.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {(isAdmin || isRM) && (
-            <Select
-              value={emIds[0] || "all"}
-              onValueChange={(v) =>
-                dispatch(
-                  updateTabFilters({
-                    tabKey,
-                    updates: { emIds: v === "all" ? [] : [v], page: 1 },
-                  }),
-                )
-              }
-              disabled={isAdmin && rmIds.length === 0}
+              Unassigned
+            </button>
+            <button
+              onClick={() => {
+                dispatch(setActiveTabAction(1));
+                setActiveView('leads');
+              }}
+              className={cn(
+                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                activeTab === 1 && activeView === 'leads'
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
+                  : "text-slate-500 hover:text-primary",
+              )}
             >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Select EM" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All EMs</SelectItem>
-                {(isAdmin ? ems : emsReportees).map((e) => (
-                  <SelectItem key={e.id} value={String(e.id)}>
-                    {e.first_name} {e.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FilterBar>
-
-        {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-          <div className="flex items-center justify-between p-3 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-lg animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                {selectedUuids.length} leads selected
-              </span>
-              <div className="flex items-center gap-2">
-                <Select value={targetRmId} onValueChange={setTargetRmId}>
-                  <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-zinc-950 transition-all focus:ring-2 focus:ring-indigo-500">
-                    <SelectValue placeholder={assignmentLabel} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignmentUsers.map((r: any) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.first_name} {r.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="sm"
-                  disabled={!targetRmId || isAnyBulkAssigning}
-                  onClick={handleBulkAssign}
-                  className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95 transition-all px-4 font-bold"
-                >
-                  {isAnyBulkAssigning ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Assign Selection"
-                  )}
-                </Button>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
-              className="text-zinc-500 hover:text-zinc-800 font-medium"
+              Assigned
+            </button>
+            <button
+              onClick={() => setActiveView('junk')}
+              className={cn(
+                "px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                activeView === 'junk' || activeView === 'junk-review'
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
+                  : "text-slate-500 hover:text-primary",
+              )}
             >
-              Cancel
-            </Button>
+              Junk
+            </button>
           </div>
         )}
-
-        <LeadTable
-          data={sortedLeads}
-          isLoading={isLoading || isFetching}
-          page={page}
-          limit={limit}
-          total={totalLeads}
-          onPageChange={(v) =>
-            dispatch(updateTabFilters({ tabKey, updates: { page: v } }))
-          }
-          onLimitChange={(v) =>
-            dispatch(
-              updateTabFilters({ tabKey, updates: { limit: v, page: 1 } }),
-            )
-          }
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onScheduleVisit={handleScheduleVisit}
-          onUpdateStatus={handleUpdateStatus}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          offset={serverOffset}
-          selectedUuids={selectedUuids}
-          onSelectUuids={(uuids) =>
-            dispatch(setSelectedUuids({ tabKey, uuids }))
-          }
-        />
       </div>
+
+      {/* Main Table Card */}
+      {activeView === 'leads' && (
+        <div className="rounded-3xl border border-border/40 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
+        {/* Card Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-foreground">Leads Queue</h2>
+            {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
+          </div>
+          <div className="flex items-center gap-3">
+            <FilterPopover
+              onReset={handleResetFilters}
+              activeFilterCount={statusIds.length + projectIds.length + rmIds.length + emIds.length}
+              align="end"
+            >
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Status</p>
+                  <MultiSelect
+                    options={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
+                    selected={statusIds}
+                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
+                    placeholder="Filter Status"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Project</p>
+                  <MultiSelect
+                    options={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
+                    selected={projectIds}
+                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
+                    placeholder="Filter Project"
+                  />
+                </div>
+                {isAdmin && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Relationship Manager</p>
+                    <Select
+                      value={rmIds[0] || "all"}
+                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === "all" ? [] : [v], emIds: [], page: 1 } }))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select RM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All RMs</SelectItem>
+                        {rms.map((r) => (
+                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(isAdmin || isRM) && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Experience Manager</p>
+                    <Select
+                      value={emIds[0] || "all"}
+                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === "all" ? [] : [v], page: 1 } }))}
+                      disabled={isAdmin && rmIds.length === 0}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select EM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All EMs</SelectItem>
+                        {(isAdmin ? ems : emsReportees).map((e) => (
+                          <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </FilterPopover>
+
+              {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
+                <Button
+                  onClick={() => setShowRandomConfirm(true)}
+                  disabled={activeTab === 0 || isAnyBulkAssigning || leads.length === 0}
+                  className="gap-2"
+                >
+                  {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Bulk Auto-Assign
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+
+          <LeadTable
+            data={sortedLeads}
+            isLoading={isLoading || isFetching}
+            page={page}
+            limit={limit}
+            total={totalLeads}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onScheduleVisit={handleScheduleVisit}
+            onLeadActivity={handleLeadActivity}
+            onUpdateStatus={handleUpdateStatus}
+            onAssignRm={handleAssignRm}
+            onAssignEm={handleAssignEm}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            offset={serverOffset}
+            selectedUuids={selectedUuids}
+            onSelectUuids={handleSelectUuids}
+            managers={managers}
+          />
+        </div>
+      </div>
+      )}
+
+      {activeView === 'junk' && (
+        <JunkLeadsPage 
+          onVerify={(lead) => {
+            setSelectedJunkLead(lead);
+            setActiveView('junk-review');
+          }} 
+        />
+      )}
+
+      {activeView === 'junk-review' && selectedJunkLead && (
+        <>
+          <LeadJunkReviewPage 
+            lead={selectedJunkLead}
+            onBack={() => setActiveView('junk')}
+            onReassign={() => setShowReassignModal(true)}
+            onApprove={() => {
+              toast.success("Lead junk approved");
+              setActiveView('junk');
+            }}
+          />
+          <ReassignRMModal
+            open={showReassignModal}
+            onClose={() => setShowReassignModal(false)}
+            lead={selectedJunkLead}
+            onConfirm={(rmId) => {
+              toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
+              setActiveView('junk');
+            }}
+          />
+        </>
+      )}
 
       <AppDrawer
         open={isDrawerOpen}
@@ -664,6 +769,28 @@ export const LeadsPage = () => {
         rms={rms}
         onSubmit={handleScheduleVisitSubmit}
         isLoading={isScheduling}
+      />
+
+      {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
+        <BulkActionsBar 
+          selectedCount={selectedUuids.length}
+          rms={rms}
+          ems={isAdmin ? ems : emsReportees}
+          onAssignRm={(id) => handleBulkAssign(id, 'rm')}
+          onAssignEm={(id) => handleBulkAssign(id, 'em')}
+          onMarkAsJunk={handleBulkMarkAsJunk}
+          onCancel={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
+          isLoading={isAnyBulkAssigning || isDeleting}
+        />
+      )}
+
+      <LeadActivityDialog
+        key={activityLead?.uuid || 'activity-dialog'}
+        open={!!activityLead}
+        onClose={() => setActivityLead(null)}
+        lead={activityLead}
+        onSubmit={handleLeadActivitySubmit}
+        isLoading={isAddingActivity}
       />
     </div>
   );

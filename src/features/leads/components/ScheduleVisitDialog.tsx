@@ -1,8 +1,15 @@
-import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2,CalendarIcon  } from "lucide-react";
+import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../../../components/ui/popover";
+import { Calendar } from "../../../components/ui/calendar";
 import { useGetReporteesQuery } from "../../users/api/usersApi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { cn } from "../../../utils";
@@ -55,6 +62,7 @@ export const ScheduleVisitDialog = ({
   const isRM = roleCode === "RELMNG";
 
   const {
+    control,
     register,
     handleSubmit,
     setValue,
@@ -73,9 +81,29 @@ export const ScheduleVisitDialog = ({
     },
   });
 
-  const watchStatus = watch("visit_status");
-  const watchRm = watch("visit_assigned_to_rm");
-  const watchEm = watch("visit_assigned_to_em");
+  const watchStatus = useWatch({ control, name: "visit_status" });
+  const watchRm = useWatch({ control, name: "visit_assigned_to_rm" });
+  const watchEm = useWatch({ control, name: "visit_assigned_to_em" });
+
+  
+  const [date, setDate] = useState<Date | undefined>();
+  const [hour, setHour] = useState("10");
+  const [minute, setMinute] = useState("00");
+  const [period, setPeriod] = useState<"AM" | "PM">("AM");
+
+  const convertTo12Hour = (dateTime: string) => {
+    if (!dateTime) return "";
+
+    const date = new Date(dateTime);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+
+    const period = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+
+    return `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
+  };
+
 
   const { data: reportees = [], isLoading: isLoadingReportees } =
     useGetReporteesQuery(
@@ -88,7 +116,7 @@ export const ScheduleVisitDialog = ({
     if (watchRm && watchEm) {
       const emExists = reportees.some((r) => r.id === watchEm);
       if (!isLoadingReportees && reportees.length > 0 && !emExists) {
-        setValue("visit_assigned_to_em", undefined as any);
+        setValue("visit_assigned_to_em", undefined as unknown as number);
       }
     }
   }, [watchRm, reportees, isLoadingReportees, watchEm, setValue]);
@@ -111,9 +139,16 @@ export const ScheduleVisitDialog = ({
   if (!open || !lead) return null;
 
   const handleFormSubmit = async (data: ScheduleVisitFormValues) => {
-    // Convert to MySQL DATETIME format (YYYY-MM-DD HH:MM:SS)
-    // e.g. "2026-03-27T17:10" -> "2026-03-27 17:10:00"
-    const formattedDate = `${data.visit_date_time.replace("T", " ")}:00`;
+      if (!date) return;
+
+    let hrs = parseInt(hour);
+
+    if (period === "PM" && hrs !== 12) hrs += 12;
+    if (period === "AM" && hrs === 12) hrs = 0;
+
+    const formattedDate = `${format(date, "yyyy-MM-dd")} ${String(
+      hrs,
+    ).padStart(2, "0")}:${minute}:00`;
 
     await onSubmit({
       ...data,
@@ -124,31 +159,73 @@ export const ScheduleVisitDialog = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[75vh]">
-        <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-            Schedule Visit
-          </h2>
+       <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[75vh]">
+         <div className="px-6 py-4 border-b bg-zinc-50/50">
+          <h2 className="text-lg font-bold">Schedule Visit</h2>
           <p className="text-sm text-zinc-500">
             Schedule a site visit for {lead.first_name} {lead.last_name}
           </p>
         </div>
 
-        <div className="p-6 overflow-y-auto min-h-0">
+        <div className="p-6 overflow-y-auto">
           <form
             id="schedule-visit-form"
             onSubmit={handleSubmit(handleFormSubmit)}
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="visit_date_time">Visit Date & Time *</Label>
-              <Input
-                id="visit_date_time"
-                type="datetime-local"
-                disabled={isLoading}
-                {...register("visit_date_time")}
-                className={errors.visit_date_time ? "border-red-500" : ""}
-              />
+              <Label>Visit Date & Time *</Label>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date
+                      ? `${format(date, "PPP")} ${hour}:${minute} ${period}`
+                      : "Pick date & time"}
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="p-4 space-y-4">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(selectedDate) => {
+                      setDate(selectedDate);
+                      if (selectedDate) {
+                        setValue("visit_date_time", "selected");
+                      }
+                    }}
+                  />
+
+                  <div className="flex gap-2 justify-center">
+                    <select value={hour} onChange={(e) => setHour(e.target.value)}>
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const val = String(i + 1).padStart(2, "0");
+                        return <option key={val}>{val}</option>;
+                      })}
+                    </select>
+
+                    :
+
+                    <select value={minute} onChange={(e) => setMinute(e.target.value)}>
+                      {["00", "15", "30", "45"].map((m) => (
+                        <option key={m}>{m}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={period}
+                      onChange={(e) =>
+                        setPeriod(e.target.value as "AM" | "PM")
+                      }
+                    >
+                      <option>AM</option>
+                      <option>PM</option>
+                    </select>
+                  </div>
+                </PopoverContent>
+              </Popover>
               {errors.visit_date_time && (
                 <p className="text-xs text-red-500">
                   {errors.visit_date_time.message}
@@ -215,7 +292,7 @@ export const ScheduleVisitDialog = ({
                       className={
                         errors.visit_assigned_to_rm ? "border-red-500" : ""
                       }
-                    >
+                  >
                       <SelectValue placeholder="Select RM" />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,7 +324,7 @@ export const ScheduleVisitDialog = ({
                     className={
                       errors.visit_assigned_to_em ? "border-red-500" : ""
                     }
-                  >
+                     >
                     <SelectValue
                       placeholder={!watchRm ? "Select RM first" : "Select EM"}
                     />

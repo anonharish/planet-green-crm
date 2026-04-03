@@ -8,11 +8,11 @@ interface PageHeaderProps {
 
 export const PageHeader = ({ title, description, actions }: PageHeaderProps) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 ">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-primary leading-tight">{title}</h1>
         {description && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{description}</p>
+          <p className="text-sm text-muted-foreground mt-2">{description}</p>
         )}
       </div>
       {actions && (

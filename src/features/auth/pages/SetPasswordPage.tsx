@@ -57,7 +57,7 @@ export const SetPasswordPage = () => {
 
       if (response.success) {
         completePasswordSetup();
-        navigate('/dashboard', { replace: true });
+        navigate('/leads', { replace: true });
       }
     } catch (err: any) {
       const message = err?.data?.error || err?.data?.message || 'Failed to update password. Please try again.';
@@ -123,7 +123,7 @@ export const SetPasswordPage = () => {
                   </p>
                 )}
                 <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                  {isLoading ? 'Updating...' : 'Save & Continue to Dashboard'}
+                  {isLoading ? 'Updating...' : 'Save & Continue to Leads Dashboard'}
                 </Button>
               </form>
             </Form>

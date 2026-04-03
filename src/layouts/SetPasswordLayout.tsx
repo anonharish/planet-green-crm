@@ -10,7 +10,7 @@ export const SetPasswordLayout = () => {
   }
 
   if (!isFirstLogin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/leads" replace />;
   }
 
   return (
