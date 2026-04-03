@@ -2,7 +2,7 @@ import React from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
-import { Pencil, Trash2, MoreVertical, Users, Layout } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Users, Layout, LayoutList } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import {
   DropdownMenu,
@@ -190,7 +190,7 @@ export const UserTable = ({
                 </DropdownMenuItem>
               )}
 
-              <DropdownMenuItem onClick={() => setSelectedLeadsUser(user)} className="cursor-pointer gap-2 py-2">
+              <DropdownMenuItem onClick={() => setViewLeadsUser(user)} className="cursor-pointer gap-2 py-2">
                 <LayoutList className="h-4 w-4 text-[#0f3d6b]" />
                 <span>View Assigned Leads</span>
               </DropdownMenuItem>

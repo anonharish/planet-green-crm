@@ -128,7 +128,7 @@ export const VisitFeedbackAuditPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {images.length > 0 ? (
             images.map((imgUrl, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden aspect-[4/3] bg-zinc-100 relative group border border-zinc-200 dark:border-zinc-800 shadow-sm">
+              <div key={i} className="rounded-2xl overflow-hidden aspect-4/3 bg-zinc-100 relative group border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <img 
                   src={imgUrl} 
                   alt={`Site photo ${i + 1}`} 

@@ -116,6 +116,8 @@ export const CustomersPage = () => {
           offset={serverOffset}
           onViewLeads={setViewLeadsCustomer}
           onEdit={setEditingCustomer}
+          search={search}
+          onSearchChange={setSearch}
         />
       </div>
 

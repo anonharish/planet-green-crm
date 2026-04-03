@@ -841,7 +841,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                 toast.success(`Lead restored and assigned to RM. Status: NEWLED`);
                 setActiveView('junk');
                 setSelectedJunkLeadUuid(null);
-                refetch();
+                handleRefetch();
               } catch (err: any) {
                 toast.error(err?.data?.message || "Restoration failed");
               }
