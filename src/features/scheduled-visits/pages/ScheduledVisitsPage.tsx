@@ -90,7 +90,7 @@ export const ScheduledVisitsPage = () => {
   const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
 
   return (
-    <div className="flex flex-col h-full bg-transparent space-y-8">
+    <div className="flex flex-col h-full bg-transparent pt-8 pb-20 px-4 space-y-8">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
@@ -175,13 +175,13 @@ export const ScheduledVisitsPage = () => {
         </div>
 
         {/* Tabs (40%) */}
-        <div className="w-[40%] bg-zinc-100 dark:bg-zinc-900 rounded-full h-[52px] p-1.5 flex shadow-inner">
+        <div className="w-[40%] bg-tab-rail dark:bg-zinc-900 rounded-xl h-[52px] p-1 flex shadow-inner">
           <button
             onClick={() => setActiveTab('SCHDLD')}
             className={cn(
-              "flex-1 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2",
+              "flex-1 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
               activeTab === 'SCHDLD' 
-                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-sm" 
+                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]" 
                 : "text-zinc-500 hover:text-zinc-700"
             )}
           >
@@ -195,9 +195,9 @@ export const ScheduledVisitsPage = () => {
           <button
             onClick={() => setActiveTab('COMPLETED')}
             className={cn(
-              "flex-1 rounded-full text-sm font-bold transition-all",
+              "flex-1 rounded-xl text-sm font-bold transition-all",
               activeTab === 'COMPLETED' 
-                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-sm" 
+                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]" 
                 : "text-zinc-500 hover:text-zinc-700"
             )}
           >
