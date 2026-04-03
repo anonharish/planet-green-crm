@@ -9,14 +9,12 @@ import {
 import { useAuth } from "../context/AuthContext";
 import {
   LogOut,
-  LayoutDashboard,
   Users,
   UserCircle,
   Briefcase,
-  ChevronRight,
-  FlaskConical,
-  ClipboardList,
   ChevronLeft,
+  ChevronRight,
+  ClipboardList,
 } from "lucide-react";
 import { usePermissions } from "../hooks/usePermissions";
 import { PERMISSIONS } from "../config/permissions";
@@ -97,7 +95,7 @@ export const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-[#F2F4F6] text-foreground">
       {/* Sidebar */}
       <aside
         className={cn(
@@ -230,7 +228,7 @@ export const MainLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background dark:bg-background p-6 relative">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#F2F4F6] dark:bg-zinc-950 p-6 relative">
           <Outlet />
         </main>
       </div>
