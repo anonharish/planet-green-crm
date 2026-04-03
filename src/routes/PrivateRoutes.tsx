@@ -21,6 +21,7 @@ export const PrivateRoutes = (
     <Route path="/leads" element={<LeadsPage />} />
     <Route path="/leads/:leadId" element={<LeadDetailsPage />} />
     <Route path="/scheduled-visits" element={<ScheduledVisitsPage />} />
+    <Route path="/scheduled-visits/:userId" element={<ScheduledVisitsPage />} />
     <Route path="/customers" element={<CustomersPage />} />
     <Route path="/relationship-managers" element={<RelationshipManagersPage />} />
     <Route path="/agents" element={<ExperienceManagersPage />} />
