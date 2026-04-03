@@ -60,7 +60,7 @@ export const VisitFeedbackAuditPage = () => {
         </h1>
       </div>
 
-      <div className="flex gap-6 items-start w-full">
+      <div className="flex gap-4 items-stretch w-full">
         {/* Left Column (Approx 30%) */}
         <div className="w-[40%] bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col items-center text-center">
           <div className="flex items-center gap-4 w-full">
@@ -99,7 +99,7 @@ export const VisitFeedbackAuditPage = () => {
         </div>
 
         {/* Right Column (Approx 70%) */}
-        <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col items-start min-h-[380px]">
+        <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col items-start">
           <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100">Key Feedback Summary</h2>
           
           <div className="mt-8 flex flex-col gap-6 w-full">
