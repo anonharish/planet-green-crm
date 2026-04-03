@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useGetVisitsByUserIdQuery } from '../../leads/api/leadsApi';
 import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
 import { format } from 'date-fns';
-import { CalendarIcon, Filter, Plus, Search, MapPin, Clock } from 'lucide-react';
+import { CalendarIcon, ListFilter, Plus, Search, MapPin, Clock } from 'lucide-react';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
@@ -21,6 +21,11 @@ export const ScheduledVisitsPage = () => {
   const userId = paramUserId ? parseInt(paramUserId, 10) : user?.id;
 
   const [date, setDate] = useState<Date>(new Date());
+  const [filterStartDate, setFilterStartDate] = useState<Date | undefined>(new Date());
+  const [filterEndDate, setFilterEndDate] = useState<Date | undefined>(new Date());
+  const [draftStartDate, setDraftStartDate] = useState<Date | undefined>(new Date());
+  const [draftEndDate, setDraftEndDate] = useState<Date | undefined>(new Date());
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'SCHDLD' | 'COMPLETED'>('SCHDLD');
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -40,11 +45,19 @@ export const ScheduledVisitsPage = () => {
   const activeStatusId = activeTab === 'SCHDLD' ? scheduledStatusId : completedStatusId;
 
   // Fetch Visits
+  const isTodayFilter = filterStartDate && filterEndDate && 
+    filterStartDate.toDateString() === new Date().toDateString() && 
+    filterEndDate.toDateString() === new Date().toDateString();
+
   const { data: visitsData, isLoading } = useGetVisitsByUserIdQuery(
     { 
       user_id: userId as number, 
       offset: 0, 
-      date: format(date, 'yyyy-MM-dd'),
+      date: activeTab === 'SCHDLD' 
+        ? format(date, 'yyyy-MM-dd') 
+        : (isTodayFilter ? format(new Date(), 'yyyy-MM-dd') : undefined),
+      start_date: activeTab === 'COMPLETED' && !isTodayFilter && filterStartDate ? format(filterStartDate, 'yyyy-MM-dd') : undefined,
+      end_date: activeTab === 'COMPLETED' && !isTodayFilter && filterEndDate ? format(filterEndDate, 'yyyy-MM-dd') : undefined,
       visit_status: activeStatusId 
     },
     { skip: !userId || !activeStatusId }
@@ -77,24 +90,74 @@ export const ScheduledVisitsPage = () => {
   const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
 
   return (
-    <div className="flex flex-col h-full bg-[#fcfcfc] dark:bg-zinc-950 p-8 space-y-8">
+    <div className="flex flex-col h-full bg-transparent space-y-8">
       {/* Header Section */}
       <div className="flex items-center justify-between">
-        <h1 className="text-[32px] font-black text-[#0f3d6b] tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
           Scheduled Site Visits
         </h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline" className="h-11 rounded-full px-6 border-zinc-200 dark:border-zinc-800 text-sm font-bold shadow-sm">
-            <Filter className="mr-2 h-4 w-4 text-[#0f3d6b]" />
-            Filter
-          </Button>
-          <Button 
-            className="h-11 rounded-full px-8 bg-[#0f3d6b] hover:bg-[#0c3156] text-white font-bold text-sm shadow-xl shadow-[#0f3d6b]/20"
-            onClick={() => setIsScheduleOpen(true)}
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            New Schedule
-          </Button>
+          {activeTab === 'COMPLETED' && (
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-11 rounded-[16px] px-6 border-search-border dark:border-zinc-800 text-base font-bold text-primary bg-white shadow-sm">
+                  <ListFilter className="mr-2 h-4 w-4 text-primary" />
+                  Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="end">
+                <div className="flex flex-col space-y-4">
+                  <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Filter Completed Visits</h4>
+                  <div className="space-y-3">
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">From Date</label>
+                      <Input 
+                        type="date" 
+                        max={format(new Date(), 'yyyy-MM-dd')}
+                        value={draftStartDate ? format(draftStartDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setDraftStartDate(e.target.value ? new Date(e.target.value) : undefined)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">To Date</label>
+                      <Input 
+                        type="date" 
+                        max={format(new Date(), 'yyyy-MM-dd')}
+                        value={draftEndDate ? format(draftEndDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setDraftEndDate(e.target.value ? new Date(e.target.value) : undefined)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button 
+                      className="w-full font-bold bg-[#0f3d6b] hover:bg-[#0c3156] text-white" 
+                      onClick={() => {
+                        setFilterStartDate(draftStartDate);
+                        setFilterEndDate(draftEndDate);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      Apply Filter
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full font-bold" 
+                      onClick={() => { 
+                        setDraftStartDate(new Date()); 
+                        setDraftEndDate(new Date());
+                        setFilterStartDate(new Date()); 
+                        setFilterEndDate(new Date()); 
+                      }}
+                    >
+                      Reset to Today
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
 
@@ -107,7 +170,7 @@ export const ScheduledVisitsPage = () => {
             placeholder="Search leads....." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 h-[52px] rounded-full bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm focus-visible:ring-[#0f3d6b]/10 text-base placeholder:text-zinc-400"
+            className="w-full pl-12 h-14 rounded-full bg-white dark:bg-zinc-900 border-search-border shadow-sm focus-visible:ring-primary/10 text-base placeholder:text-zinc-400"
           />
         </div>
 
@@ -146,23 +209,34 @@ export const ScheduledVisitsPage = () => {
       {/* Date Filter & Results */}
       <div className="pt-2">
         <div className="flex items-center w-full pb-2 mb-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" className="hover:bg-transparent px-0 h-auto font-bold text-lg text-zinc-900 dark:text-zinc-100 justify-start rounded-none">
-                {date.toDateString() === new Date().toDateString() ? 'Today, ' : ''}
-                {format(date, 'do MMMM')}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 rounded-2xl" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(d) => d && setDate(d)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <div className="ml-6 flex-1 h-[1px] bg-zinc-100 dark:bg-zinc-800"></div>
+          {activeTab === 'SCHDLD' ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="hover:bg-transparent px-0 h-auto font-bold text-lg text-zinc-900 dark:text-zinc-100 justify-start rounded-none">
+                  {date.toDateString() === new Date().toDateString() ? 'Today, ' : ''}
+                  {format(date, 'do MMMM')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 rounded-2xl" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(d) => d && setDate(d)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <div className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              {filterStartDate && filterEndDate 
+                ? `${format(filterStartDate, 'do MMM, yyyy')} - ${format(filterEndDate, 'do MMM, yyyy')}` 
+                : 'All Completed Visits'}
+              <span className="text-sm font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full ml-2">
+                {visits.length} results
+              </span>
+            </div>
+          )}
+          <div className="ml-6 flex-1 h-px bg-zinc-100 dark:bg-zinc-800"></div>
         </div>
 
         {/* Visits List */}
