@@ -151,7 +151,7 @@ export const ScheduleVisitDialog = ({
 
   const [selectedLeadUuid, setSelectedLeadUuid] = useState<string>("");
   const { data: leadsData, isLoading: isLoadingLeads } = useGetLeadsQuery({ offset: 0 }, { skip: !!lead });
-  const allLeads = leadsData?.data || [];
+  const allLeads = leadsData || [];
 
   const handleFormSubmit = async (data: ScheduleVisitFormValues) => {
       if (!date || (!lead && !selectedLeadUuid)) return;
