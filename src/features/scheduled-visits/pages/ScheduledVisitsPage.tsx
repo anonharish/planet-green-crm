@@ -244,7 +244,7 @@ export const ScheduledVisitsPage = () => {
           {isLoading ? (
             <div className="flex items-center justify-center p-12 text-zinc-500">Loading scheduled visits...</div>
           ) : filteredVisits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-20 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+            <div className="flex flex-col items-center justify-center p-20 text-center bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm mb-4">
               <CalendarIcon className="h-12 w-12 text-zinc-300 mb-4" />
               <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">No visits found</h3>
               <p className="text-zinc-500 text-sm mt-1">There are no visits scheduled for this date.</p>
