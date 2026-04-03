@@ -45,7 +45,7 @@ export const VisitFeedbackAuditPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#fcfcfc] dark:bg-zinc-950 p-8 space-y-8 overflow-y-auto">
+    <div className="flex flex-col h-full bg-transparent dark:bg-zinc-950 py-8 px-4 md:px-6 space-y-8 overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button 
@@ -55,7 +55,7 @@ export const VisitFeedbackAuditPage = () => {
         >
           <ArrowLeft className="h-5 w-5 text-[#0f3d6b] dark:text-zinc-100" />
         </Button>
-        <h1 className="text-[32px] font-black text-[#0f3d6b] dark:text-zinc-100 tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-primary dark:text-zinc-100 tracking-tight">
           Visit Feedback Audit
         </h1>
       </div>
