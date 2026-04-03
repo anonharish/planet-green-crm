@@ -11,6 +11,7 @@ const RelationshipManagersPage = React.lazy(() => import('../features/relationsh
 const ExperienceManagersPage = React.lazy(() => import('../features/experience-managers/pages/ExperienceManagersPage').then(m => ({ default: m.ExperienceManagersPage })));
 const CustomersPage = React.lazy(() => import('../features/customers/pages/CustomersPage').then(m => ({ default: m.CustomersPage })));
 const PlaygroundPage = React.lazy(() => import('../features/playground/pages/PlaygroundPage').then(m => ({ default: m.PlaygroundPage })));
+const ScheduledVisitsPage = React.lazy(() => import('../features/scheduled-visits/pages/ScheduledVisitsPage').then(m => ({ default: m.ScheduledVisitsPage })));
 
 export const PrivateRoutes = (
   <Route element={<MainLayout />}>
@@ -19,6 +20,7 @@ export const PrivateRoutes = (
     <Route path="/dashboard" element={<DashboardPage />} />
     <Route path="/leads" element={<LeadsPage />} />
     <Route path="/leads/:leadId" element={<LeadDetailsPage />} />
+    <Route path="/scheduled-visits" element={<ScheduledVisitsPage />} />
     <Route path="/customers" element={<CustomersPage />} />
     <Route path="/relationship-managers" element={<RelationshipManagersPage />} />
     <Route path="/agents" element={<ExperienceManagersPage />} />

@@ -13,9 +13,10 @@ import {
   Users,
   UserCircle,
   Briefcase,
-  ChevronLeft,
   ChevronRight,
   FlaskConical,
+  ClipboardList,
+  ChevronLeft,
 } from "lucide-react";
 import { usePermissions } from "../hooks/usePermissions";
 import { PERMISSIONS } from "../config/permissions";
@@ -49,7 +50,6 @@ export const MainLayout = () => {
     // {
     //   label: "Dashboard",
     //   path: "/dashboard",
-    //   icon: <LayoutDashboard size={22} />,
     // },
     { label: "Manage Leads", path: "/leads", icon: <Briefcase size={22} /> },
     {
@@ -70,6 +70,7 @@ export const MainLayout = () => {
       icon: <UserCircle size={22} />,
       permission: PERMISSIONS.AGENT_VIEW,
     },
+    { label: "Scheduled Visits", path: "/scheduled-visits", icon: <ClipboardList size={22} /> },
     // {
     //   label: "UI Playground",
     //   path: "/playground",
