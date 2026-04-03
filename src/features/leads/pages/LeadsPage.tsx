@@ -34,15 +34,7 @@ import {
 import { usePermissions } from "../../../hooks/usePermissions";
 import { PERMISSIONS } from "../../../config/permissions";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
-import { MultiSelect } from "../../../components/ui/multi-select";
 import { cn } from "../../../utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
 import {
   setActiveTab as setActiveTabAction,
   updateTabFilters,
@@ -126,14 +118,13 @@ export const LeadsPage = () => {
 
   // Junk Leads Flow State
   const [activeView, setActiveView] = useState<string>('leads');
-  const [selectedJunkLead, setSelectedJunkLead] = useState<Lead | null>(null);
+  const [selectedJunkLeadUuid, setSelectedJunkLeadUuid] = useState<string | null>(null);
   const [showReassignModal, setShowReassignModal] = useState(false);
   const [junkPage, setJunkPage] = useState(1);
   const [junkLimit, setJunkLimit] = useState(10);
 
   // Junk Reason State
   const [isJunkReasonDialogOpen, setIsJunkReasonDialogOpen] = useState(false);
-  const [selectedJunkLeadUuid, setSelectedJunkLeadUuid] = useState<string | null>(null);
   const [reviewReassignReason, setReviewReassignReason] = useState("");
   const [pendingJunkAction, setPendingJunkAction] = useState<{
     type: 'single' | 'bulk';
@@ -301,7 +292,7 @@ export const LeadsPage = () => {
     } catch (err: any) {
       toast.error(err?.data?.message || "Bulk action failed");
     }
-  }, [deleteLead, dispatch, selectedUuids, tabKey, junkStatusId, leads, updateLead]);
+  }, [dispatch, selectedUuids, tabKey, junkStatusId, leads, updateLead]);
 
   const handleLeadActivity = React.useCallback((lead: Lead) => {
     setActivityLead(lead);
@@ -666,7 +657,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-foreground">Leads Queue</h2>
-            {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -779,7 +769,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                   assigned_to_em: leadToApprove.assigned_to_em || null,
                   lead_priority_id: leadToApprove.lead_priority_id || 1,
                   lead_status_id: junkCompleteStatusId,
-                  // In some systems, we might add an activity for the "Approval Reason"
                 }).unwrap();
 
                 toast.success("Lead junk approved (Moved to JUNKCM)");
@@ -821,7 +810,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                   assigned_to_em: null,
                   lead_priority_id: currentLead.lead_priority_id || 1,
                   lead_status_id: newLeadStatusId,
-                  // Capture the reason here if needed by the API, but typically it might be an activity log
                 }).unwrap();
                 
                 toast.success(`Lead restored and assigned to RM. Status: NEWLED`);
