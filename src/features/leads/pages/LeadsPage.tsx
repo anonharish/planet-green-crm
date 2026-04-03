@@ -139,7 +139,7 @@ export const LeadsPage = () => {
     data: adminLeads = [],
     isLoading: isAdminLoading,
     isFetching: isAdminFetching,
-    refetch,
+    refetch: refetchAdmin,
   } = useGetLeadsQuery({
     offset: serverOffset,
     is_rm_assigned: isAdmin ? (activeTab === 1 ? 1 : 0) : undefined,
@@ -167,6 +167,7 @@ export const LeadsPage = () => {
     data: rmLeads = [],
     isLoading: isRMLoading,
     isFetching: isRMFetching,
+    refetch: refetchRM,
   } = useGetLeadsByRmIdQuery({
     assigned_to_rm: Number(currentUser?.id || 0),
     offset: serverOffset,
@@ -178,12 +179,19 @@ export const LeadsPage = () => {
     data: emLeads = [],
     isLoading: isEMLoading,
     isFetching: isEMFetching,
+    refetch: refetchEM,
   } = useGetLeadsByEmIdQuery({
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
   const [addLeadActivity, { isLoading: isAddingActivity }] = 
     useAddLeadActivityMutation();
+
+  const handleRefetch = React.useCallback(() => {
+    if (isAdmin) refetchAdmin();
+    if (isRM) refetchRM();
+    if (isEM) refetchEM();
+  }, [isAdmin, isRM, isEM, refetchAdmin, refetchRM, refetchEM]);
 
   const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
   const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
@@ -336,14 +344,15 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       if (values.assigned_to_rm) {
         dispatch(setActiveTabAction(1));
       }
-      refetch();
+      handleRefetch();
     } else {
       await createLead(values).unwrap();
       toast.success("Lead created successfully");
     }
     setIsDrawerOpen(false);
   } catch (err: any) {
-    toast.error(err?.data?.message || "Operation failed");
+    const errorMsg = err?.data?.message || err?.data?.error || err?.data?.detail || err?.message || "Operation failed";
+    toast.error(errorMsg);
   }
 };
 
@@ -411,10 +420,11 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       };
       await updateLead(payload).unwrap();
       toast.success(rmId ? 'RM assigned successfully!' : 'RM unassigned');
+      handleRefetch();
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to assign RM');
     }
-  }, [updateLead]);
+  }, [updateLead, handleRefetch]);
 
   const handleAssignEm = React.useCallback(async (lead: Lead, emId: number | null) => {
     try {
@@ -440,10 +450,11 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       };
       await updateLead(payload).unwrap();
       toast.success(emId ? 'EM assigned successfully!' : 'EM unassigned');
+      handleRefetch();
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to assign EM');
     }
-  }, [updateLead]);
+  }, [updateLead, handleRefetch]);
 
   const handlePageChange = React.useCallback((v: number) => {
     dispatch(updateTabFilters({ tabKey, updates: { page: v } }));
@@ -459,7 +470,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
   // Local Sort logic for the current buffer
   const sortedLeads = React.useMemo(() => {
-    let result = [...leads];
+    const result = [...leads];
     result.sort((a, b) => {
       let valA: any = (a as any)[sortField];
       let valB: any = (b as any)[sortField];
@@ -467,6 +478,9 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       if (sortField === "created_on") {
         valA = a.created_on ? new Date(a.created_on).getTime() : 0;
         valB = b.created_on ? new Date(b.created_on).getTime() : 0;
+      } else if (sortField === "customer_name") {
+        valA = `${a.first_name || ""} ${a.last_name || ""}`.toLowerCase().trim();
+        valB = `${b.first_name || ""} ${b.last_name || ""}`.toLowerCase().trim();
       } else {
         valA = typeof valA === "string" ? valA.toLowerCase() : (valA ?? "");
         valB = typeof valB === "string" ? valB.toLowerCase() : (valB ?? "");

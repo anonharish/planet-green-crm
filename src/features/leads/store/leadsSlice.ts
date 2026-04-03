@@ -21,8 +21,8 @@ const initialTabState: TabFilterState = {
   projectIds: [],
   rmIds: [],
   emIds: [],
-  sortField: 'created_on',
-  sortOrder: 'desc',
+  sortField: 'customer_name',
+  sortOrder: 'asc',
   selectedUuids: [],
 };
 
