@@ -4,14 +4,14 @@ import { FilterBar, SearchInput } from '../../../shared/components/FilterBar/Fil
 import { AppDrawer } from '../../../shared/components/AppDrawer/AppDrawer';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog/ConfirmDialog';
 import { Button } from '../../../components/ui/button';
-import { Plus } from 'lucide-react';
+import { UserPlus } from "lucide-react";
 import { UserTable } from '../components/UserTable';
 import { UserForm } from '../components/UserForm';
-import { 
-  useGetAllUsersByRoleIdQuery, 
-  useCreateUserMutation, 
+import {
+  useGetAllUsersByRoleIdQuery,
+  useCreateUserMutation,
   useUpdateUserMutation,
-  useDeleteUserMutation 
+  useDeleteUserMutation
 } from '../api/usersApi';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { toast } from 'sonner';
@@ -33,26 +33,19 @@ export const UsersFeaturePage = ({
   permissionPrefix
 }: UsersFeaturePageProps) => {
   const { can } = usePermissions();
-  
-  // 1. Server-side Offset State
+
   const [serverOffset, setServerOffset] = useState(0);
-  
-  // 2. Client-side Pagination State
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  
-  // 3. Filter/Search/Sort State
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<'created_on' | 'first_name'>('created_on');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Default sorting: date desc
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Drawer/Dialog States
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  // Queries & Mutations
   const { data: serverUsers = [], isLoading, isFetching } = useGetAllUsersByRoleIdQuery({
     role_id: roleId,
     offset: serverOffset,
@@ -62,27 +55,20 @@ export const UsersFeaturePage = ({
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
 
-  // 4. Client-side Filtering & Sorting Logic
   const sortedAndFilteredData = React.useMemo(() => {
     let result = [...serverUsers];
-    
-    // Search Filter
     if (search) {
       const lowerSearch = search.toLowerCase();
-      result = result.filter((u: User) => 
-        u.first_name.toLowerCase().includes(lowerSearch) || 
+      result = result.filter((u: User) =>
+        u.first_name.toLowerCase().includes(lowerSearch) ||
         u.last_name.toLowerCase().includes(lowerSearch) ||
         u.login_id.toLowerCase().includes(lowerSearch) ||
         u.email.toLowerCase().includes(lowerSearch) ||
         (u.phone_number && u.phone_number.includes(search))
       );
     }
-
-    // Sort Logic
     result.sort((a, b) => {
-      let valA: any;
-      let valB: any;
-
+      let valA: any, valB: any;
       if (sortField === 'created_on') {
         valA = a.created_on ? new Date(a.created_on).getTime() : 0;
         valB = b.created_on ? new Date(b.created_on).getTime() : 0;
@@ -90,24 +76,21 @@ export const UsersFeaturePage = ({
         valA = a.first_name.toLowerCase();
         valB = b.first_name.toLowerCase();
       }
-
       if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
       if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-
     return result;
   }, [serverUsers, search, sortField, sortOrder]);
 
-  const totalItems = sortedAndFilteredData.length < 200 ? serverOffset + sortedAndFilteredData.length : serverOffset + 201;
+  const totalItems = sortedAndFilteredData.length < 200
+    ? serverOffset + sortedAndFilteredData.length
+    : serverOffset + 201;
 
-  // Handlers
   const handlePageChange = (newPage: number) => {
     const targetIndex = (newPage - 1) * limit;
     const newServerOffset = Math.floor(targetIndex / 200) * 200;
-    if (newServerOffset !== serverOffset) {
-      setServerOffset(newServerOffset);
-    }
+    if (newServerOffset !== serverOffset) setServerOffset(newServerOffset);
     setPage(newPage);
   };
 
@@ -120,66 +103,43 @@ export const UsersFeaturePage = ({
     }
   };
 
-  const handleAddClick = () => {
-    setEditingUser(null);
-    setIsDrawerOpen(true);
-  };
-
-  const handleEditClick = (user: User) => {
-    setEditingUser(user);
-    setIsDrawerOpen(true);
-  };
-
-  const handleFormSubmit = async (values: any) => {
-    try {
-      if (editingUser) {
-        await updateUser({ ...values, id: editingUser.id }).unwrap();
-        toast.success('Updated successfully');
-      } else {
-        await createUser({ ...values, role_id: roleId }).unwrap();
-        toast.success('Created successfully');
-      }
-      setIsDrawerOpen(false);
-    } catch (err: any) {
-      toast.error(err?.data?.message || 'Operation failed');
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedUserId) return;
-    try {
-      await deleteUser(selectedUserId).unwrap();
-      toast.success('Deleted successfully');
-      setIsDeleteDialogOpen(false);
-    } catch (err: any) {
-      toast.error(err?.data?.message || 'Delete operation failed');
-    }
-  };
-
-  // Actions Header
   const actions = can(`${permissionPrefix}.create`) && (
-    <Button onClick={handleAddClick}>
-      Add 
+    <Button
+      onClick={() => { setEditingUser(null); setIsDrawerOpen(true); }}
+      className="bg-[#0f3d6b] hover:bg-[#0c2f54] text-white rounded-full px-5 py-2 flex items-center gap-2 shadow-sm"
+    >
+      <UserPlus className="h-4 w-4" />
+      Create RM
     </Button>
   );
 
   return (
     <div className="space-y-4">
-      <PageHeader 
-        title={title} 
-        description={description}
-        actions={actions}
-      />
+      <PageHeader title={title} description={description} actions={actions} />
 
-      <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar>
-          <SearchInput 
-            value={search} 
-            onChange={setSearch} 
-            placeholder={`Search ${roleLabel.toLowerCase()}s...`} 
-          />
-        </FilterBar>
+      <FilterBar>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={`Search ${roleLabel.toLowerCase()}s...`}
+        />
+      </FilterBar>
 
+      {/*
+        ── Outer white card ────────────────────────────────────────────────────
+        NOTE: overflow is NOT hidden here — that was clipping the gray tray
+        inside UserTable. Border-radius clipping is handled by the inner
+        sections themselves.
+        ────────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: 16,
+          border: '1px solid #e8edf3',
+          boxShadow: '0 1px 6px rgba(15,61,107,0.07)',
+          overflow: 'hidden',   /* keep — gray tray fills naturally now */
+        }}
+      >
         <UserTable
           data={sortedAndFilteredData}
           isLoading={isLoading || isFetching}
@@ -188,11 +148,8 @@ export const UsersFeaturePage = ({
           total={totalItems}
           onPageChange={handlePageChange}
           onLimitChange={setLimit}
-          onEdit={handleEditClick}
-          onDelete={(id) => {
-            setSelectedUserId(id);
-            setIsDeleteDialogOpen(true);
-          }}
+          onEdit={(user) => { setEditingUser(user); setIsDrawerOpen(true); }}
+          onDelete={(id) => { setSelectedUserId(id); setIsDeleteDialogOpen(true); }}
           permissionPrefix={permissionPrefix}
           sortField={sortField}
           sortOrder={sortOrder}
@@ -209,9 +166,9 @@ export const UsersFeaturePage = ({
         showHeader={false}
         width="sm"
       >
-        <UserForm 
-          onSubmit={handleFormSubmit} 
-          isLoading={isCreating || isUpdating} 
+        <UserForm
+          onSubmit={handleFormSubmit}
+          isLoading={isCreating || isUpdating}
           initialValues={editingUser || undefined}
           isEdit={!!editingUser}
           roleId={roleId}
@@ -230,4 +187,30 @@ export const UsersFeaturePage = ({
       />
     </div>
   );
+
+  async function handleFormSubmit(values: any) {
+    try {
+      if (editingUser) {
+        await updateUser({ ...values, id: editingUser.id }).unwrap();
+        toast.success('Updated successfully');
+      } else {
+        await createUser({ ...values, role_id: roleId }).unwrap();
+        toast.success('Created successfully');
+      }
+      setIsDrawerOpen(false);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Operation failed');
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!selectedUserId) return;
+    try {
+      await deleteUser(selectedUserId).unwrap();
+      toast.success('Deleted successfully');
+      setIsDeleteDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Delete operation failed');
+    }
+  }
 };

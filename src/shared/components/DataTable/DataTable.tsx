@@ -117,12 +117,12 @@ export function DataTable<T>({
       <div 
         className={cn(
           "relative overflow-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800",
-          variant === 'default' && "rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+          variant === 'default' && "rounded-xl bg-transparent border-none dark:border-zinc-800 bg-white dark:bg-zinc-950"
         )}
         style={maxHeight ? { maxHeight } : undefined}
       >
-        <Table className="min-w-full border-separate border-spacing-0">
-          <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Table className="min-w-full border-separate border-spacing-y-3">
+          <TableHeader className="sticky top-0 z-20 bg-gray-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -132,7 +132,7 @@ export function DataTable<T>({
                       key={header.id}
                       style={meta?.width ? { width: meta.width, minWidth: meta.width } : undefined}
                       className={cn(
-                        "font-bold text-[#6C757D] dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11 whitespace-nowrap bg-inherit",
+                        "font-semibold text-gray-500 dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11 whitespace-nowrap bg-inherit",
                         meta?.sortable && "p-0"
                       )}
                     >
@@ -171,7 +171,7 @@ export function DataTable<T>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="space-y-3">
             {isLoading ? (
               Array.from({ length: limit }).map((_, i) => (
                 <SkeletonRow key={i} columns={columns.length} />
@@ -184,9 +184,12 @@ export function DataTable<T>({
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-zinc-100 dark:border-zinc-800">
+                <TableRow 
+                  key={row.id} 
+                  className="bg-white shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-all"
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-sm text-zinc-700 dark:text-zinc-300 px-4 py-3">
+                    <TableCell key={cell.id} className="text-sm text-gray-700 px-4 py-5 bg-white">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
