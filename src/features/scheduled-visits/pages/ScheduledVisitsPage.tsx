@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useGetVisitsByUserIdQuery } from '../../leads/api/leadsApi';
 import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
@@ -15,6 +15,7 @@ import { cn } from '../../../utils';
 
 export const ScheduledVisitsPage = () => {
   const { userId: paramUserId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   
   const userId = paramUserId ? parseInt(paramUserId, 10) : user?.id;
@@ -33,7 +34,7 @@ export const ScheduledVisitsPage = () => {
   const scheduledStatus = masterData?.site_visit_status?.find((s: any) => s.code === 'SCHDLD');
   const scheduledStatusId = scheduledStatus?.id;
   
-  const completedStatus = masterData?.site_visit_status?.find((s: any) => s.code === 'COMPLETED');
+  const completedStatus = masterData?.site_visit_status?.find((s: any) => s.code === 'CMPLTD');
   const completedStatusId = completedStatus?.id;
 
   const activeStatusId = activeTab === 'SCHDLD' ? scheduledStatusId : completedStatusId;
@@ -203,6 +204,15 @@ export const ScheduledVisitsPage = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  {activeTab === 'COMPLETED' && (
+                    <Button 
+                      className="ml-auto bg-[#0f3d6b] hover:bg-[#0c3156] text-white rounded-full px-6 font-bold"
+                      onClick={() => navigate(`/visit-feedback/completed/${visit.id || visit.uuid}`, { state: { visit } })}
+                    >
+                      View Details
+                    </Button>
+                  )}
                 </div>
               );
             })
