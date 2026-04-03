@@ -45,6 +45,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const INDIAN_STATES = [
+  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam",
+  "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir",
+  "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha",
+  "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+];
+
 interface LeadFormProps {
   onSubmit: (values: CreateLeadRequest) => void;
   isLoading?: boolean;
@@ -451,6 +461,24 @@ export const LeadForm = ({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Country</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Country" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="city"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
@@ -467,41 +495,33 @@ export const LeadForm = ({
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="state"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
                     <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">State</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="State" 
-                        {...field} 
-                        disabled={isLoading} 
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Country</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Country" 
-                        {...field} 
-                        disabled={isLoading} 
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
-                      />
-                    </FormControl>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value ? String(field.value) : ""}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                          <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {INDIAN_STATES.map((state) => (
+                          <SelectItem key={state} value={state}>
+                            {state}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
