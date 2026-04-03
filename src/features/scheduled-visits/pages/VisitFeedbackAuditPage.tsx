@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MapPin } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 
 export const VisitFeedbackAuditPage = () => {
@@ -45,50 +45,53 @@ export const VisitFeedbackAuditPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent dark:bg-zinc-950 py-8 px-4 md:px-6 space-y-8 overflow-y-auto">
+    <div className="flex flex-col h-full bg-transparent dark:bg-zinc-950 space-y-8 overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 
-          className="h-10 w-10 p-0 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900"
+          className="h-16 w-16 p-0 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900"
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-5 w-5 text-[#0f3d6b] dark:text-zinc-100" />
         </Button>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-primary dark:text-zinc-100 tracking-tight">
+        <h1 className="text-2xl font-extrabold text-primary dark:text-zinc-100 tracking-tight">
           Visit Feedback Audit
         </h1>
       </div>
 
       <div className="flex gap-6 items-start w-full">
         {/* Left Column (Approx 30%) */}
-        <div className="w-[35%] bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col items-center text-center">
+        <div className="w-[40%] bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col items-center text-center">
           <div className="flex items-center gap-4 w-full">
-            <div className="h-20 w-20 bg-[#0f3d6b] rounded-2xl flex items-center justify-center font-black text-2xl text-white shadow-xl shadow-[#0f3d6b]/20 shrink-0">
+            <div className="h-16 w-16 bg-[#0f3d6b] rounded-xl flex items-center justify-center font-black text-xl text-white shadow-xl shadow-[#0f3d6b]/20 shrink-0 border-2 border-primary/20">
               {initials}
             </div>
-            <div className="flex flex-col items-start">
-               <h2 className="text-2xl font-black text-[#0f3d6b] dark:text-zinc-100">
+            <div className="flex flex-col items-start translate-y-[-2px]">
+               <h2 className="text-[18px] font-bold text-primary dark:text-zinc-100 leading-tight">
                  {firstName} {lastName}
                </h2>
-               <p className="text-sm font-medium text-zinc-500">Lead ID: #{leadId}</p>
+               <p className="text-[12px] font-medium text-lead-id">Lead ID: #{leadId}</p>
             </div>
           </div>
 
-          <div className="w-full mt-8 bg-zinc-50 dark:bg-zinc-950 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800">
-            <div className="text-sm text-zinc-500 font-medium text-left">Site Visited:</div>
-            <a 
-              href={locationUrl} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-lg font-bold text-zinc-900 dark:text-zinc-100 hover:text-[#0f3d6b] dark:hover:text-blue-400 text-left block mt-1 break-all"
-            >
-              {locationUrl !== '#' ? locationUrl : 'No Location Recorded'}
-            </a>
+          <div className="w-full mt-6 dark:bg-zinc-950  p-4  flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary shrink-0" />
+            <div className="text-[14px] text-zinc-900 dark:text-zinc-100 font-medium text-left truncate">
+              <span className="text-zinc-400">Site Visited : </span>
+              <a 
+                href={locationUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:text-[#0f3d6b] dark:hover:text-blue-400 underline decoration-zinc-300 underline-offset-4"
+              >
+                {locationUrl !== '#' ? (locationUrl.length > 20 ? locationUrl.substring(0, 20) + '...' : locationUrl) : 'No Location'}
+              </a>
+            </div>
           </div>
 
           <Button 
-            className="w-full mt-8 h-14 bg-[#0f3d6b] hover:bg-[#0c3156] text-white font-bold text-lg rounded-full shadow-lg shadow-[#0f3d6b]/20"
+            className="w-[180px] mt-6 h-[40px] bg-[#0f3d6b] hover:bg-[#0c3156] text-white font-bold text-[14px] rounded-full shadow-lg shadow-[#0f3d6b]/20 "
             onClick={handleLeadDetailsClick}
           >
             View Lead Details
@@ -97,13 +100,13 @@ export const VisitFeedbackAuditPage = () => {
 
         {/* Right Column (Approx 70%) */}
         <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-zinc-100 dark:border-zinc-800 flex flex-col items-start min-h-[380px]">
-          <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">Key Feedback Summary</h2>
+          <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100">Key Feedback Summary</h2>
           
           <div className="mt-8 flex flex-col gap-6 w-full">
             <div className="relative pl-6">
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#0f3d6b] rounded-full"></div>
               <h3 className="text-xs font-bold text-[#0f3d6b] uppercase tracking-widest mb-2">VISIT REMARKS</h3>
-              <p className="text-lg text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed bg-zinc-50 dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+              <p className="text-lg text-zinc-800 font-medium leading-relaxed p-6 border-zinc-100 dark:border-zinc-800">
                 {remarks ? `"${remarks}"` : <span className="text-zinc-400 italic">No feedback summary recorded.</span>}
               </p>
             </div>
@@ -128,7 +131,7 @@ export const VisitFeedbackAuditPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {images.length > 0 ? (
             images.map((imgUrl, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden aspect-[4/3] bg-zinc-100 relative group border border-zinc-200 dark:border-zinc-800 shadow-sm">
+              <div key={i} className="rounded-2xl overflow-hidden aspect-4/3 bg-zinc-100 relative group border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <img 
                   src={imgUrl} 
                   alt={`Site photo ${i + 1}`} 
