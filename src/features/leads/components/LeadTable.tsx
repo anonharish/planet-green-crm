@@ -554,6 +554,7 @@ export const LeadTable = ({
       onSort={onSort as (key: string) => void}
       offset={offset}
       maxHeight={maxHeight}
+      variant="embed"
     />
   );
 };

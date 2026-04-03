@@ -112,12 +112,12 @@ export function DataTable<T>({
       <div 
         className={cn(
           "relative overflow-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800",
-          variant === 'default' && "rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+          variant === 'default' && "rounded-md border border-zinc-200 dark:border-zinc-800 bg-[#FFFFFF] dark:bg-zinc-950"
         )}
         style={maxHeight ? { maxHeight } : undefined}
       >
         <Table className="min-w-full border-separate border-spacing-0">
-          <TableHeader className="sticky top-0 z-20 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 shadow-none">
+          <TableHeader className="sticky top-0 z-20 bg-[#F2F4F6] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-none">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -193,7 +193,7 @@ export function DataTable<T>({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between px-8 py-8 text-[13px] text-zinc-500 font-medium bg-inherit rounded-b-[inherit]">
+      <div className="flex items-center justify-between px-8 py-8 text-[13px] text-zinc-500 font-medium bg-[#F1F5F9] dark:bg-zinc-900 rounded-b-[inherit]">
         <div className="text-zinc-400 dark:text-zinc-500">
           Showing <span className="text-zinc-900 dark:text-zinc-100 font-bold">{from} - {to}</span> of <span className="text-zinc-900 dark:text-zinc-100 font-bold">{total.toLocaleString()}</span> {entityName}
         </div>
