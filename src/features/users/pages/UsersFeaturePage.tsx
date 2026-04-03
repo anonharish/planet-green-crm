@@ -206,6 +206,8 @@ export const UsersFeaturePage = ({
         onClose={() => setIsDrawerOpen(false)}
         title={editingUser ? `Edit ${roleLabel}` : `New ${roleLabel}`}
         description={editingUser ? "Modify user details below." : `Fill in the details to create a new ${roleLabel.toLowerCase()} account.`}
+        showHeader={false}
+        width="sm"
       >
         <UserForm 
           onSubmit={handleFormSubmit} 
@@ -214,6 +216,7 @@ export const UsersFeaturePage = ({
           isEdit={!!editingUser}
           roleId={roleId}
           roleLabel={roleLabel}
+          onClose={() => setIsDrawerOpen(false)}
         />
       </AppDrawer>
 

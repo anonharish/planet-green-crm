@@ -39,21 +39,21 @@ import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
 import type { CreateLeadRequest } from '../types';
 
 const formSchema = z.object({
-  first_name: z.string().optional().or(z.literal('')),
-  last_name: z.string().optional().or(z.literal('')),
-  phone_number: z.string().min(10, 'Phone number must be at least 10 digits'),
+  first_name: z.string().max(50, 'First name cannot exceed 50 characters').optional().or(z.literal('')),
+  last_name: z.string().max(50, 'Last name cannot exceed 50 characters').optional().or(z.literal('')),
+  phone_number: z.string().regex(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
   email_address: z.string().email('Invalid email address').optional().or(z.literal('')),
   source_id: z.number().min(1, 'Source is required'),
   source_employee_user_id: z.number().nullable().optional(),
   project_id: z.number().min(1, 'Project is required'),
   assigned_to_rm: z.number().nullable().optional(),
   assigned_to_em: z.number().nullable().optional(),
-  occupation: z.string().optional().or(z.literal('')),
-  address: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
-  state: z.string().optional().or(z.literal('')),
-  country: z.string().optional().or(z.literal('')),
-  zip: z.string().optional().or(z.literal('')),
+  occupation: z.string().max(50, 'Occupation cannot exceed 50 characters').optional().or(z.literal('')),
+  address: z.string().max(100, 'Address cannot exceed 100 characters').optional().or(z.literal('')),
+  city: z.string().max(50, 'City cannot exceed 50 characters').optional().or(z.literal('')),
+  state: z.string().max(50, 'State cannot exceed 50 characters').optional().or(z.literal('')),
+  country: z.string().max(50, 'Country cannot exceed 50 characters').optional().or(z.literal('')),
+  zip: z.string().max(50, 'Zip cannot exceed 50 characters').optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -216,8 +216,12 @@ export const LeadForm = ({
                     <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Phone Number</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="+00 000 000 0000" 
+                        placeholder="10 digit phone number" 
                         {...field} 
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          field.onChange(val);
+                        }}
                         disabled={isLoading || isEdit} 
                         className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
                       />

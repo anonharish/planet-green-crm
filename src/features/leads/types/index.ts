@@ -79,6 +79,7 @@ export interface Lead {
   state?: string;
   country?: string;
   zip?: string;
+  junk_reason?: string;
   customer_status_id?: number;
   remarks?: LeadRemark[];
   calls?: LeadCall[];
@@ -104,6 +105,7 @@ export interface CreateLeadRequest {
   state: string;
   country: string;
   zip: string;
+  junk_reason?: string;
 }
 
 export interface UpdateLeadRequest extends CreateLeadRequest {
