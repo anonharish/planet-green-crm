@@ -35,12 +35,12 @@ const formSchema = z.object({
   project_id: z.number().min(1, 'Project is required'),
   assigned_to_rm: z.number().nullable().optional(),
   assigned_to_em: z.number().nullable().optional(),
-  occupation: z.string().optional().or(z.literal('')),
-  address: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
-  state: z.string().optional().or(z.literal('')),
-  country: z.string().optional().or(z.literal('')),
-  zip: z.string().optional().or(z.literal('')),
+  occupation: z.string().max(50, 'Occupation cannot exceed 50 characters').optional().or(z.literal('')),
+  address: z.string().max(100, 'Address cannot exceed 100 characters').optional().or(z.literal('')),
+  city: z.string().max(50, 'City cannot exceed 50 characters').optional().or(z.literal('')),
+  state: z.string().max(50, 'State cannot exceed 50 characters').optional().or(z.literal('')),
+  country: z.string().max(50, 'Country cannot exceed 50 characters').optional().or(z.literal('')),
+  zip: z.string().max(50, 'Zip cannot exceed 50 characters').optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;

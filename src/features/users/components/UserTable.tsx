@@ -190,6 +190,11 @@ export const UserTable = ({
                 </DropdownMenuItem>
               )}
 
+              <DropdownMenuItem onClick={() => setSelectedLeadsUser(user)} className="cursor-pointer gap-2 py-2">
+                <LayoutList className="h-4 w-4 text-[#0f3d6b]" />
+                <span>View Assigned Leads</span>
+              </DropdownMenuItem>
+
               {user.role_id === 3 && (
                 <DropdownMenuItem onClick={() => setViewAgentsManager(user)} className="cursor-pointer gap-3 py-2.5">
                   <Users className="h-4 w-4 text-emerald-500" />
@@ -199,7 +204,7 @@ export const UserTable = ({
 
               <DropdownMenuSeparator />
               
-              {can(`${permissionPrefix}.delete` as Permission) && (
+              {/* {can(`${permissionPrefix}.delete` as Permission) && (
                 <DropdownMenuItem 
                   onClick={() => onDelete(user.id)} 
                   className="cursor-pointer gap-3 py-2.5 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
@@ -207,7 +212,7 @@ export const UserTable = ({
                   <Trash2 className="h-4 w-4" />
                   <span className="font-medium">Delete User</span>
                 </DropdownMenuItem>
-              )}
+              )} */}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

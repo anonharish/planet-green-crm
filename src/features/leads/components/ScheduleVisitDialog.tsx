@@ -26,6 +26,7 @@ import {
 } from "../../../components/ui/select";
 
 import type { Lead, ScheduleVisitRequest } from "../types";
+import { useGetLeadsQuery } from "../api/leadsApi";
 
 const scheduleVisitSchema = z.object({
   visit_date_time: z.string().min(1, "Date and time are required"),
@@ -121,25 +122,39 @@ export const ScheduleVisitDialog = ({
     }
   }, [watchRm, reportees, isLoadingReportees, watchEm, setValue]);
 
+  const scheduledStatus = siteVisitStatuses.find(s => s.description.toUpperCase() === 'SCHEDULED' || (s as any).code === 'SCHDLD');
+  const scheduledStatusId = scheduledStatus?.id || 1;
+
   useEffect(() => {
     if (open && lead) {
       reset({
         visit_date_time: "",
         visit_location_url: "",
-        visit_status: undefined,
+        visit_status: scheduledStatusId,
         visit_assigned_to_rm: isRM
           ? Number(currentUser?.id)
           : lead.assigned_to_rm || undefined,
         visit_assigned_to_em: lead.assigned_to_em || undefined,
         visit_remarks: "",
       });
+    } else if (open && !lead) {
+      reset({
+        visit_date_time: "",
+        visit_location_url: "",
+        visit_status: scheduledStatusId,
+        visit_assigned_to_rm: isRM ? Number(currentUser?.id) : undefined,
+        visit_assigned_to_em: undefined,
+        visit_remarks: "",
+      });
     }
-  }, [open, lead, reset, isRM, currentUser]);
+  }, [open, lead, reset, isRM, currentUser, scheduledStatusId]);
 
-  if (!open || !lead) return null;
+  const [selectedLeadUuid, setSelectedLeadUuid] = useState<string>("");
+  const { data: leadsData, isLoading: isLoadingLeads } = useGetLeadsQuery({ offset: 0 }, { skip: !!lead });
+  const allLeads = leadsData || [];
 
   const handleFormSubmit = async (data: ScheduleVisitFormValues) => {
-      if (!date) return;
+      if (!date || (!lead && !selectedLeadUuid)) return;
 
     let hrs = parseInt(hour);
 
@@ -152,18 +167,21 @@ export const ScheduleVisitDialog = ({
 
     await onSubmit({
       ...data,
+      visit_status: scheduledStatusId,
       visit_date_time: formattedDate,
-      lead_uuid: lead.uuid,
+      lead_uuid: lead ? (lead as Lead).uuid : selectedLeadUuid,
     });
   };
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
        <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[75vh]">
-         <div className="px-6 py-4 border-b bg-zinc-50/50">
+        <div className="px-6 py-4 border-b bg-zinc-50/50">
           <h2 className="text-lg font-bold">Schedule Visit</h2>
           <p className="text-sm text-zinc-500">
-            Schedule a site visit for {lead.first_name} {lead.last_name}
+            {lead ? `Schedule a site visit for ${lead.first_name} ${lead.last_name}` : "Schedule a site visit for a lead"}
           </p>
         </div>
 
@@ -174,6 +192,23 @@ export const ScheduleVisitDialog = ({
             className="space-y-4"
           >
             <div className="space-y-2">
+              {!lead && (
+                <div className="space-y-2 mb-4">
+                  <Label>Select Lead *</Label>
+                  <Select value={selectedLeadUuid} onValueChange={setSelectedLeadUuid} disabled={isLoadingLeads}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Search / Select a lead" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allLeads.map((l: Lead) => (
+                        <SelectItem key={l.uuid} value={l.uuid}>
+                          {l.first_name} {l.last_name} ({l.lead_id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <Label>Visit Date & Time *</Label>
 
               <Popover>
@@ -250,32 +285,8 @@ export const ScheduleVisitDialog = ({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Visit Status *</Label>
-              <Select
-                value={watchStatus?.toString() || ""}
-                onValueChange={(val) => setValue("visit_status", Number(val))}
-                disabled={isLoading}
-              >
-                <SelectTrigger
-                  className={errors.visit_status ? "border-red-500" : ""}
-                >
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {siteVisitStatuses.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.visit_status && (
-                <p className="text-xs text-red-500">
-                  {errors.visit_status.message}
-                </p>
-              )}
-            </div>
+            {/* Hidden Status - forced to 'SCHDLD' */}
+            <input type="hidden" {...register("visit_status")} />
 
             <div className={cn("grid gap-4", isRM ? "grid-cols-1" : "grid-cols-2")}>
               {!isRM && (

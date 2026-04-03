@@ -16,7 +16,7 @@ export interface LeadCall {
   call_remarks: string | null;
   caller_user_id: number | null;
   caller_role_id: number | null;
-  call_s3_data: Record<string, unknown> | null;
+  call_s3_data: string | null;
   is_active: number;
   created_by: number;
   created_on: string;
@@ -79,6 +79,7 @@ export interface Lead {
   state?: string;
   country?: string;
   zip?: string;
+  junk_reason?: string;
   customer_status_id?: number;
   remarks?: LeadRemark[];
   calls?: LeadCall[];
@@ -104,6 +105,7 @@ export interface CreateLeadRequest {
   state: string;
   country: string;
   zip: string;
+  junk_reason?: string;
 }
 
 export interface UpdateLeadRequest extends CreateLeadRequest {

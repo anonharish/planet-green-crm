@@ -14,6 +14,7 @@ interface AppDrawerProps {
   description?: string;
   children: React.ReactNode;
   width?: 'sm' | 'md' | 'lg';
+  showHeader?: boolean;
 }
 
 const WIDTH_MAP = {
@@ -22,14 +23,16 @@ const WIDTH_MAP = {
   lg: 'sm:max-w-lg',
 };
 
-export const AppDrawer = ({ open, onClose, title, description, children, width = 'md' }: AppDrawerProps) => {
+export const AppDrawer = ({ open, onClose, title, description, children, width = 'md', showHeader = true }: AppDrawerProps) => {
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <SheetContent className={`${WIDTH_MAP[width]} p-0 flex flex-col h-full overflow-hidden`}>
-        <SheetHeader className="px-6 py-3.5 border-b shrink-0 space-y-0">
-          <SheetTitle className="text-lg font-bold">{title}</SheetTitle>
-          {description && <SheetDescription className="text-xs">{description}</SheetDescription>}
-        </SheetHeader>
+      <SheetContent className={`${WIDTH_MAP[width]} p-0 flex flex-col h-full overflow-hidden border-none shadow-2xl`}>
+        {showHeader && (
+          <SheetHeader className="px-6 py-3.5 border-b shrink-0 space-y-0 text-left">
+            <SheetTitle className="text-lg font-bold">{title}</SheetTitle>
+            {description && <SheetDescription className="text-xs">{description}</SheetDescription>}
+          </SheetHeader>
+        )}
         <div className="flex-1 flex flex-col overflow-hidden">
           {children}
         </div>
