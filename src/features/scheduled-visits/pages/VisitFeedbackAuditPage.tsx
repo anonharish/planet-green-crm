@@ -26,16 +26,26 @@ export const VisitFeedbackAuditPage = () => {
 
   // Parse Images JSON Array string -> string[]
   let images: string[] = [];
-  try {
-    if (visit.visit_images_location) {
-      // The JSON comes as a string representation of an array according to the specs
-      const parsed = JSON.parse(visit.visit_images_location);
+  if (visit.visit_images_location) {
+    const raw = visit.visit_images_location.trim();
+    try {
+      // 1. Try valid JSON first
+      const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
         images = parsed;
       }
+    } catch (err) {
+      // 2. Fallback for custom format "[url1, url2]" (no quotes)
+      if (raw.startsWith("[") && raw.endsWith("]")) {
+        images = raw
+          .slice(1, -1)
+          .split(",")
+          .map((url: string) => url.trim())
+          .filter((url: string) => url.length > 0);
+      } else {
+        console.error("Failed to parse visit images:", err);
+      }
     }
-  } catch (err) {
-    console.error("Failed to parse visit images", err);
   }
 
   const handleLeadDetailsClick = () => {
