@@ -90,30 +90,36 @@ export const CustomersPage = () => {
   }, [customers, search, sortField, sortOrder]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader 
         title="Customers" 
-        description="View and manage all active customers in your portfolio."
+        description="View and manage all active customers"
       />
 
-      <CustomerTable 
-        data={sortedAndFilteredData}
-        isLoading={isLoading || isFetching}
-        page={page}
-        limit={limit}
-        // If we have 200 customers, assume there might be more to enable "Next"
-        total={customers.length < 200 ? serverOffset + customers.length : serverOffset + 201}
-        onPageChange={setPage}
-        onLimitChange={setLimit}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-        offset={serverOffset}
-        onViewLeads={setViewLeadsCustomer}
-        onEdit={setEditingCustomer}
-        search={search}
-        onSearchChange={setSearch}
-      />
+      <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
+        <FilterBar onReset={() => setSearch('')}>
+          <SearchInput value={search} onChange={setSearch} placeholder="Search customers by name, email or phone..." />
+        </FilterBar>
+
+        <CustomerTable 
+          data={sortedAndFilteredData}
+          isLoading={isLoading || isFetching}
+          page={page}
+          limit={limit}
+          // If we have 200 customers, assume there might be more to enable "Next"
+          total={customers.length < 200 ? serverOffset + customers.length : serverOffset + 201}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          offset={serverOffset}
+          onViewLeads={setViewLeadsCustomer}
+          onEdit={setEditingCustomer}
+          search={search}
+          onSearchChange={setSearch}
+        />
+      </div>
 
       <CustomerLeadsDialog 
         open={viewLeadsCustomer !== null} 

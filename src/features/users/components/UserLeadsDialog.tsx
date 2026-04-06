@@ -1,202 +1,179 @@
-import React from 'react';
-import { Loader2, User as UserIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
+  DialogClose,
 } from '../../../components/ui/dialog';
-import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
-import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
-import { useGetLeadsByRmIdQuery, useGetLeadsByEmIdQuery } from '../../leads/api/leadsApi';
+import { useGetLeadsByEmIdQuery } from '../../leads/api/leadsApi';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
-import type { Lead } from '../../leads/types';
+import { Loader2, Layout, X } from 'lucide-react';
+import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import { cn } from '../../../utils';
+import type { User as UserType } from '../types';
+import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
+import type { Lead } from '../../leads/types';
 
 interface UserLeadsDialogProps {
   open: boolean;
   onClose: () => void;
-  userId: number | null;
-  userName?: string;
-  type: 'RM' | 'EM';
+  user: UserType | null;
 }
 
-const getInitials = (first?: string | null, last?: string | null) => {
-  return `${(first?.[0] || '').toUpperCase()}${(last?.[0] || '').toUpperCase()}`;
+const InitialsBadge = ({ name, colorClass }: { name?: string; colorClass: string }) => {
+  if (!name) return <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-400 border border-zinc-200">--</div>;
+  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold shadow-xs border border-white/20", colorClass)}>
+      {initials}
+    </div>
+  );
 };
 
 export const UserLeadsDialog = ({
   open,
   onClose,
-  userId,
-  userName,
-  type,
+  user
 }: UserLeadsDialogProps) => {
-  const navigate = useNavigate();
-  const { getStatusLabel, getSourceLabel, getProjectLabel, getRmLabel } = useMasterDataLookup();
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const { getStatusLabel, getProjectLabel, getSourceLabel, getRmLabel, isLoading: isLookupLookup } = useMasterDataLookup();
 
-  // Conditionally call the appropriate API based on user type
-  const { data: rmLeads, isLoading: isRmLoading } = useGetLeadsByRmIdQuery(
-    { assigned_to_rm: userId || 0, offset: 0, is_em_assigned: 0 },
-    { skip: !userId || !open || type !== 'RM' }
+  // Fetch leads for this EM
+  const { data: leads = [], isLoading, isFetching } = useGetLeadsByEmIdQuery(
+    { assigned_to_em: user?.id || 0, offset: (page - 1) * limit },
+    { skip: !open || !user?.id }
   );
-
-  const { data: emLeads, isLoading: isEmLoading } = useGetLeadsByEmIdQuery(
-    { assigned_to_em: userId || 0, offset: 0 },
-    { skip: !userId || !open || type !== 'EM' }
-  );
-
-  const leads = type === 'RM' ? (rmLeads || []) : (emLeads || []);
-  const isLoading = type === 'RM' ? isRmLoading : isEmLoading;
 
   const columns: ColumnDef<Lead>[] = [
     {
       key: 'lead_id',
       header: 'LEAD ID',
       width: '120px',
-      render: (l) => (
-        <span className="text-zinc-400 font-medium text-xs">
-          #{l.lead_id}
+      render: (lead) => (
+        <span className="font-bold text-zinc-400 dark:text-zinc-600 text-xs tracking-tight">
+          PG{lead.lead_id}
         </span>
-      )
+      ),
     },
     {
-      key: 'name',
+      key: 'lead_name',
       header: 'LEAD NAME',
-      width: '200px',
-      render: (l) => (
+      width: '240px',
+      render: (lead) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-[#0f3d6b]/10 flex items-center justify-center text-[11px] font-bold text-[#0f3d6b] shrink-0">
-            {getInitials(l.first_name, l.last_name)}
-          </div>
-          <span className="font-bold text-zinc-900 dark:text-zinc-100 text-xs">
-            {l.first_name} {l.last_name}
+          <InitialsBadge name={`${lead.first_name} ${lead.last_name}`} colorClass="bg-[#E9ECEF] text-[#495057]" />
+          <span className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight whitespace-nowrap">
+            {lead.first_name} {lead.last_name}
           </span>
         </div>
-      )
+      ),
     },
     {
-      key: 'project',
+      key: 'project_id',
       header: 'PROJECT INTEREST',
-      width: '220px',
-      render: (l) => (
-        <span className="font-bold text-zinc-800 dark:text-zinc-200 text-xs">{getProjectLabel(l.project_id)}</span>
-      )
+      width: '200px',
+      render: (lead) => (
+        <span className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
+          {getProjectLabel(lead.project_id)}
+        </span>
+      ),
     },
     {
-      key: 'source',
+      key: 'source_id',
       header: 'SOURCE',
       width: '140px',
-      render: (l) => (
-        <Badge variant="outline" className="text-[10px] py-1 px-3 font-bold uppercase rounded-full border-zinc-200 text-zinc-500 bg-zinc-50/50 shadow-none">
-          {getSourceLabel(l.source_id)}
-        </Badge>
-      )
+      render: (lead) => (
+        <div className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full inline-flex border border-zinc-200 dark:border-zinc-700">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">
+            {getSourceLabel(lead.source_id)}
+          </span>
+        </div>
+      ),
     },
     {
-      key: 'stage',
+      key: 'lead_status_id',
       header: 'CURRENT STAGE',
       width: '160px',
-      render: (l) => {
-        const label = getStatusLabel(l.lead_status_id);
-        const statusColors: Record<string, string> = {
-          'Negotiation': 'bg-blue-50 text-blue-600 border-blue-100',
-          'Closed': 'bg-teal-50 text-teal-600 border-teal-100',
-          'Discovery': 'bg-zinc-100 text-zinc-600 border-zinc-200',
-          'Rejected': 'bg-red-50 text-red-600 border-red-100',
-          'Interested': 'bg-indigo-50 text-indigo-600 border-indigo-100',
-        };
-        const colorClass = statusColors[label] || 'bg-zinc-50 text-zinc-500 border-zinc-200';
-        
-        return (
-          <Badge variant="outline" className={cn("text-[10px] py-1 px-4 font-bold uppercase rounded-full border shadow-none", colorClass)}>
-            {label}
-          </Badge>
-        );
-      }
+      render: (lead) => (
+        <div className="px-4 py-1 border border-zinc-200 dark:border-zinc-800 rounded-full inline-flex bg-white dark:bg-zinc-900 shadow-xs">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">
+            {getStatusLabel(lead.lead_status_id)}
+          </span>
+        </div>
+      ),
     },
     {
-      key: 'actions',
-      header: 'ACTIONS',
-      width: '120px',
-      render: (l) => (
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 text-[11px] font-bold uppercase rounded-xl border-zinc-200 dark:border-zinc-800 text-[#0f3d6b] hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all px-4 shadow-none"
-          onClick={() => {
-            onClose();
-            navigate(`/leads/${l.uuid}`);
-          }}
-        >
-          View Full Details
-        </Button>
-      )
-    }
+      key: 'assigned_to_rm',
+      header: 'ASSIGNE',
+      width: '80px',
+      render: (lead) => {
+        const rmLabel = getRmLabel(lead.assigned_to_rm);
+        return (
+          <div className="flex items-center justify-center">
+            <InitialsBadge 
+              name={rmLabel === '--' ? undefined : rmLabel} 
+              colorClass={rmLabel === '--' ? "bg-zinc-100 text-zinc-400" : "bg-[#212529] text-white"} 
+            />
+          </div>
+        );
+      },
+    },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1000px] max-h-[90vh] flex flex-col p-8 gap-8 bg-white dark:bg-zinc-950 rounded-[32px] overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-2xl font-black text-[#0f3d6b] dark:text-zinc-100 tracking-tight">
-                Assigned Lead Registry
-              </DialogTitle>
-              <p className="text-sm text-zinc-500 font-medium mt-1">
-                Displaying all active leads currently handled by <span className="text-[#0f3d6b] font-bold">{userName}</span>
-              </p>
-            </div>
-            <div className="bg-[#0f3d6b]/5 dark:bg-zinc-900 px-4 py-2 rounded-2xl border border-[#0f3d6b]/10">
-              <span className="text-[10px] font-black text-[#0f3d6b] uppercase tracking-widest leading-none">
-                Total {leads.length} Assignments
-              </span>
-            </div>
+      <DialogContent className="max-w-5xl overflow-hidden flex flex-col p-0 gap-0 border-none shadow-3xl bg-white dark:bg-zinc-950 rounded-[28px]">
+        {/* Header Section */}
+        <div className="px-12 pt-12 pb-6 flex items-center justify-between relative">
+          <div>
+            <DialogTitle className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-1">
+              Lead Registry
+            </DialogTitle>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
+              Listing leads for <span className="text-zinc-900 dark:text-zinc-100">{user?.first_name} {user?.last_name}</span>
+            </p>
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-auto min-h-0 -mx-4 px-4 custom-scrollbar">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-72 text-zinc-400">
-              <Loader2 className="h-8 w-8 animate-spin text-[#0f3d6b] mb-4" />
-              <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Syncing Registry...</p>
+        {/* List Section */}
+        <div className="flex-1 overflow-visible bg-white dark:bg-zinc-950 px-6">
+          {isLoading || isFetching || isLookupLookup ? (
+            <div className="flex flex-col items-center justify-center py-32 gap-4 text-zinc-300">
+              <Loader2 className="h-10 w-10 animate-spin text-zinc-200" />
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Loading Registry...</p>
             </div>
           ) : leads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-72 border-2 border-dashed border-zinc-100 dark:border-zinc-900 rounded-[32px] bg-zinc-50/30 dark:bg-zinc-950/30">
-               <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center shadow-sm mb-4 border border-zinc-100 dark:border-zinc-800">
-                <UserIcon size={24} className="text-zinc-200" />
+            <div className="text-center py-32 px-10">
+              <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-zinc-200 dark:border-zinc-800 transition-all">
+                <Layout className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
               </div>
-              <p className="text-zinc-400 font-bold text-sm">No leads assigned to this {type}.</p>
-              <p className="text-xs text-zinc-300 mt-1">Assignment history will appear here once leads are linked.</p>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                No Leads Assigned
+              </h3>
+              <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2 max-w-[280px] mx-auto font-medium leading-relaxed">
+                This experience manager currently has no active leads assigned to them in the registry.
+              </p>
             </div>
           ) : (
             <DataTable
               columns={columns as any}
               data={leads}
               isLoading={isLoading}
-              page={1}
-              limit={leads.length}
+              page={page}
+              limit={limit}
               total={leads.length}
-              onPageChange={() => {}}
+              onPageChange={setPage}
               onLimitChange={() => {}}
               rowKey={(l) => l.uuid}
               variant="embed"
+              entityName="Records"
             />
           )}
         </div>
 
-        <div className="flex justify-end pt-2">
-           <Button 
-            onClick={onClose} 
-            className="h-12 px-10 rounded-2xl bg-[#0f3d6b] text-white font-black text-sm shadow-lg hover:bg-[#0c3156] transition-all active:scale-95"
-          >
-            Close Registry
-          </Button>
-        </div>
+        {/* Spacing for aesthetic */}
+        <div className="h-4" />
       </DialogContent>
     </Dialog>
   );

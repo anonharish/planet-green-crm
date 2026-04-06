@@ -6,9 +6,10 @@ export const ExperienceManagersPage = () => {
     <UsersFeaturePage
       roleId={4}
       roleLabel="Site Experience Manager"
-      title="Site Experience Managers"
-      description="Manage your team of site experience managers and their field officer assignments."
+      title="Experience Managers"
+      description="Manage and monitor your on-site experience team."
       permissionPrefix="agent"
+      searchPlaceholder="Search EM's"
     />
   );
 };
