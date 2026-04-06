@@ -109,7 +109,7 @@ export const UsersFeaturePage = ({
       className="bg-[#0f3d6b] hover:bg-[#0c2f54] text-white rounded-full px-5 py-2 flex items-center gap-2 shadow-sm"
     >
       <UserPlus className="h-4 w-4" />
-      Create RM
+      Create {permissionPrefix === 'manager' ? 'RM' : 'EM'}
     </Button>
   );
 

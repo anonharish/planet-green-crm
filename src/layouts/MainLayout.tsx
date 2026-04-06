@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { cn } from "../utils";
+import { GlobalApiLoader } from "../shared/components/GlobalApiLoader";
 
 export const MainLayout = () => {
   const { isAuthenticated, isFirstLogin, user, logout } = useAuth();
@@ -98,6 +99,7 @@ export const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
+      <GlobalApiLoader />
       {/* Sidebar */}
       <aside
         className={cn(
