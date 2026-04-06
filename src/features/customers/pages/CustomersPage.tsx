@@ -97,9 +97,9 @@ export const CustomersPage = () => {
       />
 
       <div className="border rounded-lg p-4 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
-        <FilterBar onReset={() => setSearch('')}>
+        {/* <FilterBar>
           <SearchInput value={search} onChange={setSearch} placeholder="Search customers by name, email or phone..." />
-        </FilterBar>
+        </FilterBar> */}
 
         <CustomerTable 
           data={sortedAndFilteredData}
