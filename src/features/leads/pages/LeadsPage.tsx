@@ -54,6 +54,7 @@ import { JunkLeadsPage } from './JunkLeadsPage';
 import { LeadJunkReviewPage } from './LeadJunkReviewPage';
 import { ReassignRMModal } from '../components/ReassignRMModal';
 import type { JunkLead } from '../data/junkLeadsData';
+import { junkLeads as junkLeadsMock } from '../data/junkLeadsData';
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -690,6 +691,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
       {activeView === 'junk' && (
         <JunkLeadsPage 
+          leads={junkLeadsMock as any}
+          isLoading={false}
+          page={1}
+          limit={10}
+          total={junkLeadsMock.length}
+          onPageChange={() => {}}
+          onLimitChange={() => {}}
           onVerify={(lead) => {
             setSelectedJunkLead(lead);
             setActiveView('junk-review');
@@ -710,6 +718,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           />
           <ReassignRMModal
             open={showReassignModal}
+            rms={rms}
             onClose={() => setShowReassignModal(false)}
             lead={selectedJunkLead}
             onConfirm={(rmId) => {

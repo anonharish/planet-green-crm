@@ -77,13 +77,17 @@ export function DataTable<T>({
   variant = 'default',
   entityName = 'Records',
 }: DataTableProps<T>) {
-  const totalPages = Math.ceil(total / limit);
-  const globalStart = (page - 1) * limit;
-  const from = total === 0 ? 0 : globalStart + 1;
-  const to = Math.min(globalStart + limit, total);
+  const safeTotal = total || 0;
+  const safeLimit = limit || 10;
+  const safePage = page || 1;
+  const totalPages = Math.ceil(safeTotal / safeLimit);
+  const globalStart = (safePage - 1) * safeLimit;
+  const from = safeTotal === 0 ? 0 : globalStart + 1;
+  const to = Math.min(globalStart + safeLimit, safeTotal);
 
   const relativeStart = Math.max(0, globalStart - offset);
-  const slicedData = data.slice(relativeStart, relativeStart + limit);
+  const dataArray = data || [];
+  const slicedData = dataArray.slice(relativeStart, relativeStart + safeLimit);
 
   const tanstackColumns = React.useMemo<TanStackColumnDef<T, any>[]>(() => {
     return columns.map((col) => ({
@@ -168,7 +172,7 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: limit }).map((_, i) => (
+              Array.from({ length: safeLimit }).map((_, i) => (
                 <SkeletonRow key={i} columns={columns.length} />
               ))
             ) : table.getRowModel().rows.length === 0 ? (
@@ -195,7 +199,7 @@ export function DataTable<T>({
       {/* Pagination Controls */}
       <div className="flex items-center justify-between px-8 py-8 text-[13px] text-zinc-500 font-medium bg-inherit rounded-b-[inherit]">
         <div className="text-zinc-400 dark:text-zinc-500">
-          Showing <span className="text-zinc-900 dark:text-zinc-100 font-bold">{from} - {to}</span> of <span className="text-zinc-900 dark:text-zinc-100 font-bold">{total.toLocaleString()}</span> {entityName}
+          Showing <span className="text-zinc-900 dark:text-zinc-100 font-bold">{from} - {to}</span> of <span className="text-zinc-900 dark:text-zinc-100 font-bold">{(total || 0).toLocaleString()}</span> {entityName}
         </div>
 
         <div className="flex items-center gap-1">
@@ -203,17 +207,17 @@ export function DataTable<T>({
             variant="ghost"
             size="sm"
             className="h-10 px-4 rounded-xl border-none hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold gap-1 transition-all"
-            disabled={page <= 1 || isLoading}
-            onClick={() => onPageChange(page - 1)}
+            disabled={safePage <= 1 || isLoading}
+            onClick={() => onPageChange(safePage - 1)}
           >
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
 
           <div className="flex items-center gap-1 mx-2">
-            {[...Array(Math.min(5, totalPages))].map((_, i) => {
+            {[...Array(!isNaN(totalPages) ? Math.min(5, totalPages) : 0)].map((_, i) => {
               const pageNum = i + 1; // Simplified for now, just first 5
-              const isActive = pageNum === page;
+              const isActive = pageNum === safePage;
               return (
                 <Button
                   key={pageNum}
@@ -252,8 +256,8 @@ export function DataTable<T>({
             variant="ghost"
             size="sm"
             className="h-10 px-4 rounded-xl border-none hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold gap-1 transition-all"
-            disabled={page >= totalPages || isLoading}
-            onClick={() => onPageChange(page + 1)}
+            disabled={safePage >= totalPages || isLoading}
+            onClick={() => onPageChange(safePage + 1)}
           >
             Next
             <ChevronRight className="h-4 w-4" />
