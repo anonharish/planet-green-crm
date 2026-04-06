@@ -74,7 +74,7 @@ export const ReassignRMModal: React.FC<ReassignRMModalProps> = ({
                   <SelectValue placeholder="Choose an RM..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-zinc-100 dark:border-zinc-800 shadow-xl max-h-60 overflow-y-auto">
-                  {rms.map((rm) => (
+                  {(rms || []).map((rm) => (
                     <SelectItem key={rm.id} value={String(rm.id)} className="py-3 font-bold cursor-pointer">
                       <div className="flex items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center font-bold shrink-0 text-[10px]">

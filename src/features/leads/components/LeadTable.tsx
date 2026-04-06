@@ -309,6 +309,7 @@ export const LeadTable = ({
   maxHeight,
   managers = []
 }: LeadTableProps) => {
+  const dataArray = data || [];
   const { currentRole, can } = usePermissions();
   const roleCode = currentRole?.code || '';
   
@@ -331,10 +332,10 @@ export const LeadTable = ({
         header: (
           <div className="flex items-center justify-center h-full">
             <Checkbox 
-              checked={data.length > 0 && selectedUuids.length === data.length}
+              checked={dataArray.length > 0 && selectedUuids.length === dataArray.length}
               onCheckedChange={(checked: boolean) => {
                 if (checked) {
-                  onSelectUuids?.(data.map(l => l.uuid));
+                  onSelectUuids?.(dataArray.map(l => l.uuid));
                 } else {
                   onSelectUuids?.([]);
                 }
@@ -541,7 +542,7 @@ export const LeadTable = ({
   return (
     <DataTable
       columns={columns as ColumnDef<Lead>[]}
-      data={data}
+      data={dataArray}
       isLoading={isLoading || isLookupLoading}
       page={page}
       limit={limit}
