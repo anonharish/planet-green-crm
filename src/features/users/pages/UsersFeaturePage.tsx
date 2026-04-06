@@ -188,20 +188,29 @@ export const UsersFeaturePage = ({
     </div>
   );
 
-  async function handleFormSubmit(values: any) {
-    try {
-      if (editingUser) {
-        await updateUser({ ...values, id: editingUser.id }).unwrap();
-        toast.success('Updated successfully');
-      } else {
-        await createUser({ ...values, role_id: roleId }).unwrap();
-        toast.success('Created successfully');
-      }
-      setIsDrawerOpen(false);
-    } catch (err: any) {
-      toast.error(err?.data?.message || 'Operation failed');
+async function handleFormSubmit(values: any) {
+  try {
+    if (editingUser) {
+      await updateUser({ ...values, id: editingUser.id }).unwrap();
+      toast.success('Updated successfully');
+    } else {
+      await createUser({ ...values, role_id: roleId }).unwrap();
+      toast.success('Created successfully');
     }
+    setIsDrawerOpen(false);
+  } catch (err: any) {
+    let message =
+      err?.data?.error ||
+      err?.data?.message ||
+      "Something went wrong";
+
+    if (message.includes("Duplicate entry") && message.includes("phone_number")) {
+      message = "Phone number already exists";
+    }
+
+    toast.error(message);
   }
+}
 
   async function handleDeleteConfirm() {
     if (!selectedUserId) return;

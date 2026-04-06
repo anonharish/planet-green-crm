@@ -197,6 +197,7 @@ export const UserTable = ({
 
         /* Column header text style */
         .rm-table thead th {
+          
           border: none !important;
           box-shadow: none !important;
           font-size: 11px !important;
@@ -207,6 +208,26 @@ export const UserTable = ({
           padding-top: 4px !important;
           padding-bottom: 8px !important;
         }
+
+        /* 🔥 ADD THIS BELOW thead th block */
+
+/* Filter button styling */
+.rm-table thead th button {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+/* Hover */
+.rm-table thead th button:hover {
+  background: #e9eef5 !important;
+}
 
         /* Card gaps via border-spacing */
         .rm-table table {
@@ -242,16 +263,64 @@ export const UserTable = ({
            FOOTER  — white background, top divider
            (same treatment as the header)
         ══════════════════════════════════════════════════════ */
-        .rm-table tfoot,
-        .rm-table tfoot tr,
-        .rm-table tfoot td,
-        .rm-table [class*="pagination"],
-        .rm-table [class*="Pagination"],
-        .rm-table [class*="footer"],
-        .rm-table [class*="Footer"] {
-          background: ${WHITE} !important;
-          border-top: 1px solid #f0f4f8 !important;
-        }
+ /* Footer container */
+.rm-table tfoot,
+.rm-table [class*="footer"],
+.rm-table [class*="Footer"] {
+  background: #ffffff !important;
+  border-top: 1px solid #f0f4f8 !important;
+  padding: 14px 20px !important;
+}
+
+/* Inner footer layout fix */
+.rm-table [class*="footer"] > div {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100%;
+}
+
+/* Left text */
+.rm-table [class*="footer"] span {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Pagination container */
+.rm-table [class*="pagination"] {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons */
+.rm-table button {
+  border-radius: 10px !important;
+  min-width: 36px;
+  height: 36px;
+  font-size: 13px;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+/* Active page */
+.rm-table button[aria-current="page"] {
+  background: #0f3d6b !important;
+  color: #fff !important;
+  border: none;
+}
+
+/* Disabled buttons */
+.rm-table button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hover */
+.rm-table button:not(:disabled):hover {
+  background: #f3f4f6;
+}
       `}</style>
 
       {/* ── White header ── */}
@@ -284,12 +353,10 @@ export const UserTable = ({
         manager={viewAgentsManager}
       />
       <UserLeadsDialog
-        open={!!selectedLeadsUser}
-        onClose={() => setSelectedLeadsUser(null)}
-        userId={selectedLeadsUser?.id || null}
-        userName={selectedLeadsUser ? `${selectedLeadsUser.first_name} ${selectedLeadsUser.last_name}` : ''}
-        type={permissionPrefix === 'manager' ? 'RM' : 'EM'}
-      />
+  open={!!selectedLeadsUser}
+  onClose={() => setSelectedLeadsUser(null)}
+  user={selectedLeadsUser}   // ✅ FIX
+/>
     </>
   );
 };

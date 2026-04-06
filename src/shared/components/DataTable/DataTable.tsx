@@ -201,59 +201,71 @@ export function DataTable<T>({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between py-4 text-[13px] text-zinc-500 font-medium">
-        <div>
-          Showing <span className="text-zinc-900 dark:text-zinc-100">{from} - {to}</span> of <span className="text-zinc-900 dark:text-zinc-100">{total.toLocaleString()}</span> Records
-        </div>
+{/* Pagination Controls */}
+<div className="flex items-center justify-between px-5 py-4 border-t border-[#f0f4f8] bg-white rounded-b-xl">
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 px-4 rounded-lg border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 transition-all gap-2"
-            disabled={page <= 1 || isLoading}
-            onClick={() => onPageChange(page - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
+  {/* Left text */}
+  <div className="text-[13px] text-zinc-500 font-medium">
+    Showing <span className="text-zinc-900">{from} - {to}</span> of{" "}
+    <span className="text-zinc-900">{total.toLocaleString()}</span> Records
+  </div>
 
-          <div className="flex items-center gap-1 mx-2">
-            {/* Simple page indicator for now, could be expanded to full numeric pagination if requested */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 p-0 rounded-lg bg-primary text-white hover:bg-primary/90 hover:text-white"
-            >
-              {page}
-            </Button>
-            {totalPages > 1 && totalPages > page && (
-               <span className="px-2 text-zinc-400">...</span>
-            )}
-            {totalPages > 1 && totalPages > page && (
-               <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 rounded-lg"
-                onClick={() => onPageChange(totalPages)}
-              >
-                {totalPages}
-              </Button>
-            )}
-          </div>
+  {/* Right pagination */}
+  <div className="flex items-center gap-2">
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 px-4 rounded-lg border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 transition-all gap-2"
-            disabled={page >= totalPages || isLoading}
-            onClick={() => onPageChange(page + 1)}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+    {/* Previous */}
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-9 px-4 rounded-lg border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 flex items-center gap-2"
+      disabled={isLoading}
+      onClick={() => onPageChange(page - 1)}
+    >
+      <ChevronLeft className="h-4 w-4" />
+      Previous
+    </Button>
+
+{/* Page numbers */}
+<div className="flex items-center gap-1 mx-2">
+
+  {/* Current page */}
+ <Button
+  variant="default"
+  size="sm"
+  className="h-9 w-9 p-0 rounded-lg !bg-[#0f3d6b] !text-white hover:!bg-[#0f3d6b] shadow-sm"
+>
+  {page}
+</Button>
+
+  {/* Dots + last page */}
+  {totalPages > 1 && totalPages > page && (
+    <>
+      <span className="px-2 text-zinc-400">...</span>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-9 w-9 p-0 rounded-lg text-zinc-600 hover:bg-zinc-100"
+        onClick={() => onPageChange(totalPages)}
+      >
+        {totalPages}
+      </Button>
+    </>
+  )}
+</div>
+
+    {/* Next */}
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-9 px-4 rounded-lg border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 flex items-center gap-2"
+      disabled={isLoading}
+      onClick={() => onPageChange(page + 1)}
+    >
+      Next
+      <ChevronRight className="h-4 w-4" />
+    </Button>
+  </div>
+</div>
     </div>
   );
 }
