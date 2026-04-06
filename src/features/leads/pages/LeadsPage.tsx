@@ -699,7 +699,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           onPageChange={() => {}}
           onLimitChange={() => {}}
           onVerify={(lead) => {
-            setSelectedJunkLead(lead);
+            setSelectedJunkLead(lead as unknown as JunkLead);
             setActiveView('junk-review');
           }} 
         />
@@ -708,11 +708,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       {activeView === 'junk-review' && selectedJunkLead && (
         <>
           <LeadJunkReviewPage 
-            lead={selectedJunkLead}
+            lead={selectedJunkLead as unknown as Lead}
             onBack={() => setActiveView('junk')}
-            onReassign={() => setShowReassignModal(true)}
-            onApprove={() => {
-              toast.success("Lead junk approved");
+            onReassign={(reason) => {
+              setShowReassignModal(true);
+            }}
+            onApprove={(reason) => {
+              toast.success("Lead junk approved with reason: " + reason);
               setActiveView('junk');
             }}
           />
@@ -720,8 +722,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             open={showReassignModal}
             rms={rms}
             onClose={() => setShowReassignModal(false)}
-            lead={selectedJunkLead}
-            onConfirm={(rmId) => {
+            lead={selectedJunkLead as unknown as Lead}
+            onConfirm={(rmId, reason) => {
               toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
               setActiveView('junk');
             }}

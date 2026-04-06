@@ -286,9 +286,7 @@ export const UserTable = ({
       <UserLeadsDialog
         open={!!selectedLeadsUser}
         onClose={() => setSelectedLeadsUser(null)}
-        userId={selectedLeadsUser?.id || null}
-        userName={selectedLeadsUser ? `${selectedLeadsUser.first_name} ${selectedLeadsUser.last_name}` : ''}
-        type={permissionPrefix === 'manager' ? 'RM' : 'EM'}
+        user={selectedLeadsUser}
       />
     </>
   );

@@ -167,7 +167,6 @@ export const UserLeadsDialog = ({
               onLimitChange={() => {}}
               rowKey={(l) => l.uuid}
               variant="embed"
-              entityName="Records"
             />
           )}
         </div>
