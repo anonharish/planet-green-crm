@@ -93,7 +93,7 @@ export const ScheduledVisitsPage = () => {
     <div className="flex flex-col h-full bg-transparent pt-8 pb-20 px-4 space-y-8">
       {/* Header Section */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
+        <h1 className="text-2xl font-extrabold text-primary tracking-tight">
           Scheduled Site Visits
         </h1>
         <div className="flex items-center gap-4">
@@ -170,7 +170,7 @@ export const ScheduledVisitsPage = () => {
             placeholder="Search leads....." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 h-14 rounded-full bg-white dark:bg-zinc-900 border-search-border shadow-sm focus-visible:ring-primary/10 text-base placeholder:text-zinc-400"
+            className="w-full pl-12 h-12 rounded-full bg-white dark:bg-zinc-900 border-search-border shadow-sm focus-visible:ring-primary/10 text-base placeholder:text-zinc-400"
           />
         </div>
 

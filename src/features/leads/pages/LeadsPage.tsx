@@ -651,7 +651,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
                 <Button
                   onClick={() => setShowRandomConfirm(true)}
-                  disabled={activeTab === 0 || isAnyBulkAssigning || leads.length === 0}
+                  disabled={activeTab === 1 || isAnyBulkAssigning || leads.length === 0}
                   className="gap-2"
                 >
                   {isAnyBulkAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
