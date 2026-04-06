@@ -92,7 +92,6 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
               <>
                 <UnassignedAvatar />
                 <span className="text-zinc-500 font-medium">Unassigned</span>
-                <ChevronDown className="h-3.5 w-3.5 ml-auto text-zinc-400 shrink-0" />
               </>
             )}
           </button>
@@ -238,7 +237,6 @@ const EmAssigneeCell = ({ lead, onAssign, disabled, emLabel }: {
                 <span className="text-zinc-500 font-medium">
                   {!lead.assigned_to_rm ? 'Select RM first' : 'Unassigned'}
                 </span>
-                <ChevronDown className="h-3.5 w-3.5 ml-auto text-zinc-400 shrink-0" />
               </>
             )}
           </button>

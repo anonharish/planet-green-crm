@@ -11,7 +11,7 @@
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
-  --color-primary: #063669;
+  --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
   --color-secondary: hsl(var(--secondary));
@@ -37,14 +37,7 @@
   --radius-sm: calc(var(--radius) - 4px);
 
   --color-source-bg: hsl(var(--source-bg));
-  
-  /* Scheduled Visits */
-  --color-scheduled-bg: #F7F9FB;
-  --color-search-border: #00000033;
-  --color-tab-rail: #E2E8F0;
-  --color-lead-id: #434653;
 }
-
 
 @layer base {
   :root {

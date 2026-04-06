@@ -20,18 +20,10 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
   const { getProjectLabel, getRmLabel } = useMasterDataLookup();
   const [reassignmentReason, setReassignmentReason] = useState("");
 
-  if (!lead) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-zinc-200">
-        <p className="text-zinc-500 font-medium">Loading lead information...</p>
-      </div>
-    );
-  }
-
   const fallback = (val: any) => val || <span className="text-zinc-400 italic">Not provided</span>;
 
   // Map initials for RM
-  const rmLabel = getRmLabel(lead?.assigned_to_rm);
+  const rmLabel = getRmLabel(lead.assigned_to_rm);
   const initials = rmLabel !== '--' ? rmLabel.split(' ').map(n => n[0]).join('') : 'UN';
 
   return (

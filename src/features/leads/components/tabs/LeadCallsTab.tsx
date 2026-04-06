@@ -158,133 +158,10 @@ const CallAudioPlayer = ({ url, durationSec, fileName }: { url: string; duration
   );
 };
 
-const ParsedCallSummary = ({ summary }: { summary: string }) => {
-  try {
-    const data = JSON.parse(summary);
-    
-    // Check if it's the expected object structure
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
-      return <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-3xl">{summary}</p>;
-    }
-
-    const { overview, keyPoints, sentiment, callOutcome, allQuestions, speakers } = data;
-
-    return (
-      <div className="space-y-6 pt-2">
-        {/* Overview */}
-        {overview && (
-          <div className="space-y-2">
-            <h5 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Overview</h5>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
-              {overview}
-            </p>
-          </div>
-        )}
-
-        {/* Key Points */}
-        {keyPoints && keyPoints.length > 0 && (
-          <div className="space-y-3">
-            <h5 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Key Discussion Points</h5>
-            <div className="grid gap-2">
-              {keyPoints.map((point: string, idx: number) => (
-                <div key={idx} className="flex gap-3 items-start group">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0 group-hover:scale-125 transition-transform" />
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
-                    {point}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action/Outcome Bar */}
-        <div className="flex flex-wrap gap-4 items-center">
-            {callOutcome && (
-                <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest leading-none">Outcome</span>
-                    <span className={cn(
-                        "inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider",
-                        callOutcome.toLowerCase().includes('follow-up') 
-                            ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
-                            : "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20"
-                    )}>
-                        {callOutcome.replace(/-/g, ' ')}
-                    </span>
-                </div>
-            )}
-
-            {sentiment && (
-                <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest leading-none">Sentiment</span>
-                    <div className="flex items-center gap-2">
-                        <span className={cn(
-                            "inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider",
-                            sentiment.overall === 'positive' ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
-                        )}>
-                            {sentiment.overall} ({sentiment.score}/10)
-                        </span>
-                        <p className="text-[11px] font-medium text-zinc-500 italic">
-                            — {sentiment.reason}
-                        </p>
-                    </div>
-                </div>
-            )}
-        </div>
-
-        {/* Speakers Highlights */}
-        {speakers && speakers.length > 0 && (
-            <div className="space-y-4 pt-2">
-                <h5 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Participants & Highlights</h5>
-                <div className="grid md:grid-cols-2 gap-4">
-                    {speakers.map((s: any, idx: number) => (
-                        <div key={idx} className="p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 flex gap-3 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-600 shrink-0 uppercase">
-                                {s.initials || s.name[0]}
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{s.name}</span>
-                                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest border border-zinc-200 rounded px-1.5 py-0.5">
-                                        {s.role}
-                                    </span>
-                                </div>
-                                <p className="text-[11px] text-zinc-500 leading-relaxed italic">
-                                    "{s.highlight}"
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        )}
-
-        {/* All Questions */}
-        {allQuestions && allQuestions.length > 0 && (
-          <div className="space-y-3 pt-2">
-            <h5 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Captured Questions</h5>
-            <div className="flex flex-wrap gap-2">
-                {allQuestions.map((q: string, idx: number) => (
-                    <div key={idx} className="px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 hover:border-indigo-200 transition-colors cursor-default">
-                        {q}
-                    </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-      </div>
-    );
-  } catch (e) {
-    // If parsing fails, just return plain text
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-3xl">{summary}</p>;
-  }
-};
-
 export const LeadCallsTab = ({ calls }: LeadCallsTabProps) => {
   if (!calls || calls.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] border border-zinc-100 rounded-2xl bg-white/50 backdrop-blur-sm dark:bg-zinc-950 dark:border-zinc-800">
+      <div className="flex flex-col items-center justify-center min-h-[300px] border border-zinc-100 rounded-2xl bg-white/50 backdrop-blur-sm">
         <p className="text-sm text-zinc-400 font-medium italic">No call history available for this lead.</p>
       </div>
     );
@@ -303,7 +180,7 @@ export const LeadCallsTab = ({ calls }: LeadCallsTabProps) => {
             {/* Header Section */}
             <div className="flex justify-between items-start p-6 pb-4">
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
                   <ArrowUpRight className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div className="space-y-0.5">
@@ -331,18 +208,16 @@ export const LeadCallsTab = ({ calls }: LeadCallsTabProps) => {
 
               {/* AI Summary Section */}
               {c.call_summary && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1 px-1.5 rounded-md bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800">
-                        <Sparkles className="h-3.5 w-3.5 text-indigo-500 fill-indigo-500/20" />
-                    </div>
-                    <span className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-zinc-900 dark:text-zinc-100 leading-none">
-                      AI Call Insights
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-zinc-400">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest leading-none">
+                      AI Call Summary
                     </span>
                   </div>
-                  <div className="pl-0">
-                    <ParsedCallSummary summary={c.call_summary} />
-                  </div>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-3xl">
+                    {c.call_summary}
+                  </p>
                 </div>
               )}
             </div>

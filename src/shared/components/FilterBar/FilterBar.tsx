@@ -11,20 +11,26 @@ interface SearchInputProps {
 
 export const SearchInput = ({ value, onChange, placeholder = 'Search...' }: SearchInputProps) => {
   return (
-    <div className="relative">
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-      <Input
+    <div className="relative w-full max-w-full">
+      
+      {/* Input */}
+      <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="pl-10 pr-8 w-full h-11 rounded-full bg-white dark:bg-zinc-800 border border-border/50 focus:border-border transition-colors"
+        className="w-full pl-12 pr-10 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm"
       />
+
+      {/* Search Icon */}
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+
+      {/* Clear Button */}
       {value && (
         <button
           onClick={() => onChange('')}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

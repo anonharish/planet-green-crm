@@ -145,14 +145,6 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Leads'],
     }),
-    getVisitsByUserId: builder.query<any[], { user_id: number; offset: number; date?: string; visit_status?: number; start_date?: string; end_date?: string }>({
-      query: (params) => ({
-        url: '/leadSiteVisits/getVisitsByUserId',
-        method: 'POST',
-        body: params,
-      }),
-      providesTags: ['Leads'],
-    }),
   }),
 });
 
@@ -169,5 +161,4 @@ export const {
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
   useAddLeadActivityMutation,
-  useGetVisitsByUserIdQuery,
 } = leadsApi;
