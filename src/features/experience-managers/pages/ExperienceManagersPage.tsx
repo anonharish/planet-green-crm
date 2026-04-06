@@ -9,7 +9,6 @@ export const ExperienceManagersPage = () => {
       title="Experience Managers"
       description="Manage and monitor your on-site experience team."
       permissionPrefix="agent"
-      searchPlaceholder="Search EM's"
     />
   );
 };
