@@ -12,6 +12,13 @@ import { Calendar } from '../../../components/ui/calendar';
 import { ScheduleVisitDialog } from '../../leads/components/ScheduleVisitDialog';
 import { useGetAllUsersByRoleIdQuery } from '../../users/api/usersApi';
 import { cn } from '../../../utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 
 export const ScheduledVisitsPage = () => {
   const { userId: paramUserId } = useParams();
@@ -25,17 +32,35 @@ export const ScheduledVisitsPage = () => {
   const [filterEndDate, setFilterEndDate] = useState<Date | undefined>(new Date());
   const [draftStartDate, setDraftStartDate] = useState<Date | undefined>(new Date());
   const [draftEndDate, setDraftEndDate] = useState<Date | undefined>(new Date());
+
+  // Fetch Master Data and Users first
+  const { data: masterData } = useGetAllMasterDataQuery();
+  const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
+  const { data: ems = [] } = useGetAllUsersByRoleIdQuery({ role_id: 4, offset: 0 });
+  const siteVisitStatuses = masterData?.site_visit_status || [];
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'SCHDLD' | 'COMPLETED'>('SCHDLD');
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [selectedEmId, setSelectedEmId] = useState<string | undefined>(userId?.toString());
+
+  // Update selectedEmId when userId changes (e.g. on mount or param change)
+  React.useEffect(() => {
+    if (userId) {
+      setSelectedEmId(userId.toString());
+    }
+  }, [userId]);
+
+  // Default to first user in ems list if current selection is not valid or empty
+  React.useEffect(() => {
+    if (ems.length > 0 && (!selectedEmId || !ems.find((e: any) => e.id.toString() === selectedEmId))) {
+      setSelectedEmId(ems[0].id.toString());
+    }
+  }, [ems, selectedEmId]);
   
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch Master Data to find Status IDs dynamically
-  const { data: masterData } = useGetAllMasterDataQuery();
-  
   const scheduledStatus = masterData?.site_visit_status?.find((s: any) => s.code === 'SCHDLD');
   const scheduledStatusId = scheduledStatus?.id;
   
@@ -51,7 +76,7 @@ export const ScheduledVisitsPage = () => {
 
   const { data: visitsData, isLoading } = useGetVisitsByUserIdQuery(
     { 
-      user_id: userId as number, 
+      user_id: selectedEmId ? parseInt(selectedEmId, 10) : (userId as number), 
       offset: 0, 
       date: activeTab === 'SCHDLD' 
         ? format(date, 'yyyy-MM-dd') 
@@ -60,7 +85,7 @@ export const ScheduledVisitsPage = () => {
       end_date: activeTab === 'COMPLETED' && !isTodayFilter && filterEndDate ? format(filterEndDate, 'yyyy-MM-dd') : undefined,
       visit_status: activeStatusId 
     },
-    { skip: !userId || !activeStatusId }
+    { skip: (!selectedEmId && !userId) || !activeStatusId }
   );
 
   const visits = visitsData || [];
@@ -85,10 +110,7 @@ export const ScheduledVisitsPage = () => {
     return filteredVisits.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredVisits, currentPage]);
 
-  // Necessary data for the ScheduleVisitDialog reuse
-  const siteVisitStatuses = masterData?.site_visit_status || [];
-  const { data: rms = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
-
+  console.log(ems,"insideems");
   return (
     <div className="flex flex-col h-full bg-transparent pt-8 pb-20 px-4 space-y-8">
       {/* Header Section */}
@@ -158,6 +180,22 @@ export const ScheduledVisitsPage = () => {
               </PopoverContent>
             </Popover>
           )}
+
+          {/* EM Selection Dropdown */}
+          <div className="flex items-center gap-2 min-w-[200px]">
+            <Select value={selectedEmId} onValueChange={setSelectedEmId}>
+              <SelectTrigger className="h-11 rounded-[16px] px-4 border-search-border bg-white shadow-sm font-bold text-primary">
+                <SelectValue placeholder="Select Experience Manager" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-zinc-200 bg-white text-black">
+                {ems.map((em: any) => (
+                  <SelectItem key={em.id} value={em.id.toString()} className="font-medium text-black cursor-pointer">
+                    {em.first_name} {em.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

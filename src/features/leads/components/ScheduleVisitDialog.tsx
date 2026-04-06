@@ -199,9 +199,9 @@ export const ScheduleVisitDialog = ({
                     <SelectTrigger>
                       <SelectValue placeholder="Search / Select a lead" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-black">
                       {allLeads.map((l: Lead) => (
-                        <SelectItem key={l.uuid} value={l.uuid}>
+                        <SelectItem key={l.uuid} value={l.uuid} className="text-black">
                           {l.first_name} {l.last_name} ({l.lead_id})
                         </SelectItem>
                       ))}
@@ -306,9 +306,9 @@ export const ScheduleVisitDialog = ({
                   >
                       <SelectValue placeholder="Select RM" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-black">
                       {rms.map((r) => (
-                        <SelectItem key={r.id} value={String(r.id)}>
+                        <SelectItem key={r.id} value={String(r.id)} className="text-black">
                           {r.first_name} {r.last_name}
                         </SelectItem>
                       ))}
@@ -340,14 +340,14 @@ export const ScheduleVisitDialog = ({
                       placeholder={!watchRm ? "Select RM first" : "Select EM"}
                     />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white text-black">
                     {isLoadingReportees && (
                       <div className="flex items-center justify-center p-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
                     )}
                     {reportees.map((e) => (
-                      <SelectItem key={e.id} value={String(e.id)}>
+                      <SelectItem key={e.id} value={String(e.id)} className="text-black">
                         {e.first_name} {e.last_name}
                       </SelectItem>
                     ))}

@@ -427,9 +427,9 @@ export const LeadTable = ({
             <SelectTrigger className="h-8 text-[11px] font-bold uppercase w-36 bg-source-bg text-primary border-2 border-primary/40 rounded-full focus:ring-0 px-4 hover:border-primary transition-colors">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white text-black">
               {masterData?.lead_statuses.map(s => (
-                <SelectItem key={s.id} value={String(s.id)} className="text-[10px] uppercase font-bold">
+                <SelectItem key={s.id} value={String(s.id)} className="text-[10px] uppercase font-bold text-black cursor-pointer">
                   {s.description}
                 </SelectItem>
               ))}

@@ -145,7 +145,7 @@ export const UserLeadsDialog = ({
             </div>
           ) : leads.length === 0 ? (
             <div className="text-center py-32 px-10">
-              <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-zinc-200 dark:border-zinc-800 transition-all">
+              <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-900/50 rounded-4xl flex items-center justify-center mx-auto mb-6 border border-zinc-200 dark:border-zinc-800 transition-all">
                 <Layout className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
               </div>
               <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">

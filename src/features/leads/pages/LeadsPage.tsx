@@ -616,10 +616,10 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select RM" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All RMs</SelectItem>
+                      <SelectContent className="bg-white text-black">
+                        <SelectItem value="all" className="text-black cursor-pointer">All RMs</SelectItem>
                         {rms.map((r) => (
-                          <SelectItem key={r.id} value={String(r.id)}>{r.first_name} {r.last_name}</SelectItem>
+                          <SelectItem key={r.id} value={String(r.id)} className="text-black cursor-pointer">{r.first_name} {r.last_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -636,10 +636,10 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select EM" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All EMs</SelectItem>
+                      <SelectContent className="bg-white text-black">
+                        <SelectItem value="all" className="text-black cursor-pointer">All EMs</SelectItem>
                         {(isAdmin ? ems : emsReportees).map((e) => (
-                          <SelectItem key={e.id} value={String(e.id)}>{e.first_name} {e.last_name}</SelectItem>
+                          <SelectItem key={e.id} value={String(e.id)} className="text-black cursor-pointer">{e.first_name} {e.last_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

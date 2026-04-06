@@ -294,9 +294,9 @@ export const LeadForm = ({
                           <SelectValue placeholder="Select Source" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white text-black">
                         {masterData?.sources.map((source) => (
-                          <SelectItem key={source.id} value={String(source.id)}>
+                          <SelectItem key={source.id} value={String(source.id)} className="text-black cursor-pointer">
                             {source.description}
                           </SelectItem>
                         ))}
@@ -322,9 +322,9 @@ export const LeadForm = ({
                           <SelectValue placeholder="Select Project" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white text-black">
                         {masterData?.projects.map((project) => (
-                          <SelectItem key={project.id} value={String(project.id)}>
+                          <SelectItem key={project.id} value={String(project.id)} className="text-black cursor-pointer">
                             {project.description}
                           </SelectItem>
                         ))}
@@ -355,9 +355,9 @@ export const LeadForm = ({
                           <SelectValue placeholder="Select Employee" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white text-black">
                         {allUsers.map((user) => (
-                          <SelectItem key={user.id} value={String(user.id)}>
+                          <SelectItem key={user.id} value={String(user.id)} className="text-black cursor-pointer">
                             {user.first_name} {user.last_name}
                           </SelectItem>
                         ))}
@@ -386,10 +386,10 @@ export const LeadForm = ({
                             <SelectValue placeholder="Select RM" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black">
                           <SelectItem value="none" className="text-zinc-500 italic">Unassigned</SelectItem>
                           {managers.map((manager: any) => (
-                            <SelectItem key={manager.id} value={String(manager.id)}>
+                            <SelectItem key={manager.id} value={String(manager.id)} className="text-black cursor-pointer">
                               {manager.first_name} {manager.last_name}
                             </SelectItem>
                           ))}
@@ -416,10 +416,10 @@ export const LeadForm = ({
                             <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-white text-black">
                           <SelectItem value="none" className="text-zinc-500 italic">Unassigned</SelectItem>
                           {reportees.map((em: any) => (
-                            <SelectItem key={em.id} value={String(em.id)}>
+                            <SelectItem key={em.id} value={String(em.id)} className="text-black cursor-pointer">
                               {em.first_name} {em.last_name} 
                             </SelectItem>
                           ))}
@@ -515,9 +515,9 @@ export const LeadForm = ({
                           <SelectValue placeholder="Select State" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white text-black">
                         {INDIAN_STATES.map((state) => (
-                          <SelectItem key={state} value={state}>
+                          <SelectItem key={state} value={state} className="text-black cursor-pointer">
                             {state}
                           </SelectItem>
                         ))}
