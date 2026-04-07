@@ -54,7 +54,6 @@ import { JunkLeadsPage } from './JunkLeadsPage';
 import { LeadJunkReviewPage } from './LeadJunkReviewPage';
 import { ReassignRMModal } from '../components/ReassignRMModal';
 import type { JunkLead } from '../data/junkLeadsData';
-import { junkLeads as junkLeadsMock } from '../data/junkLeadsData';
 
 export const LeadsPage = () => {
   const dispatch = useAppDispatch();
@@ -518,13 +517,15 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       {/* Search + Tabs Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="w-full sm:w-1/2">
-          <SearchInput
-            value={search}
-            onChange={(v) =>
-              dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
-            }
-            placeholder="Search leads by name"
-          />
+          {activeView === 'leads' && (
+            <SearchInput
+              value={search}
+              onChange={(v) =>
+                dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
+              }
+              placeholder="Search leads by name"
+            />
+          )}
         </div>
 
         {showTabs && (
@@ -691,13 +692,6 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
       {activeView === 'junk' && (
         <JunkLeadsPage 
-          leads={junkLeadsMock as any}
-          isLoading={false}
-          page={1}
-          limit={10}
-          total={junkLeadsMock.length}
-          onPageChange={() => {}}
-          onLimitChange={() => {}}
           onVerify={(lead) => {
             setSelectedJunkLead(lead as unknown as JunkLead);
             setActiveView('junk-review');
