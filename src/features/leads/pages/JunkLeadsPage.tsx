@@ -1,19 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
 import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
 import { Button } from '../../../components/ui/button';
 import type { Lead } from '../types';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 import { Link } from 'react-router-dom';
+import { useGetLeadsQuery } from '../api/leadsApi';
+import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
+import { SearchInput } from '../../../shared/components/FilterBar/FilterBar';
+import { useDebounce } from '../../../shared/hooks/useDebounce';
+import { Loader2 } from 'lucide-react';
 
 interface JunkLeadsPageProps {
-  leads: Lead[];
-  isLoading: boolean;
-  page: number;
-  limit: number;
-  total: number;
-  onPageChange: (page: number) => void;
-  onLimitChange: (limit: number) => void;
   onVerify: (lead: Lead) => void;
 }
 
@@ -27,21 +25,41 @@ export const InitialsAvatar = ({ firstName, lastName }: { firstName?: string; la
 };
 
 export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({ 
-  leads, 
-  isLoading, 
-  page, 
-  limit, 
-  total, 
-  onPageChange, 
-  onLimitChange, 
   onVerify 
 }) => {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
+  const { data: masterData } = useGetAllMasterDataQuery();
+  const junkStatus = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE');
+  
+  const { 
+    data: leads = [], 
+    isLoading, 
+    isFetching 
+  } = useGetLeadsQuery({
+    offset: (page - 1) * limit,
+    search_text: debouncedSearch || undefined,
+    status: junkStatus ? [junkStatus.id] : undefined,
+  }, { 
+    skip: !junkStatus 
+  });
+
   const { 
     getStatusLabel, 
     getProjectLabel, 
     getRmLabel, 
     getSourceLabel 
   } = useMasterDataLookup();
+
+  // For server-side pagination with partial data, assume more if 200 chunk is full
+  // But wait, the DataTable expects a total. If we don't have a real total from API, 
+  // we might need to adjust. GetLeadsResponse is just an array.
+  // The backend might not return total. Let's see LeadsPage.tsx's total calculation.
+  // totalLeads = leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
+  const total = leads.length < limit ? (page - 1) * limit + leads.length : (page - 1) * limit + limit + 1;
 
   const fallback = (value: React.ReactNode) => value ?? '--';
 
@@ -165,10 +183,21 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
       </div>
 
       <div className="bg-white dark:bg-zinc-950 rounded-4xl border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
-        <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/30 dark:bg-zinc-900/10">
+        <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-50/30 dark:bg-zinc-900/10">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Active Junk Leads Queue</h2>
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            {(isLoading || isFetching) && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
+          </div>
+          <div className="w-full sm:w-64">
+            <SearchInput
+              value={search}
+              onChange={(v) => {
+                setSearch(v);
+                setPage(1);
+              }}
+              placeholder="Search by name..."
+            />
           </div>
         </div>
         <div className="p-4">
@@ -179,8 +208,11 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
             page={page}
             limit={limit}
             total={total}
-            onPageChange={onPageChange}
-            onLimitChange={onLimitChange}
+            onPageChange={setPage}
+            onLimitChange={(v) => {
+              setLimit(v);
+              setPage(1);
+            }}
             rowKey={(l) => l.uuid}
           />
         </div>
