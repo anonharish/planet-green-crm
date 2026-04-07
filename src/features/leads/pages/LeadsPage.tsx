@@ -11,6 +11,7 @@ import { BulkActionsBar } from "../components/BulkActionsBar";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { LeadActivityDialog } from "../components/LeadActivityDialog";
 import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
+import { JunkReasonDialog } from "../components/JunkReasonDialog";
 import { Loader2, UserPlus, SlidersHorizontal } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
@@ -123,6 +124,8 @@ export const LeadsPage = () => {
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [activityLead, setActivityLead] = useState<Lead | null>(null);
+  const [isJunkDialogOpen, setIsJunkDialogOpen] = useState(false);
+  const [pendingJunkUpdate, setPendingJunkUpdate] = useState<{ lead: Lead; statusId: number } | null>(null);
 
   // Junk Leads Flow State
   const [activeView, setActiveView] = useState<string>('leads');
@@ -369,6 +372,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
   };
 
   const handleUpdateStatus = React.useCallback(async (lead: Lead, newStatusId: number) => {
+    const junkStatus = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE');
+    if (junkStatus && newStatusId === junkStatus.id) {
+      setPendingJunkUpdate({ lead, statusId: newStatusId });
+      setIsJunkDialogOpen(true);
+      return;
+    }
+
     try {
       const payload: UpdateLeadRequest = {
         uuid: lead.uuid,
@@ -396,7 +406,42 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
-  }, [updateLead]);
+  }, [updateLead, masterData]);
+
+  const handleJunkReasonConfirm = async (reason: string) => {
+    if (!pendingJunkUpdate) return;
+    const { lead, statusId } = pendingJunkUpdate;
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: lead.assigned_to_rm || null,
+        assigned_to_em: lead.assigned_to_em || null,
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: statusId,
+        junk_reason: reason,
+      };
+      
+      await updateLead(payload).unwrap();
+      toast.success('Lead marked as junk for review!');
+      setIsJunkDialogOpen(false);
+      setPendingJunkUpdate(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to update status');
+    }
+  };
 
   const handleAssignRm = React.useCallback(async (lead: Lead, rmId: number | null) => {
     try {
@@ -717,6 +762,16 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           />
         )}
       </AppDrawer>
+
+      <JunkReasonDialog
+        open={isJunkDialogOpen}
+        onClose={() => {
+          setIsJunkDialogOpen(false);
+          setPendingJunkUpdate(null);
+        }}
+        onConfirm={handleJunkReasonConfirm}
+        isLoading={isUpdating}
+      />
 
       <ConfirmDialog
         open={showRandomConfirm}
