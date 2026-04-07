@@ -10,8 +10,8 @@ import { LeadTable } from "../components/LeadTable";
 import { BulkActionsBar } from "../components/BulkActionsBar";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { LeadActivityDialog } from "../components/LeadActivityDialog";
-import { FilterPopover } from "../../../shared/components/FilterPopover/FilterPopover";
-import { Loader2, UserPlus } from "lucide-react";
+import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
+import { Loader2, UserPlus, SlidersHorizontal } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import {
@@ -118,6 +118,7 @@ export const LeadsPage = () => {
   };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [showRandomConfirm, setShowRandomConfirm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
@@ -582,71 +583,43 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
           </div>
           <div className="flex items-center gap-3">
-            <FilterPopover
-              onReset={handleResetFilters}
-              activeFilterCount={statusIds.length + projectIds.length + rmIds.length + emIds.length}
-              align="end"
+            <Button 
+              variant="outline" 
+              onClick={() => setIsFilterDialogOpen(true)}
+              className="gap-3 relative h-11 rounded-[16px] px-6 border-zinc-200 dark:border-zinc-800 text-base font-bold text-primary bg-white shadow-sm hover:bg-zinc-50 transition-all ring-0 focus-visible:ring-0"
             >
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Status</p>
-                  <MultiSelect
-                    options={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
-                    selected={statusIds}
-                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { statusIds: v, page: 1 } }))}
-                    placeholder="Filter Status"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">Project</p>
-                  <MultiSelect
-                    options={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
-                    selected={projectIds}
-                    onChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { projectIds: v, page: 1 } }))}
-                    placeholder="Filter Project"
-                  />
-                </div>
-                {isAdmin && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Relationship Manager</p>
-                    <Select
-                      value={rmIds[0] || "all"}
-                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { rmIds: v === "all" ? [] : [v], emIds: [], page: 1 } }))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select RM" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white text-black">
-                        <SelectItem value="all" className="text-black cursor-pointer">All RMs</SelectItem>
-                        {rms.map((r) => (
-                          <SelectItem key={r.id} value={String(r.id)} className="text-black cursor-pointer">{r.first_name} {r.last_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {(isAdmin || isRM) && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-1.5">Experience Manager</p>
-                    <Select
-                      value={emIds[0] || "all"}
-                      onValueChange={(v) => dispatch(updateTabFilters({ tabKey, updates: { emIds: v === "all" ? [] : [v], page: 1 } }))}
-                      disabled={isAdmin && rmIds.length === 0}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select EM" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white text-black">
-                        <SelectItem value="all" className="text-black cursor-pointer">All EMs</SelectItem>
-                        {(isAdmin ? ems : emsReportees).map((e) => (
-                          <SelectItem key={e.id} value={String(e.id)} className="text-black cursor-pointer">{e.first_name} {e.last_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </FilterPopover>
+              <SlidersHorizontal className="h-4 w-4" />
+              Filter
+              {(statusIds.length + projectIds.length + rmIds.length + emIds.length) > 0 && (
+                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 py-0.5 text-[10px] font-bold bg-primary text-white rounded-full">
+                  {statusIds.length + projectIds.length + rmIds.length + emIds.length}
+                </span>
+              )}
+            </Button>
+
+            <FilterDialog
+              open={isFilterDialogOpen}
+              onClose={() => setIsFilterDialogOpen(false)}
+              onApply={(filters) => {
+                dispatch(updateTabFilters({ 
+                  tabKey, 
+                  updates: { 
+                    ...filters,
+                    page: 1 
+                  } 
+                }));
+              }}
+              onReset={handleResetFilters}
+              statusIds={statusIds}
+              projectIds={projectIds}
+              rmIds={rmIds}
+              emIds={emIds}
+              statusOptions={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
+              projectOptions={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
+              rmOptions={rms}
+              showRmFilter={isAdmin}
+              showEmFilter={isAdmin || isRM}
+            />
 
               {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
                 <Button
