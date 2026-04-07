@@ -139,6 +139,58 @@ export const LeadsPage = () => {
     offset: 0,
   });
 
+  const statusOptions = React.useMemo(() => {
+    const options = masterData?.lead_statuses?.map((s: any) => ({
+      value: String(s.id),
+      label: s.description,
+    })) || [];
+
+    if (activeView === 'leads') {
+      return options.filter((o: any) => {
+        const s = masterData?.lead_statuses?.find((st: any) => String(st.id) === o.value);
+        return s?.code !== 'JUNKPE' && s?.code !== 'JUNKCM';
+      });
+    }
+    return options;
+  }, [masterData, activeView]);
+
+  const projectOptions = React.useMemo(() =>
+    masterData?.projects?.map((p) => ({
+      value: String(p.id),
+      label: p.description,
+    })) || [], [masterData]);
+
+  const nonJunkStatusIds = React.useMemo(() => {
+    if (!masterData?.lead_statuses) return [];
+    return masterData.lead_statuses
+      .filter((s: any) => s.code !== 'JUNKPE' && s.code !== 'JUNKCM')
+      .map((s: any) => s.id);
+  }, [masterData]);
+
+  const queryStatusIds = React.useMemo(() => 
+    debouncedFilters.statusIds.length > 0
+      ? debouncedFilters.statusIds.map(Number)
+      : (activeView === 'leads' ? nonJunkStatusIds : undefined)
+  , [debouncedFilters.statusIds, activeView, nonJunkStatusIds]);
+
+  const queryProjectIds = React.useMemo(() =>
+    debouncedFilters.projectIds.length > 0
+      ? debouncedFilters.projectIds.map(Number)
+      : undefined
+  , [debouncedFilters.projectIds]);
+
+  const queryRmIds = React.useMemo(() =>
+    debouncedFilters.rmIds.length > 0
+      ? debouncedFilters.rmIds.map(Number)
+      : undefined
+  , [debouncedFilters.rmIds]);
+
+  const queryEmIds = React.useMemo(() =>
+    debouncedFilters.emIds.length > 0
+      ? debouncedFilters.emIds.map(Number)
+      : undefined
+  , [debouncedFilters.emIds]);
+
   // Admin view uses getLeads
   const {
     data: adminLeads = [],
@@ -149,22 +201,10 @@ export const LeadsPage = () => {
     offset: serverOffset,
     is_rm_assigned: isAdmin ? (activeTab === 1 ? 1 : 0) : undefined,
     search_text: debouncedSearch || undefined,
-    status:
-      debouncedFilters.statusIds.length > 0
-        ? debouncedFilters.statusIds.map(Number)
-        : undefined,
-    project:
-      debouncedFilters.projectIds.length > 0
-        ? debouncedFilters.projectIds.map(Number)
-        : undefined,
-    rm:
-      debouncedFilters.rmIds.length > 0
-        ? debouncedFilters.rmIds.map(Number)
-        : undefined,
-    em:
-      debouncedFilters.emIds.length > 0
-        ? debouncedFilters.emIds.map(Number)
-        : undefined,
+    status: queryStatusIds,
+    project: queryProjectIds,
+    rm: queryRmIds,
+    em: queryEmIds,
   }, { skip: !isAdmin });
 
   // RM view uses getLeadsByRmId
@@ -198,7 +238,18 @@ export const LeadsPage = () => {
     if (isEM) refetchEM();
   }, [isAdmin, isRM, isEM, refetchAdmin, refetchRM, refetchEM]);
 
-  const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
+  const leads = React.useMemo(() => {
+    let list = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
+    // Exclude Junk and Junk Review statuses from the main Leads view
+    if (activeView === 'leads') {
+      return list.filter(l => {
+        const s = masterData?.lead_statuses?.find(st => st.id === l.lead_status_id);
+        return s?.code !== 'JUNKPE' && s?.code !== 'JUNKCM';
+      });
+    }
+    return list;
+  }, [isAdmin, adminLeads, isRM, rmLeads, isEM, emLeads, activeView, masterData]);
+
   const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
   const isFetching = isAdmin ? isAdminFetching : (isRM ? isRMFetching : isEMFetching);
 
@@ -655,13 +706,16 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                   } 
                 }));
               }}
-              onReset={handleResetFilters}
-              statusIds={statusIds}
+              onReset={() => {
+                dispatch(resetTabFilters(tabKey));
+                setIsFilterDialogOpen(false);
+              }}
+              statusIds={activeView === 'leads' ? nonJunkStatusIds.map(String) : statusIds}
+              statusOptions={statusOptions}
               projectIds={projectIds}
+              projectOptions={projectOptions}
               rmIds={rmIds}
               emIds={emIds}
-              statusOptions={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
-              projectOptions={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
               rmOptions={rms}
               showRmFilter={isAdmin}
               showEmFilter={isAdmin || isRM}
