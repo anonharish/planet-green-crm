@@ -199,7 +199,7 @@ const isFetching = isRM ? rmFetching : emFetching;
               onLimitChange={() => {}}
               rowKey={(l) => l.uuid}
               variant="embed"
-              entityName="Records"
+              // entityName="Records"
             />
           )}
         </div>
