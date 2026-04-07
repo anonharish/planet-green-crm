@@ -199,7 +199,16 @@ export const UsersFeaturePage = ({
       }
       setIsDrawerOpen(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Operation failed');
+      let message =
+        err?.data?.error ||
+        err?.data?.message ||
+        "Something went wrong";
+
+      if (message.includes("Duplicate entry") && message.includes("phone_number")) {
+        message = "Phone number already exists";
+      }
+
+      toast.error(message);
     }
   }
 

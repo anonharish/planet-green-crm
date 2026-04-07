@@ -5,7 +5,10 @@ import {
   DialogTitle,
   DialogClose,
 } from '../../../components/ui/dialog';
-import { useGetLeadsByEmIdQuery } from '../../leads/api/leadsApi';
+import { 
+  useGetLeadsByEmIdQuery, 
+  useGetLeadsByRmIdQuery 
+} from '../../leads/api/leadsApi';
 import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
 import { Loader2, Layout, X } from 'lucide-react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
@@ -40,10 +43,39 @@ export const UserLeadsDialog = ({
   const { getStatusLabel, getProjectLabel, getSourceLabel, getRmLabel, isLoading: isLookupLookup } = useMasterDataLookup();
 
   // Fetch leads for this EM
-  const { data: leads = [], isLoading, isFetching } = useGetLeadsByEmIdQuery(
-    { assigned_to_em: user?.id || 0, offset: (page - 1) * limit },
-    { skip: !open || !user?.id }
-  );
+const isRM = user?.role_id === 3;
+
+// RM API
+const {
+  data: rmLeads = [],
+  isLoading: rmLoading,
+  isFetching: rmFetching,
+} = useGetLeadsByRmIdQuery(
+  {
+    assigned_to_rm: user?.id || 0,
+    offset: (page - 1) * limit,
+    is_em_assigned: 1 // ✅ REQUIRED
+  },
+  { skip: !open || !user?.id || !isRM }
+);
+
+// EM API
+const {
+  data: emLeads = [],
+  isLoading: emLoading,
+  isFetching: emFetching,
+} = useGetLeadsByEmIdQuery(
+  {
+    assigned_to_em: user?.id || 0,
+    offset: (page - 1) * limit,
+  },
+  { skip: !open || !user?.id || isRM }
+);
+
+
+const leads = isRM ? rmLeads : emLeads;
+const isLoading = isRM ? rmLoading : emLoading;
+const isFetching = isRM ? rmFetching : emFetching;
 
   const columns: ColumnDef<Lead>[] = [
     {
@@ -167,6 +199,7 @@ export const UserLeadsDialog = ({
               onLimitChange={() => {}}
               rowKey={(l) => l.uuid}
               variant="embed"
+              entityName="Records"
             />
           )}
         </div>
