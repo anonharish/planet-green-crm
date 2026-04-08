@@ -24,8 +24,8 @@ export const InitialsAvatar = ({ firstName, lastName }: { firstName?: string; la
   );
 };
 
-export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({ 
-  onVerify 
+export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
+  onVerify
 }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -34,24 +34,24 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
 
   const { data: masterData } = useGetAllMasterDataQuery();
   const junkStatus = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE');
-  
-  const { 
-    data: leads = [], 
-    isLoading, 
-    isFetching 
+
+  const {
+    data: leads = [],
+    isLoading,
+    isFetching
   } = useGetLeadsQuery({
     offset: (page - 1) * limit,
     search_text: debouncedSearch || undefined,
     status: junkStatus ? [junkStatus.id] : undefined,
-  }, { 
-    skip: !junkStatus 
+  }, {
+    skip: !junkStatus
   });
 
-  const { 
-    getStatusLabel, 
-    getProjectLabel, 
-    getRmLabel, 
-    getSourceLabel 
+  const {
+    getStatusLabel,
+    getProjectLabel,
+    getRmLabel,
+    getSourceLabel
   } = useMasterDataLookup();
 
   // For server-side pagination with partial data, assume more if 200 chunk is full
@@ -69,8 +69,8 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
       header: 'LEAD ID',
       width: '110px',
       render: (l: Lead) => (
-        <Link 
-          to={`/leads/${l.uuid}`} 
+        <Link
+          to={`/leads/${l.uuid}`}
           className="text-secondary-foreground font-semibold hover:text-primary transition-colors text-xs"
         >
           #{fallback(l.lead_id)}
@@ -147,25 +147,32 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
       key: 'junk_reason',
       header: 'JUNK REASON',
       width: '200px',
-      render: (l: Lead) => (
-        <div className="max-w-[180px] truncate">
-          <span 
-            className="text-zinc-600 dark:text-zinc-400 font-medium text-[11px] tracking-tight" 
-            title={l.junk_reason || 'No reason provided'}
-          >
-            {l.junk_reason || '--'}
-          </span>
-        </div>
-      ),
+      render: (l: Lead) => {
+        const text = l.junk_reason || '--';
+
+        const shortText =
+          text.length > 10 ? text.slice(0, 10) + '...' : text;
+
+        return (
+          <div className="max-w-[120px]">
+            <span
+              title={text}
+              className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium cursor-pointer"
+            >
+              {shortText}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: 'actions',
       header: 'ACTIONS',
       width: '120px',
       render: (l: Lead) => (
-        <Button 
-          variant="default" 
-          size="sm" 
+        <Button
+          variant="default"
+          size="sm"
           className="bg-[#0f3d6b] hover:bg-[#0c3156] text-white font-extrabold h-8 px-4 rounded-lg shadow-sm transition-all active:scale-95 text-[10px] uppercase tracking-wider"
           onClick={() => onVerify(l)}
         >

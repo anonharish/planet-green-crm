@@ -19,6 +19,7 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
 }) => {
   const { getProjectLabel, getRmLabel } = useMasterDataLookup();
   const [reassignmentReason, setReassignmentReason] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   if (!lead) {
     return (
@@ -37,9 +38,9 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 pb-12 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between">
-        <Button 
-          variant="ghost" 
-          onClick={onBack} 
+        <Button
+          variant="ghost"
+          onClick={onBack}
           className="gap-2 text-zinc-500 hover:text-[#0f3d6b] transition-colors p-0 hover:bg-transparent"
         >
           <ChevronLeft size={20} />
@@ -56,7 +57,7 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
                 <span className="px-3 py-1 bg-rose-50 text-rose-600 text-[9px] font-black uppercase rounded-full tracking-widest border border-rose-100 dark:bg-rose-950 dark:border-rose-900">JUNKED</span>
                 <span className="text-zinc-400 font-bold text-xs tracking-tight">Lead ID: #{lead.lead_id}</span>
               </div>
-              
+
               <div className="space-y-1">
                 <h2 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
                   {lead.first_name} {lead.last_name}
@@ -85,12 +86,23 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
               </div>
               <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Junk Reason Description</h3>
             </div>
-            
+
             <div className="pl-1 space-y-5">
-              <blockquote className="text-zinc-600 dark:text-zinc-400 font-semibold text-base leading-relaxed">
-                "{lead.junk_reason || (lead.remarks && lead.remarks.length > 0 ? lead.remarks[0].remark : 'No specific reason recorded.')}"
+              <blockquote className="text-zinc-600 dark:text-zinc-400 font-semibold text-base leading-relaxed break-words">
+                "{expanded || (lead.junk_reason || '').length <= 100
+                  ? (lead.junk_reason || (lead.remarks && lead.remarks.length > 0 ? lead.remarks[0].remark : 'No specific reason recorded.'))
+                  : `${(lead.junk_reason || '').substring(0, 100)}...`}"
+
+                {(lead.junk_reason || '').length > 100 && (
+                  <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="ml-2 text-[#0f3d6b] hover:text-indigo-700 font-bold text-xs uppercase tracking-wider transition-colors"
+                  >
+                    {expanded ? 'View Less' : 'View More'}
+                  </button>
+                )}
               </blockquote>
-              
+
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-[#0f3d6b] flex items-center justify-center text-[10px] font-black text-white uppercase shadow-md">
                   {initials}
@@ -118,7 +130,7 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
                 <div className="w-1.5 h-1 border-b-2 border-r-2 border-white -rotate-45 mb-0.5" />
               </div>
             </div>
-            
+
             <div className="space-y-1">
               <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{rmLabel === '--' ? 'Unassigned' : rmLabel}</h3>
               <p className="text-zinc-400 font-bold text-[10px] uppercase tracking-widest">Relationship Manager (RM)</p>
@@ -136,28 +148,28 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
             </div>
           </div>
 
-          {/* Action Card */}
+          {/* Action Card
           <div className="bg-white dark:bg-zinc-950 p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-6">
             <div className="space-y-3">
               <h4 className="text-xs font-black text-zinc-900 dark:text-zinc-100 tracking-tight">Reassignment Reason</h4>
-              <textarea 
+              <textarea
                 className="w-full h-32 bg-zinc-50/20 dark:bg-zinc-900/30 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 focus:outline-none focus:border-[#0f3d6b] transition-all resize-none text-zinc-600 dark:text-zinc-300 font-medium text-xs leading-relaxed"
                 placeholder="Reason for reassignment..."
                 value={reassignmentReason}
                 onChange={(e) => setReassignmentReason(e.target.value)}
               />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
-              <Button 
+              <Button
                 onClick={() => onReassign(reassignmentReason)}
                 className="w-full bg-[#0f3d6b] hover:bg-[#1e293b] text-white font-black py-5 rounded-xl gap-2 text-sm shadow transition-all active:scale-[0.98]"
               >
                 <UserPlus size={18} strokeWidth={2.5} />
                 Reassign to RM
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => onApprove(reassignmentReason)}
                 className="w-full bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-rose-500 font-black py-5 rounded-xl gap-2 text-sm hover:bg-rose-50 hover:border-rose-100 transition-all active:scale-[0.98]"
               >
@@ -168,6 +180,6 @@ export const LeadJunkReviewPage: React.FC<LeadJunkReviewPageProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    // </div>
   );
 };

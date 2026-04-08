@@ -129,7 +129,7 @@ export const LeadsPage = () => {
 
   // Junk Leads Flow State
   const [activeView, setActiveView] = useState<string>('leads');
-  const [selectedJunkLead, setSelectedJunkLead] = useState<JunkLead | null>(null);
+  const [selectedJunkLead, setSelectedJunkLead] = useState<Lead | null>(null);
   const [showReassignModal, setShowReassignModal] = useState(false);
 
   // Data Fetching
@@ -765,7 +765,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       {activeView === 'junk' && (
         <JunkLeadsPage 
           onVerify={(lead) => {
-            setSelectedJunkLead(lead as unknown as JunkLead);
+            setSelectedJunkLead(lead);
             setActiveView('junk-review');
           }} 
         />
@@ -789,7 +789,15 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             rms={rms}
             onClose={() => setShowReassignModal(false)}
             lead={selectedJunkLead as unknown as Lead}
-            onConfirm={(rmId, reason) => {
+            onConfirm={(rmId) => {
+           
+              const _leadStatusId = masterData?.lead_statuses?.find(s => s.code === 'NEWLED')?.id;
+              if(_leadStatusId){
+                const _lead = {...selectedJunkLead, lead_status_id: _leadStatusId };
+                handleAssignRm(_lead, rmId);
+              }
+
+              
               toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
               setActiveView('junk');
             }}

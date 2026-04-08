@@ -22,17 +22,19 @@ interface ReassignRMModalProps {
   onClose: () => void;
   lead: Lead | null;
   rms: any[];
-  onConfirm: (rmId: number, reason: string) => void;
+  onConfirm: (rmId: number) => void;
   initialReason?: string;
 }
 
 export const ReassignRMModal: React.FC<ReassignRMModalProps> = ({
+  lead,
   open,
   onClose,
   rms,
   onConfirm,
   initialReason = "",
 }) => {
+  console.log(lead,"insideReassign")
   const [rmId, setRmId] = React.useState<string>("");
   const [reason, setReason] = React.useState<string>(initialReason);
 
@@ -44,8 +46,8 @@ export const ReassignRMModal: React.FC<ReassignRMModalProps> = ({
   }, [open, initialReason]);
 
   const handleConfirm = () => {
-    if (rmId && reason) {
-      onConfirm(Number(rmId), reason);
+    if (rmId) {
+      onConfirm(Number(rmId));
       onClose();
     }
   };
@@ -88,7 +90,7 @@ export const ReassignRMModal: React.FC<ReassignRMModalProps> = ({
               </Select>
             </div>
 
-            <div className="space-y-2.5">
+            {/* <div className="space-y-2.5">
               <label className="text-[10px] font-black text-[#0f3d6b] uppercase tracking-widest pl-1">
                 Reason for Reassignment
               </label>
@@ -98,7 +100,7 @@ export const ReassignRMModal: React.FC<ReassignRMModalProps> = ({
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="grid grid-cols-12 gap-3 pt-2">
@@ -114,7 +116,7 @@ export const ReassignRMModal: React.FC<ReassignRMModalProps> = ({
             <div className="col-span-8">
               <Button 
                 onClick={handleConfirm}
-                disabled={!rmId || !reason}
+                disabled={!rmId}
                 className="w-full h-[52px] text-sm bg-[#0f3d6b] hover:bg-[#1e293b] text-white rounded-2xl font-black shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 Confirm Reassignment
