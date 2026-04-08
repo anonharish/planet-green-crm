@@ -714,7 +714,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               statusOptions={statusOptions}
               projectIds={projectIds}
               projectOptions={projectOptions}
-              rmIds={rmIds}
+              rmIds={isAdmin ? rmIds : (currentUser?.id ? [String(currentUser.id)] : [])}
               emIds={emIds}
               rmOptions={rms}
               showRmFilter={isAdmin}

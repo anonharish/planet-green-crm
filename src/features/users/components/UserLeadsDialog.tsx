@@ -4,18 +4,20 @@ import {
   DialogContent,
   DialogTitle,
   DialogClose,
-} from '../../../components/ui/dialog';
-import { 
-  useGetLeadsByEmIdQuery, 
-  useGetLeadsByRmIdQuery 
-} from '../../leads/api/leadsApi';
-import { useMasterDataLookup } from '../../../shared/hooks/useMasterDataLookup';
-import { Loader2, Layout, X } from 'lucide-react';
-import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import { cn } from '../../../utils';
-import type { User as UserType } from '../types';
-import type { ColumnDef } from '../../../shared/components/DataTable/DataTable';
-import type { Lead } from '../../leads/types';
+} from "../../../components/ui/dialog";
+import {
+  useGetLeadsByEmIdQuery,
+  useGetLeadsByRmIdQuery,
+} from "../../leads/api/leadsApi";
+import { useNavigate } from "react-router-dom";
+import { useMasterDataLookup } from "../../../shared/hooks/useMasterDataLookup";
+import { Loader2, Layout, X, ArrowRight } from "lucide-react";
+import { Button } from "../../../components/ui/button";
+import { DataTable } from "../../../shared/components/DataTable/DataTable";
+import { cn } from "../../../utils";
+import type { User as UserType } from "../types";
+import type { ColumnDef } from "../../../shared/components/DataTable/DataTable";
+import type { Lead } from "../../leads/types";
 
 interface UserLeadsDialogProps {
   open: boolean;
@@ -23,11 +25,32 @@ interface UserLeadsDialogProps {
   user: UserType | null;
 }
 
-const InitialsBadge = ({ name, colorClass }: { name?: string; colorClass: string }) => {
-  if (!name) return <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-400 border border-zinc-200">--</div>;
-  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+const InitialsBadge = ({
+  name,
+  colorClass,
+}: {
+  name?: string;
+  colorClass: string;
+}) => {
+  if (!name)
+    return (
+      <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-400 border border-zinc-200">
+        --
+      </div>
+    );
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   return (
-    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold shadow-xs border border-white/20", colorClass)}>
+    <div
+      className={cn(
+        "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold shadow-xs border border-white/20",
+        colorClass,
+      )}
+    >
       {initials}
     </div>
   );
@@ -36,52 +59,58 @@ const InitialsBadge = ({ name, colorClass }: { name?: string; colorClass: string
 export const UserLeadsDialog = ({
   open,
   onClose,
-  user
+  user,
 }: UserLeadsDialogProps) => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const limit = 10;
-  const { getStatusLabel, getProjectLabel, getSourceLabel, getRmLabel, isLoading: isLookupLookup } = useMasterDataLookup();
+  const {
+    getStatusLabel,
+    getProjectLabel,
+    getSourceLabel,
+    getRmLabel,
+    isLoading: isLookupLookup,
+  } = useMasterDataLookup();
 
   // Fetch leads for this EM
-const isRM = user?.role_id === 3;
+  const isRM = user?.role_id === 3;
 
-// RM API
-const {
-  data: rmLeads = [],
-  isLoading: rmLoading,
-  isFetching: rmFetching,
-} = useGetLeadsByRmIdQuery(
-  {
-    assigned_to_rm: user?.id || 0,
-    offset: (page - 1) * limit,
-    is_em_assigned: 1 // ✅ REQUIRED
-  },
-  { skip: !open || !user?.id || !isRM }
-);
+  // RM API
+  const {
+    data: rmLeads = [],
+    isLoading: rmLoading,
+    isFetching: rmFetching,
+  } = useGetLeadsByRmIdQuery(
+    {
+      assigned_to_rm: user?.id || 0,
+      offset: (page - 1) * limit,
+      is_em_assigned: 1, // ✅ REQUIRED
+    },
+    { skip: !open || !user?.id || !isRM },
+  );
 
-// EM API
-const {
-  data: emLeads = [],
-  isLoading: emLoading,
-  isFetching: emFetching,
-} = useGetLeadsByEmIdQuery(
-  {
-    assigned_to_em: user?.id || 0,
-    offset: (page - 1) * limit,
-  },
-  { skip: !open || !user?.id || isRM }
-);
+  // EM API
+  const {
+    data: emLeads = [],
+    isLoading: emLoading,
+    isFetching: emFetching,
+  } = useGetLeadsByEmIdQuery(
+    {
+      assigned_to_em: user?.id || 0,
+      offset: (page - 1) * limit,
+    },
+    { skip: !open || !user?.id || isRM },
+  );
 
-
-const leads = isRM ? rmLeads : emLeads;
-const isLoading = isRM ? rmLoading : emLoading;
-const isFetching = isRM ? rmFetching : emFetching;
+  const leads = isRM ? rmLeads : emLeads;
+  const isLoading = isRM ? rmLoading : emLoading;
+  const isFetching = isRM ? rmFetching : emFetching;
 
   const columns: ColumnDef<Lead>[] = [
     {
-      key: 'lead_id',
-      header: 'LEAD ID',
-      width: '120px',
+      key: "lead_id",
+      header: "LEAD ID",
+      width: "120px",
       render: (lead) => (
         <span className="font-bold text-zinc-400 dark:text-zinc-600 text-xs tracking-tight">
           PG{lead.lead_id}
@@ -89,12 +118,15 @@ const isFetching = isRM ? rmFetching : emFetching;
       ),
     },
     {
-      key: 'lead_name',
-      header: 'LEAD NAME',
-      width: '240px',
+      key: "lead_name",
+      header: "LEAD NAME",
+      width: "240px",
       render: (lead) => (
         <div className="flex items-center gap-3">
-          <InitialsBadge name={`${lead.first_name} ${lead.last_name}`} colorClass="bg-[#E9ECEF] text-[#495057]" />
+          <InitialsBadge
+            name={`${lead.first_name} ${lead.last_name}`}
+            colorClass="bg-[#E9ECEF] text-[#495057]"
+          />
           <span className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight whitespace-nowrap">
             {lead.first_name} {lead.last_name}
           </span>
@@ -102,9 +134,9 @@ const isFetching = isRM ? rmFetching : emFetching;
       ),
     },
     {
-      key: 'project_id',
-      header: 'PROJECT INTEREST',
-      width: '200px',
+      key: "project_id",
+      header: "PROJECT INTEREST",
+      width: "200px",
       render: (lead) => (
         <span className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
           {getProjectLabel(lead.project_id)}
@@ -112,9 +144,9 @@ const isFetching = isRM ? rmFetching : emFetching;
       ),
     },
     {
-      key: 'source_id',
-      header: 'SOURCE',
-      width: '140px',
+      key: "source_id",
+      header: "SOURCE",
+      width: "140px",
       render: (lead) => (
         <div className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full inline-flex border border-zinc-200 dark:border-zinc-700">
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">
@@ -124,9 +156,9 @@ const isFetching = isRM ? rmFetching : emFetching;
       ),
     },
     {
-      key: 'lead_status_id',
-      header: 'CURRENT STAGE',
-      width: '160px',
+      key: "lead_status_id",
+      header: "CURRENT STAGE",
+      width: "160px",
       render: (lead) => (
         <div className="px-4 py-1 border border-zinc-200 dark:border-zinc-800 rounded-full inline-flex bg-white dark:bg-zinc-900 shadow-xs">
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">
@@ -136,20 +168,42 @@ const isFetching = isRM ? rmFetching : emFetching;
       ),
     },
     {
-      key: 'assigned_to_rm',
-      header: 'ASSIGNE',
-      width: '80px',
+      key: "assigned_to_rm",
+      header: "ASSIGNE",
+      width: "80px",
       render: (lead) => {
         const rmLabel = getRmLabel(lead.assigned_to_rm);
         return (
           <div className="flex items-center justify-center">
-            <InitialsBadge 
-              name={rmLabel === '--' ? undefined : rmLabel} 
-              colorClass={rmLabel === '--' ? "bg-zinc-100 text-zinc-400" : "bg-[#212529] text-white"} 
+            <InitialsBadge
+              name={rmLabel === "--" ? undefined : rmLabel}
+              colorClass={
+                rmLabel === "--"
+                  ? "bg-zinc-100 text-zinc-400"
+                  : "bg-[#212529] text-white"
+              }
             />
           </div>
         );
       },
+    },
+    {
+      key: "actions",
+      header: "ACTIONS",
+      width: "180px",
+      render: (lead) => (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            onClose();
+            navigate(`/leads/${lead.uuid}`);
+          }}
+          className="h-8 text-[11px] font-bold uppercase rounded-xl border-zinc-200 dark:border-zinc-800 text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all px-4 shadow-none"
+        >
+          View Lead Details
+        </Button>
+      ),
     },
   ];
 
@@ -163,7 +217,10 @@ const isFetching = isRM ? rmFetching : emFetching;
               Lead Registry
             </DialogTitle>
             <p className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
-              Listing leads for <span className="text-zinc-900 dark:text-zinc-100">{user?.first_name} {user?.last_name}</span>
+              Listing leads for{" "}
+              <span className="text-zinc-900 dark:text-zinc-100">
+                {user?.first_name} {user?.last_name}
+              </span>
             </p>
           </div>
         </div>
@@ -173,7 +230,9 @@ const isFetching = isRM ? rmFetching : emFetching;
           {isLoading || isFetching || isLookupLookup ? (
             <div className="flex flex-col items-center justify-center py-32 gap-4 text-zinc-300">
               <Loader2 className="h-10 w-10 animate-spin text-zinc-200" />
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Loading Registry...</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">
+                Loading Registry...
+              </p>
             </div>
           ) : leads.length === 0 ? (
             <div className="text-center py-32 px-10">
@@ -184,7 +243,8 @@ const isFetching = isRM ? rmFetching : emFetching;
                 No Leads Assigned
               </h3>
               <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2 max-w-[280px] mx-auto font-medium leading-relaxed">
-                This experience manager currently has no active leads assigned to them in the registry.
+                This experience manager currently has no active leads assigned
+                to them in the registry.
               </p>
             </div>
           ) : (

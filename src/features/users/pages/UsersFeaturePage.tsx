@@ -9,6 +9,7 @@ import { UserTable } from '../components/UserTable';
 import { UserForm } from '../components/UserForm';
 import {
   useGetAllUsersByRoleIdQuery,
+  useGetReporteesQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation
@@ -46,10 +47,23 @@ export const UsersFeaturePage = ({
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const { data: serverUsers = [], isLoading, isFetching } = useGetAllUsersByRoleIdQuery({
+  const { currentRole, user: currentUser } = usePermissions();
+  const isRM = currentRole?.code === 'RELMNG';
+  const isEMScreen = roleId === 4;
+
+  const { data: allUsers = [], isLoading: isAllLoading, isFetching: isAllFetching } = useGetAllUsersByRoleIdQuery({
     role_id: roleId,
     offset: serverOffset,
-  });
+  }, { skip: isRM && isEMScreen });
+
+  const { data: reportees = [], isLoading: isReporteesLoading, isFetching: isReporteesFetching } = useGetReporteesQuery({
+    reporting_manager_id: Number(currentUser?.id || 0),
+    offset: serverOffset,
+  }, { skip: !isRM || !isEMScreen });
+
+  const serverUsers = isRM && isEMScreen ? reportees : allUsers;
+  const isLoading = isRM && isEMScreen ? isReporteesLoading : isAllLoading;
+  const isFetching = isRM && isEMScreen ? isReporteesFetching : isAllFetching;
 
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
