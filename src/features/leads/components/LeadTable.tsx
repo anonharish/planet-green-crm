@@ -325,6 +325,8 @@ export const LeadTable = ({
 
   const fallback = (value: React.ReactNode) => value ?? '--';
 
+  const isAllSelected = dataArray.length > 0 && selectedUuids.length === dataArray.length;
+
   const columns: ColumnDef<Lead>[] = React.useMemo(() => [
     ...( can(PERMISSIONS.LEAD_BULK_ACTIONS) ? [
       {
@@ -332,7 +334,7 @@ export const LeadTable = ({
         header: (
           <div className="flex items-center justify-center h-full">
             <Checkbox 
-              checked={dataArray.length > 0 && selectedUuids.length === dataArray.length}
+              checked={isAllSelected}
               onCheckedChange={(checked: boolean) => {
                 if (checked) {
                   onSelectUuids?.(dataArray.map(l => l.uuid));
@@ -428,11 +430,13 @@ export const LeadTable = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-white text-black">
-              {masterData?.lead_statuses.map(s => (
-                <SelectItem key={s.id} value={String(s.id)} className="text-[10px] uppercase font-bold text-black cursor-pointer">
-                  {s.description}
-                </SelectItem>
-              ))}
+              {masterData?.lead_statuses
+                ?.filter(s => s.code !== 'JUNKCM')
+                .map(s => (
+                  <SelectItem key={s.id} value={String(s.id)} className="text-[10px] uppercase font-bold text-black cursor-pointer">
+                    {s.description}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -536,7 +540,7 @@ export const LeadTable = ({
         </div>
       ),
     },
-  ], [data, selectedUuids, can, roleCode, masterData, managers, onAssignRm, onAssignEm, onUpdateStatus, onEdit, onScheduleVisit, onLeadActivity, onDelete, getSourceLabel, getProjectLabel, getEmLabel]);
+  ], [isAllSelected, selectedUuids, can, roleCode, masterData, managers, onAssignRm, onAssignEm, onUpdateStatus, onEdit, onScheduleVisit, onLeadActivity, onDelete, getSourceLabel, getProjectLabel, getEmLabel]);
 
 
   return (

@@ -11,6 +11,7 @@ import { BulkActionsBar } from "../components/BulkActionsBar";
 import { ScheduleVisitDialog } from "../components/ScheduleVisitDialog";
 import { LeadActivityDialog } from "../components/LeadActivityDialog";
 import { FilterDialog } from "../../../shared/components/FilterDialog/FilterDialog";
+import { JunkReasonDialog } from "../components/JunkReasonDialog";
 import { Loader2, UserPlus, SlidersHorizontal } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
@@ -123,6 +124,8 @@ export const LeadsPage = () => {
   const [deleteUuid, setDeleteUuid] = useState<string | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [activityLead, setActivityLead] = useState<Lead | null>(null);
+  const [isJunkDialogOpen, setIsJunkDialogOpen] = useState(false);
+  const [pendingJunkUpdate, setPendingJunkUpdate] = useState<{ lead: Lead; statusId: number } | null>(null);
 
   // Junk Leads Flow State
   const [activeView, setActiveView] = useState<string>('leads');
@@ -136,6 +139,58 @@ export const LeadsPage = () => {
     offset: 0,
   });
 
+  const statusOptions = React.useMemo(() => {
+    const options = masterData?.lead_statuses?.map((s: any) => ({
+      value: String(s.id),
+      label: s.description,
+    })) || [];
+
+    if (activeView === 'leads') {
+      return options.filter((o: any) => {
+        const s = masterData?.lead_statuses?.find((st: any) => String(st.id) === o.value);
+        return s?.code !== 'JUNKPE' && s?.code !== 'JUNKCM';
+      });
+    }
+    return options;
+  }, [masterData, activeView]);
+
+  const projectOptions = React.useMemo(() =>
+    masterData?.projects?.map((p) => ({
+      value: String(p.id),
+      label: p.description,
+    })) || [], [masterData]);
+
+  const nonJunkStatusIds = React.useMemo(() => {
+    if (!masterData?.lead_statuses) return [];
+    return masterData.lead_statuses
+      .filter((s: any) => s.code !== 'JUNKPE' && s.code !== 'JUNKCM')
+      .map((s: any) => s.id);
+  }, [masterData]);
+
+  const queryStatusIds = React.useMemo(() => 
+    debouncedFilters.statusIds.length > 0
+      ? debouncedFilters.statusIds.map(Number)
+      : (activeView === 'leads' ? nonJunkStatusIds : undefined)
+  , [debouncedFilters.statusIds, activeView, nonJunkStatusIds]);
+
+  const queryProjectIds = React.useMemo(() =>
+    debouncedFilters.projectIds.length > 0
+      ? debouncedFilters.projectIds.map(Number)
+      : undefined
+  , [debouncedFilters.projectIds]);
+
+  const queryRmIds = React.useMemo(() =>
+    debouncedFilters.rmIds.length > 0
+      ? debouncedFilters.rmIds.map(Number)
+      : undefined
+  , [debouncedFilters.rmIds]);
+
+  const queryEmIds = React.useMemo(() =>
+    debouncedFilters.emIds.length > 0
+      ? debouncedFilters.emIds.map(Number)
+      : undefined
+  , [debouncedFilters.emIds]);
+
   // Admin view uses getLeads
   const {
     data: adminLeads = [],
@@ -146,22 +201,10 @@ export const LeadsPage = () => {
     offset: serverOffset,
     is_rm_assigned: isAdmin ? (activeTab === 1 ? 1 : 0) : undefined,
     search_text: debouncedSearch || undefined,
-    status:
-      debouncedFilters.statusIds.length > 0
-        ? debouncedFilters.statusIds.map(Number)
-        : undefined,
-    project:
-      debouncedFilters.projectIds.length > 0
-        ? debouncedFilters.projectIds.map(Number)
-        : undefined,
-    rm:
-      debouncedFilters.rmIds.length > 0
-        ? debouncedFilters.rmIds.map(Number)
-        : undefined,
-    em:
-      debouncedFilters.emIds.length > 0
-        ? debouncedFilters.emIds.map(Number)
-        : undefined,
+    status: queryStatusIds,
+    project: queryProjectIds,
+    rm: queryRmIds,
+    em: queryEmIds,
   }, { skip: !isAdmin });
 
   // RM view uses getLeadsByRmId
@@ -195,7 +238,18 @@ export const LeadsPage = () => {
     if (isEM) refetchEM();
   }, [isAdmin, isRM, isEM, refetchAdmin, refetchRM, refetchEM]);
 
-  const leads = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
+  const leads = React.useMemo(() => {
+    let list = isAdmin ? adminLeads : (isRM ? rmLeads : emLeads);
+    // Exclude Junk and Junk Review statuses from the main Leads view
+    if (activeView === 'leads') {
+      return list.filter(l => {
+        const s = masterData?.lead_statuses?.find(st => st.id === l.lead_status_id);
+        return s?.code !== 'JUNKPE' && s?.code !== 'JUNKCM';
+      });
+    }
+    return list;
+  }, [isAdmin, adminLeads, isRM, rmLeads, isEM, emLeads, activeView, masterData]);
+
   const isLoading = isAdmin ? isAdminLoading : (isRM ? isRMLoading : isEMLoading);
   const isFetching = isAdmin ? isAdminFetching : (isRM ? isRMFetching : isEMFetching);
 
@@ -369,6 +423,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
   };
 
   const handleUpdateStatus = React.useCallback(async (lead: Lead, newStatusId: number) => {
+    const junkStatus = masterData?.lead_statuses?.find(s => s.code === 'JUNKPE');
+    if (junkStatus && newStatusId === junkStatus.id) {
+      setPendingJunkUpdate({ lead, statusId: newStatusId });
+      setIsJunkDialogOpen(true);
+      return;
+    }
+
     try {
       const payload: UpdateLeadRequest = {
         uuid: lead.uuid,
@@ -396,7 +457,42 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
-  }, [updateLead]);
+  }, [updateLead, masterData]);
+
+  const handleJunkReasonConfirm = async (reason: string) => {
+    if (!pendingJunkUpdate) return;
+    const { lead, statusId } = pendingJunkUpdate;
+    try {
+      const payload: UpdateLeadRequest = {
+        uuid: lead.uuid,
+        first_name: lead.first_name || '',
+        last_name: lead.last_name || '',
+        phone_number: lead.phone_number || '',
+        email_address: lead.email_address || '',
+        occupation: lead.occupation || '',
+        address: lead.address || '',
+        city: lead.city || '',
+        state: lead.state || '',
+        country: lead.country || '',
+        zip: lead.zip || '',
+        source_id: lead.source_id,
+        source_employee_user_id: lead.source_employee_user_id || null,
+        project_id: lead.project_id,
+        assigned_to_rm: lead.assigned_to_rm || null,
+        assigned_to_em: lead.assigned_to_em || null,
+        lead_priority_id: lead.lead_priority_id || 1,
+        lead_status_id: statusId,
+        junk_reason: reason,
+      };
+      
+      await updateLead(payload).unwrap();
+      toast.success('Lead marked as junk for review!');
+      setIsJunkDialogOpen(false);
+      setPendingJunkUpdate(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to update status');
+    }
+  };
 
   const handleAssignRm = React.useCallback(async (lead: Lead, rmId: number | null) => {
     try {
@@ -610,13 +706,16 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                   } 
                 }));
               }}
-              onReset={handleResetFilters}
-              statusIds={statusIds}
+              onReset={() => {
+                dispatch(resetTabFilters(tabKey));
+                setIsFilterDialogOpen(false);
+              }}
+              statusIds={activeView === 'leads' ? nonJunkStatusIds.map(String) : statusIds}
+              statusOptions={statusOptions}
               projectIds={projectIds}
+              projectOptions={projectOptions}
               rmIds={rmIds}
               emIds={emIds}
-              statusOptions={masterData?.lead_statuses.map((s) => ({ label: s.description, value: String(s.id) })) || []}
-              projectOptions={masterData?.projects.map((p) => ({ label: p.description, value: String(p.id) })) || []}
               rmOptions={rms}
               showRmFilter={isAdmin}
               showEmFilter={isAdmin || isRM}
@@ -717,6 +816,16 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           />
         )}
       </AppDrawer>
+
+      <JunkReasonDialog
+        open={isJunkDialogOpen}
+        onClose={() => {
+          setIsJunkDialogOpen(false);
+          setPendingJunkUpdate(null);
+        }}
+        onConfirm={handleJunkReasonConfirm}
+        isLoading={isUpdating}
+      />
 
       <ConfirmDialog
         open={showRandomConfirm}
