@@ -221,7 +221,7 @@ export const ScheduleVisitDialog = ({
                   </Button>
                 </PopoverTrigger>
 
-                <PopoverContent className="p-4 space-y-4">
+                <PopoverContent className="w-auto p-4 space-y-4">
                   <Calendar
                     mode="single"
                     selected={date}
@@ -379,19 +379,26 @@ export const ScheduleVisitDialog = ({
           </form>
         </div>
 
-        <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-end gap-3 rounded-b-xl shrink-0">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="schedule-visit-form"
-            disabled={isLoading}
-            className="gap-2"
-          >
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Schedule Visit
-          </Button>
+        <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-col gap-3 rounded-b-xl shrink-0">
+          {watchRm && !isLoadingReportees && reportees.length === 0 && (
+            <p className="text-sm text-red-500 font-medium text-center">
+              for assigned rm there is no assigned em
+            </p>
+          )}
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="schedule-visit-form"
+              disabled={isLoading || (!!watchRm && reportees.length === 0)}
+              className="gap-2"
+            >
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Schedule Visit
+            </Button>
+          </div>
         </div>
       </div>
     </div>

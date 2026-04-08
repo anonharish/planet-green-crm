@@ -157,7 +157,7 @@ export function DataTable<T>({
                             </div>
                           </button>
                         ) : (
-                          <div className="px-4 py-3 whitespace-nowrap">
+                          <div className={cn("px-4 py-3 whitespace-nowrap", header.id === 'selection' && "px-0")}>
                             {flexRender(
                               header.column.columnDef.header,
                               header.getContext()
@@ -189,7 +189,7 @@ export function DataTable<T>({
                   className="bg-white shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-all"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-sm text-gray-700 px-4 py-5 bg-white">
+                    <TableCell key={cell.id} className={cn("text-sm text-gray-700 px-4 py-5 bg-white", cell.column.id === 'selection' && "px-0")}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
