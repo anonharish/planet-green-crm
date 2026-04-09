@@ -621,7 +621,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               onChange={(v) =>
                 dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
               }
-              placeholder="Search leads by name"
+              placeholder="Search by Name or Phone Number"
             />
           )}
         </div>
@@ -633,36 +633,48 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                 dispatch(setActiveTabAction(0));
                 setActiveView('leads');
               }}
+              style={{ 
+                width: (activeTab === 0 && activeView === 'leads') ? '210.87px' : '155.8px',
+                height: (activeTab === 0 && activeView === 'leads') ? '39px' : '36px'
+              }}
               className={cn(
-                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeTab === 0 && activeView === 'leads'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
-              Unassigned
+              Unassigned {(activeTab === 0 && activeView === 'leads') && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] ml-1">24</span>}
             </button>
             <button
               onClick={() => {
                 dispatch(setActiveTabAction(1));
                 setActiveView('leads');
               }}
+              style={{ 
+                width: (activeTab === 1 && activeView === 'leads') ? '210.87px' : '155.8px',
+                height: (activeTab === 1 && activeView === 'leads') ? '39px' : '36px'
+              }}
               className={cn(
-                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeTab === 1 && activeView === 'leads'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
               Assigned
             </button>
             <button
               onClick={() => setActiveView('junk')}
+              style={{ 
+                width: (activeView === 'junk' || activeView === 'junk-review') ? '210.87px' : '155.8px',
+                height: (activeView === 'junk' || activeView === 'junk-review') ? '39px' : '36px'
+              }}
               className={cn(
-                "px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeView === 'junk' || activeView === 'junk-review'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
               Junk
@@ -677,8 +689,12 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         {/* Card Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-foreground">Leads Queue</h2>
-            {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
+            <h2 
+              className="font-bold text-[#191C1E] font-['Plus_Jakarta_Sans']"
+              style={{ width: '175px', height: '28px', fontSize: '18px', lineHeight: '28px' }}
+            >
+              Leads Queue
+            </h2>
           </div>
           <div className="flex items-center gap-3">
             <Button 
