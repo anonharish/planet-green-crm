@@ -489,7 +489,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       toast.success('Lead marked as junk for review!');
       setIsJunkDialogOpen(false);
       setPendingJunkUpdate(null);
-    } catch (err: any) {
+    } 
+    catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
   };
