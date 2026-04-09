@@ -8,8 +8,8 @@ const mutex = new Mutex();
 
 const baseQuery = fetchBaseQuery({
   // baseUrl: 'http://localhost:3000',
-  // baseUrl: 'https://y7lidobvl7.execute-api.ap-south-1.amazonaws.com',
-  baseUrl: 'https://nonslippery-monumentally-lane.ngrok-free.dev',
+  baseUrl: 'https://y7lidobvl7.execute-api.ap-south-1.amazonaws.com',
+  // baseUrl: 'https://nonslippery-monumentally-lane.ngrok-free.dev',
   prepareHeaders: (headers, { getState }) => {
   const stateToken = (getState() as any).auth.token;
   const localToken = localStorage.getItem('token');
