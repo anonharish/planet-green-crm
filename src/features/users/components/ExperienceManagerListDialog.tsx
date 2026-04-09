@@ -8,32 +8,36 @@ import {
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { useGetReporteesQuery } from '../api/usersApi';
-import { Mail, Phone, User as UserIcon, Loader2, Search, X } from 'lucide-react';
+import { Search, X, Calendar, AlertTriangle, Loader2, User as UserIcon } from 'lucide-react';
 import type { User } from '../types';
+import { cn } from '../../../utils';
 
 interface ExperienceManagerListDialogProps {
   open: boolean;
   onClose: () => void;
   manager: User | null;
+  visitLocation?: string;
+  onConfirm?: (agentId: number) => void;
 }
 
 export const ExperienceManagerListDialog = ({
   open,
   onClose,
-  manager
+  manager,
+  visitLocation = "Prestige High Fields", // Default/Placeholder as per Figma
+  onConfirm
 }: ExperienceManagerListDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
 
-  // Fetch reportees for this manager (Dedicated API)
+  // Fetch reportees for this manager
   const { data: reportees = [], isLoading, isFetching } = useGetReporteesQuery(
     { reporting_manager_id: manager?.id || 0, offset: 0 },
-    { skip: !open || !manager?.id } // Only fetch when dialog opens and manager is present
+    { skip: !open || !manager?.id }
   );
 
-  // Apply local search query to the filtered results from API
   const filteredReports = useMemo(() => {
     if (!searchQuery) return reportees;
-    
     const lowerQuery = searchQuery.toLowerCase();
     return reportees.filter(agent => 
       agent.first_name.toLowerCase().includes(lowerQuery) ||
@@ -43,109 +47,144 @@ export const ExperienceManagerListDialog = ({
     );
   }, [reportees, searchQuery]);
 
+  // Mock colors for avatars as seen in Figma
+  const getAvatarColor = (id: number) => {
+    const colors = [
+      'bg-[#0f3d6b]', // Dark Navy
+      'bg-[#7dd3fc]', // Light Blue
+      'bg-[#064e3b]', // Dark Green
+      'bg-[#f9a8d4]', // Pinkish
+    ];
+    return colors[id % colors.length];
+  };
+
+  const handleConfirm = () => {
+    if (selectedAgentId && onConfirm) {
+      onConfirm(selectedAgentId);
+    }
+    // For now, if no onConfirm is passed (like in UserTable), we just close or handle it
+    if (!onConfirm) onClose();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-white/95 backdrop-blur-md dark:bg-zinc-950/95">
-        {/* Header Section - Emerald Theme */}
-        <DialogHeader className="p-6 bg-[#f0f9f6] dark:bg-emerald-950/20 border-b border-emerald-100 dark:border-emerald-900/30">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#34d399] flex items-center justify-center text-white font-black text-sm shadow-sm">
-              {manager?.first_name[0]}{manager?.last_name[0]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <DialogTitle className="text-xl font-black text-[#0f3d6b] dark:text-zinc-100 truncate tracking-tight">
-                Direct Reports
-              </DialogTitle>
-              <p className="text-xs text-zinc-500 font-bold dark:text-zinc-400 truncate">
-                Managed by <span className="text-[#10b981]">{manager?.first_name} {manager?.last_name}</span>
-              </p>
-            </div>
-            <div className="bg-white dark:bg-emerald-900/30 px-3 py-1 rounded-full text-[10px] font-black text-[#10b981] border border-[#d1fae5] dark:border-emerald-800 uppercase tracking-widest shadow-sm">
-              {filteredReports.length} REPORTS
-            </div>
-          </div>
-        </DialogHeader>
+      <DialogContent className="w-[672px] h-[691px] max-w-[672px] overflow-hidden flex flex-col p-0 gap-0 border border-zinc-100 shadow-2xl bg-white dark:bg-zinc-950 rounded-[24px]">
+        {/* Header Section */}
+        <div className="p-8 pb-4 relative">
+          <button 
+            onClick={onClose}
+            className="absolute right-8 top-8 p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-400"
+          >
+           
+          </button>
+          
+          <DialogHeader className="text-left space-y-1">
+            <DialogTitle className="text-2xl font-bold text-[#0f3d6b] dark:text-zinc-100 tracking-tight">
+              Assign Experience Manager
+            </DialogTitle>
+            <p className="text-sm text-[#0f3d6b]/70 font-medium">
+              Selection for site visit at <span className="text-[#0f3d6b] border-b border-[#0f3d6b]/30">{visitLocation}</span>
+            </p>
+          </DialogHeader>
+        </div>
 
-        {/* Search Bar Section - Pill Style */}
-        <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#10b981] opacity-60" />
+        {/* Search Bar */}
+        <div className="px-8 mb-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
             <Input 
-              placeholder="Search reports by name or email..." 
+              placeholder="Search experience managers..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 pr-11 h-11 text-sm bg-white dark:bg-zinc-900 border-[#10b981]/30 dark:border-zinc-800 rounded-full focus-visible:ring-[#10b981]/10 focus-visible:border-[#10b981] transition-all shadow-sm font-medium"
+              className="pl-12 h-12 text-base bg-zinc-50 dark:bg-zinc-900 border-none rounded-xl focus-visible:ring-1 focus-visible:ring-zinc-200 transition-all shadow-none"
             />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-400"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
           </div>
         </div>
 
-        {/* List Section */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Manager List */}
+        <div className="flex-1 overflow-y-auto px-8 pb-4 custom-scrollbar">
           {isLoading || isFetching ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 text-zinc-400">
-              <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
-              <p className="text-[11px] font-medium animate-pulse tracking-wide uppercase">Updating results...</p>
+              <Loader2 className="h-8 w-8 animate-spin text-[#0f3d6b]" />
+              <p className="text-sm font-medium tracking-wide">Loading managers...</p>
             </div>
           ) : filteredReports.length === 0 ? (
-            <div className="text-center py-20 px-10">
-              <div className="w-20 h-20 bg-[#f0f9f6] dark:bg-emerald-900/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-50 dark:border-emerald-900/30">
-                <UserIcon size={32} className="text-[#10b981] opacity-30" />
+            <div className="text-center py-10">
+               <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserIcon size={24} className="text-zinc-300" />
               </div>
-              <h3 className="text-lg font-black text-[#0f3d6b] dark:text-zinc-100 tracking-tight">
-                {searchQuery ? 'No results found' : 'No reports yet'}
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-medium max-w-[200px] mx-auto leading-relaxed">
-                {searchQuery 
-                  ? `We couldn't find any reports matching "${searchQuery}"`
-                  : 'This relationship manager has no experience managers assigned.'}
-              </p>
+              <p className="text-zinc-500 font-medium">No experience managers found.</p>
             </div>
           ) : (
-            <div className="p-2 space-y-1">
-              {filteredReports.map((agent: User) => (
-                <div 
-                  key={agent.id} 
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 border border-transparent hover:border-emerald-500/10 transition-all duration-200 cursor-default group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-400 dark:text-zinc-600 group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-colors">
-                    <UserIcon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                      {agent.first_name} {agent.last_name}
-                    </h4>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
-                        <Mail className="h-2.5 w-2.5 opacity-70" />
-                        <span className="truncate">{agent.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
-                        <Phone className="h-2.5 w-2.5 opacity-70" />
-                        <span>{agent.phone_number}</span>
+            <div className="space-y-4">
+              {filteredReports.map((agent: User) => {
+                const initials = `${agent.first_name[0]}${agent.last_name[0]}`;
+                const isSelected = selectedAgentId === agent.id;
+                
+                // MOCK Metrics (as seen in Figma)
+                const mockVisits = (agent.id % 5) + 1;
+                const isAtCapacity = agent.id % 4 === 0;
+
+                return (
+                  <div 
+                    key={agent.id} 
+                    onClick={() => setSelectedAgentId(agent.id)}
+                    className={cn(
+                      "flex items-center gap-4 p-4 rounded-3xl border transition-all duration-200 cursor-pointer group",
+                      isSelected 
+                        ? "bg-white border-transparent shadow-lg shadow-zinc-200/50" 
+                        : "bg-white border-zinc-100 hover:border-zinc-200"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0",
+                      getAvatarColor(agent.id)
+                    )}>
+                      {initials}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                        {agent.first_name} {agent.last_name}
+                      </h4>
+                      <div className="flex items-center gap-3 mt-1">
+                        <div className={cn(
+                          "flex items-center gap-1.5 text-sm font-semibold",
+                          isAtCapacity ? "text-red-500" : "text-zinc-500"
+                        )}>
+                          {isAtCapacity ? <AlertTriangle className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+                          <span>{mockVisits} {isAtCapacity ? `visits (At Capacity)` : `visits scheduled`}</span>
+                        </div>
+                        <span className="text-zinc-300">•</span>
+                        <span className="text-sm text-zinc-500 font-medium truncate">
+                           Prestige Group
+                        </span>
                       </div>
                     </div>
+
+                    <div className={cn(
+                      "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                      isSelected 
+                        ? "border-[#0f3d6b] bg-[#0f3d6b]" 
+                        : "border-zinc-200 bg-white"
+                    )}>
+                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Footer Section */}
-        <div className="p-5 bg-zinc-50 dark:bg-zinc-900/10 border-t border-zinc-100 dark:border-zinc-800 flex justify-end items-center px-6">
-           <Button 
-            onClick={onClose} 
-            className="h-11 px-8 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[#0f3d6b] dark:text-zinc-300 font-black text-sm shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all active:scale-95"
+        {/* Footer */}
+        <div className="p-8 pt-4 flex justify-center bg-white dark:bg-zinc-950">
+          <Button 
+            onClick={handleConfirm}
+            disabled={!selectedAgentId}
+            className="w-full max-w-sm h-14 rounded-2xl bg-[#0f3d6b] hover:bg-[#0f3d6b]/90 text-white font-bold text-lg shadow-xl shadow-[#0f3d6b]/20 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            Close
+            Confirm Assignment
           </Button>
         </div>
       </DialogContent>

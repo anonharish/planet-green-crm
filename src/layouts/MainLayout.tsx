@@ -10,8 +10,12 @@ import { useAuth } from "../context/AuthContext";
 import {
   LogOut,
   LayoutDashboard,
+  LayoutGrid,
   Users,
+  UsersRound,
+  ShieldCheck,
   UserCircle,
+  Contact,
   Briefcase,
   ChevronRight,
   FlaskConical,
@@ -48,27 +52,23 @@ export const MainLayout = () => {
   }
 
   const allNavItems = [
-    // {
-    //   label: "Dashboard",
-    //   path: "/dashboard",
-    // },
-    { label: "Manage Leads", path: "/leads", icon: <Briefcase size={22} /> },
+    { label: "Dashboard", path: "/leads", icon: <LayoutGrid size={22} /> },
     {
       label: "Customers",
       path: "/customers",
-      icon: <Users size={22} />,
+      icon: <Contact size={22} />,
       permission: PERMISSIONS.CUSTOMER_VIEW,
     },
     {
       label: "Relationship Managers",
       path: "/relationship-managers",
-      icon: <Users size={22} />,
+      icon: <UsersRound size={22} />,
       permission: PERMISSIONS.MANAGER_VIEW,
     },
     {
       label: "Experience Managers",
       path: "/agents",
-      icon: <UserCircle size={22} />,
+      icon: <ShieldCheck size={22} />,
       permission: PERMISSIONS.AGENT_VIEW,
     },
     { label: "Scheduled Visits", path: "/scheduled-visits", icon: <ClipboardList size={22} /> },
