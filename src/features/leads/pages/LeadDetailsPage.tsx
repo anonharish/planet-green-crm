@@ -47,7 +47,7 @@ export const LeadDetailsPage = () => {
     return user ? `${user.first_name} ${user.last_name}` : `ID: ${lead.source_employee_user_id}`;
   };
 
-  const fallback = (val: any) => val || <span className="text-zinc-400 italic">Not provided</span>;
+  const fallback = (val: any) => val || <span className="text-zinc-400">--</span>;
   console.log("CALLS DATA:", lead?.calls);
 
   const dummyChats: any = [
@@ -140,7 +140,7 @@ export const LeadDetailsPage = () => {
             <div>
               <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <User className="h-5 w-5 text-indigo-500" />
-                {fallback(lead.first_name)} {fallback(lead.last_name)}
+                {lead.first_name || ''} {lead.last_name || ''}
               </h3>
               <p className="text-sm font-medium text-zinc-500 mt-1">
                 Lead ID:{' '}
