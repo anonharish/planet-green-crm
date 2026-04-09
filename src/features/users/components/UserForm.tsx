@@ -210,7 +210,11 @@ export const UserForm = ({
                         placeholder="+91 98765 43210" 
                         {...field} 
                         disabled={isLoading} 
-                        className="pl-11 h-11 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 rounded-xl focus-visible:ring-[#0f3d6b]/10 focus-visible:border-[#0f3d6b] transition-all font-bold text-sm placeholder:text-zinc-400/40"
+                        readOnly={isEdit}
+                        className={cn(
+                          "pl-11 h-11 bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 rounded-xl focus-visible:ring-[#0f3d6b]/10 focus-visible:border-[#0f3d6b] transition-all font-bold text-sm placeholder:text-zinc-400/40",
+                          isEdit && "opacity-70 cursor-not-allowed select-none bg-zinc-100 dark:bg-zinc-900"
+                        )}
                       />
                     </FormControl>
                   </div>
