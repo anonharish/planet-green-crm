@@ -85,7 +85,7 @@ export const UserTable = ({
             }}>
               {initials || '??'}
             </div>
-            <span className="font-semibold text-gray-900 text-sm">
+            <span className="font-semibold text-sm" style={{ color: '#191C1E' }}>
               {user.first_name} {user.last_name}
             </span>
           </div>
@@ -99,9 +99,9 @@ export const UserTable = ({
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
             <Phone size={12} className="text-zinc-400 shrink-0" />
-            <span className="font-medium text-gray-800 text-sm">{user.phone_number}</span>
+            <span className="font-medium text-sm" style={{ color: '#434653' }}>{user.phone_number}</span>
           </div>
-          <span className="text-zinc-400 text-xs pl-[18px]">{user.email}</span>
+          <span className="text-xs pl-[18px]" style={{ color: '#94A3B8' }}>{user.email}</span>
         </div>
       ),
     },
@@ -110,16 +110,17 @@ export const UserTable = ({
       header: 'Creation Date',
       sortable: true,
       render: (user) => (
-        <span className="text-sm text-gray-600 font-medium">{formatDate(user.created_on)}</span>
+        <span className="text-sm font-medium" style={{ color: '#64748B' }}>{formatDate(user.created_on)}</span>
       ),
     },
     ...(permissionPrefix === 'manager' ? [{
       key: 'em_count' as keyof User,
-      header: 'EM Count',
+      header: 'Assigned EM',
       render: (user: User) => (
         <span
-          className="text-blue-600 cursor-pointer underline underline-offset-2 font-semibold px-2"
+          className="cursor-pointer underline underline-offset-2 font-semibold px-2"
           onClick={() => { if (user.role_id === 3) setViewAgentsManager(user); }}
+          style={{ color: '#063669' }}
         >
           {user.reportee_count ?? 0}
         </span>
@@ -140,19 +141,19 @@ export const UserTable = ({
         <div className="flex items-center gap-1">
           {can(`${permissionPrefix}.edit` as Permission) && (
             <Button variant="ghost" size="icon"
-              className="h-8 w-8 rounded-lg hover:bg-blue-50 transition"
+              className="h-8 w-8 rounded-lg hover:bg-blue-50 transition cursor-pointer"
               onClick={() => onEdit(user)} title="Edit">
               <Pencil className="h-4 w-4 text-blue-500" />
             </Button>
           )}
           <Button variant="ghost" size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-[#0f3d6b]/10 transition"
+            className="h-8 w-8 rounded-lg hover:bg-blue-50 transition cursor-pointer"
             onClick={() => setSelectedLeadsUser(user)} title="View Leads">
             <LayoutList className="h-4 w-4 text-[#0f3d6b]" />
           </Button>
           {user.role_id === 3 && (
             <Button variant="ghost" size="icon"
-              className="h-8 w-8 rounded-lg hover:bg-emerald-50 transition"
+              className="h-8 w-8 rounded-lg hover:bg-blue-50 transition cursor-pointer"
               onClick={() => setViewAgentsManager(user)} title="View Experience Managers">
               <Users className="h-4 w-4 text-emerald-500" />
             </Button>
@@ -163,159 +164,152 @@ export const UserTable = ({
   ];
 
   return (
-    <>
+    <div style={{ fontFamily: 'Inter, sans-serif' }}>
       <style>{`
 
         /* ══════════════════════════════════════════════════════
-           HEADER  — white background, bottom divider
+           1. TOP HEADER (White Background)
         ══════════════════════════════════════════════════════ */
         .rm-section-header {
-          background: ${WHITE};
-          padding: 16px 24px 14px;
-          border-bottom: 1px solid #f0f4f8;
+          background: #FFFFFF !important;
+          padding: 12px 16px 8px 16px; /* Ultra-tight title spacing */
         }
         .rm-section-header p {
-          font-size: 15px; font-weight: 700; color: #1a2e44; margin: 0;
+          font-size: 16px; font-weight: 700; color: #111827; margin: 0;
         }
 
         /* ══════════════════════════════════════════════════════
-           GRAY TRAY  — #F3F4F6 everywhere inside .rm-table
+           2. GRAY TRAY (Background for table and text headers)
         ══════════════════════════════════════════════════════ */
-        .rm-table,
-        .rm-table > *,
-        .rm-table > * > *,
-        .rm-table table,
-        .rm-table thead,
-        .rm-table thead tr,
-        .rm-table thead th {
-          background: ${TRAY} !important;
-        }
-
         .rm-table {
-          padding: 12px 16px 0;
+          width: 100%;
+          background: transparent !important;
         }
 
-        /* Column header text style */
-        .rm-table thead th {
-          border: none !important;
-          box-shadow: none !important;
-          font-size: 11px !important;
-          font-weight: 600 !important;
-          color: #8fa3b8 !important;
-          letter-spacing: 0.07em !important;
-          text-transform: uppercase !important;
-          padding-top: 4px !important;
-          padding-bottom: 8px !important;
+        .rm-table .overflow-auto {
+          background: #F5F7FA !important;
+          padding: 0px 8px 0px 8px !important; /* EVEN TINIER grey spacing on left and right */
+          border-radius: 0 !important; /* Touch edges */
         }
-.rm-table thead th button {
-  background: #f1f5f9 !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 10px !important;
-  padding: 6px 12px !important;
-  font-size: 12px !important;
-  color: #64748b !important;
-  height: 36px;
-  display: flex;
-  align-items: center;
-}
 
-/* Hover */
-.rm-table thead th button:hover {
-  background: #e9eef5 !important;
-}
-
-        /* Card gaps via border-spacing */
+        /* Enforce Table Separation strictly! */
         .rm-table table {
           border-collapse: separate !important;
-          border-spacing: 0 10px !important;
+          border-spacing: 0 6px !important; /* Extremely tight stack between cards */
           width: 100%;
+          background: transparent !important;
+          margin-top: 0 !important;
+          margin-bottom: 0 !important;
         }
 
         /* ══════════════════════════════════════════════════════
-           CARD ROWS  — white floating cards
+           3. TABLE HEADERS (Transparent over gray tray)
+        ══════════════════════════════════════════════════════ */
+        .rm-table thead,
+        .rm-table thead tr {
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        .rm-table thead th {
+          background: transparent !important;
+          border: none !important;
+          padding: 4px 12px !important;
+          height: 26px !important;         /* fixed height */
+          vertical-align: middle !important;
+          text-align: left !important;
+          font-size: 11px !important;
+          font-weight: 600 !important;
+          color: #6B7280 !important;
+          letter-spacing: 0.05em !important;
+          text-transform: uppercase !important;
+          display: table-cell !important;  /* ensure proper alignment */
+        }
+
+        /* Prevent previous custom button pill styles */
+        .rm-table thead th button {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          height: auto !important;
+          min-height: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: flex-start !important; /* FIX ZIGZAG 2 */
+          text-align: left !important; /* FIX ZIGZAG 3 */
+          width: 100% !important; /* Forces bounding box for flex-start */
+          line-height: inherit !important;
+          font-size: 11px !important;
+          font-weight: 600 !important;
+          color: #6B7280 !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.05em !important;
+        }
+
+        .rm-table thead th button:hover {
+          background: transparent !important;
+          color: #111827 !important;
+        }
+
+        .rm-table thead th:first-child { border-radius: 8px 0 0 8px !important; }
+        .rm-table thead th:last-child { border-radius: 0 8px 8px 0 !important; }
+
+        /* ══════════════════════════════════════════════════════
+           4. PROFILE CARDS (Floating White Rows)
         ══════════════════════════════════════════════════════ */
         .rm-table tbody tr {
-          background: ${WHITE} !important;
-          box-shadow: 0 1px 6px rgba(15,61,107,0.09) !important;
+          background: #FFFFFF !important;
+          box-shadow: 0px 2px 6px rgba(0,0,0,0.04) !important;
           border-radius: 12px !important;
-          transition: box-shadow 0.15s, transform 0.12s;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .rm-table tbody tr:hover {
-          box-shadow: 0 4px 16px rgba(15,61,107,0.16) !important;
-          transform: translateY(-1px);
-          background: #f8fbff !important;
+          transform: translateY(-2px);
+          box-shadow: 0px 4px 12px rgba(0,0,0,0.08) !important;
         }
+
+        /* Applying corner rounding via table cells */
         .rm-table tbody tr td:first-child { border-radius: 12px 0 0 12px !important; }
         .rm-table tbody tr td:last-child  { border-radius: 0 12px 12px 0 !important; }
+
         .rm-table tbody tr td {
           border: none !important;
-          background: inherit !important;
-          padding-top: 18px !important;
-          padding-bottom: 18px !important;
+          background: transparent !important;
+          padding: 8px 16px !important; /* Ultra-thin internal card heights */
+          vertical-align: middle !important;
+          text-align: left !important; /* FIX ZIGZAG 4 */
         }
 
         /* ══════════════════════════════════════════════════════
-           FOOTER  — white background, top divider
-           (same treatment as the header)
+           5. FOOTER (Bottom White Background)
         ══════════════════════════════════════════════════════ */
- /* Footer container */
-.rm-table tfoot,
-.rm-table [class*="footer"],
-.rm-table [class*="Footer"] {
-  background: #ffffff !important;
-  border-top: 1px solid #f0f4f8 !important;
-  padding: 14px 20px !important;
-}
+        .rm-table .justify-between {
+          background: #FFFFFF !important;
+          padding: 8px 16px !important; /* Cut footer padding tightly */
+          border-top: 1px solid #F2F4F6 !important;
+          border-radius: 0 !important; /* Edges must touch container padding */
+          margin-top: 0 !important;
+        }
 
-/* Inner footer layout fix */
-.rm-table [class*="footer"] > div {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  width: 100%;
-}
+        .rm-table button {
+          border-radius: 8px !important;
+          font-size: 13px;
+          font-weight: 500;
+          border: 1px solid transparent !important;
+        }
 
-/* Left text */
-.rm-table [class*="footer"] span {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
+        /* Data table specific active page override */
+        .rm-table button.bg-\\[\\#0f3d6b\\]\\! {
+          background: #1D4ED8 !important;
+          color: #fff !important;
+        }
 
-/* Pagination container */
-.rm-table [class*="pagination"] {
-  display: flex !important;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Buttons */
-.rm-table button {
-  border-radius: 10px !important;
-  min-width: 36px;
-  height: 36px;
-  font-size: 13px;
-  border: 1px solid #e5e7eb;
-  background: white;
-}
-
-/* Active page */
-.rm-table button[aria-current="page"] {
-  background: #0f3d6b !important;
-  color: #fff !important;
-  border: none;
-}
-
-/* Disabled buttons */
-.rm-table button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Hover */
-.rm-table button:not(:disabled):hover {
-  background: #f3f4f6;
-}
+        /* Normal button hover */
+        .rm-table div > button:hover:not(.bg-\\[\\#0f3d6b\\]\\!) {
+          background: #F3F4F6 !important;
+        }
       `}</style>
 
       {/* ── White header ── */}
@@ -356,6 +350,6 @@ export const UserTable = ({
         onClose={() => setSelectedLeadsUser(null)}
         user={selectedLeadsUser}
       />
-    </>
+    </div>
   );
 };

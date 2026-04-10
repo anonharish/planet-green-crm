@@ -63,7 +63,7 @@ export const CustomerTable = ({
       header: 'CUSTOMER ID',
       width: '120px',
       render: (c) => (
-        <span className="font-bold text-primary text-xs uppercase tracking-tighter ml-4">
+        <span className="text-[13px] text-slate-500 font-medium uppercase ml-4" style={{ fontFamily: 'Liberation Mono, monospace' }}>
           #{(c.uuid || '').slice(0, 6)}
         </span>
       ),
@@ -74,7 +74,7 @@ export const CustomerTable = ({
       sortable: true,
       width: '200px',
       render: (c) => (
-        <span className="font-bold text-primary text-xs">
+        <span className="font-bold text-xs" style={{ color: '#191C1E' }}>
           {c.first_name} {c.last_name}
         </span>
       ),
@@ -85,8 +85,8 @@ export const CustomerTable = ({
       width: '220px',
       render: (c) => (
         <div className="flex flex-col">
-          <span className="font-medium text-zinc-800 dark:text-zinc-200 text-xs">{fallback(c.phone_number)}</span>
-          <span className="text-[11px] text-zinc-400">{fallback(c.email_address)}</span>
+          <span className="font-medium text-xs" style={{ color: '#434653' }}>{fallback(c.phone_number)}</span>
+          <span className="text-[11px]" style={{ color: '#94A3B8' }}>{fallback(c.email_address)}</span>
         </div>
       ),
     },
@@ -95,7 +95,7 @@ export const CustomerTable = ({
       header: 'OCCUPATION',
       width: '180px',
       render: (c) => (
-        <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">
+        <span className="font-medium text-xs" style={{ color: '#434653' }}>
           {fallback(c.occupation)}
         </span>
       ),
@@ -104,14 +104,18 @@ export const CustomerTable = ({
       key: 'city',
       header: 'CITY',
       width: '150px',
-      render: (c) => <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">{fallback(c.city)}</span>,
+      render: (c) => <span className="font-medium text-xs" style={{ color: '#434653' }}>{fallback(c.city)}</span>,
     },
     {
       key: 'customer_status_id',
       header: 'STATUS',
       width: '140px',
       render: (c) => (
-        <Badge variant="outline" className="text-[10px] py-0.5 px-3 font-bold uppercase rounded-full border-primary/40 text-primary bg-primary/5">
+        <Badge 
+          variant="outline" 
+          className="text-[10px] py-0.5 px-3 font-bold uppercase rounded-full"
+          style={{ background: '#72F7ED33', border: '1.5px solid #BA1A1A', color: '#105955' }}
+        >
           {getCustomerStatusLabel(c.customer_status_id)}
         </Badge>
       ),
@@ -122,7 +126,7 @@ export const CustomerTable = ({
       sortable: true,
       width: '150px',
       render: (c) => (
-        <span className="text-zinc-500 font-medium text-xs">
+        <span className="font-medium text-xs" style={{ color: '#64748B' }}>
           {c.created_on ? new Date(c.created_on).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '--'}
         </span>
       ),
@@ -136,7 +140,8 @@ export const CustomerTable = ({
           variant="outline"
           size="sm"
           onClick={() => onViewLeads?.(c)}
-          className="h-8 text-[11px] font-bold uppercase rounded-xl border-zinc-200 dark:border-zinc-800 text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all px-4 shadow-none"
+          className="h-8 text-[11px] font-bold uppercase rounded-xl border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all px-4 shadow-none"
+          style={{ color: '#063669' }}
         >
           View Leads
         </Button>
@@ -145,7 +150,16 @@ export const CustomerTable = ({
   ];
 
   return (
-    <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] overflow-hidden shadow-sm">
+    <div 
+      className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] overflow-hidden shadow-sm customer-table-wrapper"
+      style={{ fontFamily: 'Inter, sans-serif' }}
+    >
+      <style>{`
+        .customer-table-wrapper thead th,
+        .customer-table-wrapper thead th button {
+          color: #64748B !important;
+        }
+      `}</style>
       {/* Integrated Header */}
       <div className="px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
