@@ -25,7 +25,7 @@ import {
   useScheduleVisitMutation,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
-   useAddLeadActivityMutation,
+  useAddLeadActivityMutation,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -167,29 +167,29 @@ export const LeadsPage = () => {
       .map((s: any) => s.id);
   }, [masterData]);
 
-  const queryStatusIds = React.useMemo(() => 
+  const queryStatusIds = React.useMemo(() =>
     debouncedFilters.statusIds.length > 0
       ? debouncedFilters.statusIds.map(Number)
       : (activeView === 'leads' ? nonJunkStatusIds : undefined)
-  , [debouncedFilters.statusIds, activeView, nonJunkStatusIds]);
+    , [debouncedFilters.statusIds, activeView, nonJunkStatusIds]);
 
   const queryProjectIds = React.useMemo(() =>
     debouncedFilters.projectIds.length > 0
       ? debouncedFilters.projectIds.map(Number)
       : undefined
-  , [debouncedFilters.projectIds]);
+    , [debouncedFilters.projectIds]);
 
   const queryRmIds = React.useMemo(() =>
     debouncedFilters.rmIds.length > 0
       ? debouncedFilters.rmIds.map(Number)
       : undefined
-  , [debouncedFilters.rmIds]);
+    , [debouncedFilters.rmIds]);
 
   const queryEmIds = React.useMemo(() =>
     debouncedFilters.emIds.length > 0
       ? debouncedFilters.emIds.map(Number)
       : undefined
-  , [debouncedFilters.emIds]);
+    , [debouncedFilters.emIds]);
 
   // Admin view uses getLeads
   const {
@@ -229,7 +229,7 @@ export const LeadsPage = () => {
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
-  const [addLeadActivity, { isLoading: isAddingActivity }] = 
+  const [addLeadActivity, { isLoading: isAddingActivity }] =
     useAddLeadActivityMutation();
 
   const handleRefetch = React.useCallback(() => {
@@ -272,7 +272,7 @@ export const LeadsPage = () => {
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
   const [bulkAssign, { isLoading: isBulkAssigning }] =
     useBulkAssignLeadsToRmMutation();
-  const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] = 
+  const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] =
     useBulkAssignLeadsToEmMutation();
   const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
@@ -392,25 +392,25 @@ export const LeadsPage = () => {
     setDeleteUuid(uuid);
   }, []);
 
-const handleFormSubmit = async (values: CreateLeadRequest) => {
-  try {
-    if (editingLead) {
-      await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
-      toast.success("Lead updated successfully");
-      if (values.assigned_to_rm) {
-        dispatch(setActiveTabAction(1));
+  const handleFormSubmit = async (values: CreateLeadRequest) => {
+    try {
+      if (editingLead) {
+        await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
+        toast.success("Lead updated successfully");
+        if (values.assigned_to_rm) {
+          dispatch(setActiveTabAction(1));
+        }
+        handleRefetch();
+      } else {
+        await createLead(values).unwrap();
+        toast.success("Lead created successfully");
       }
-      handleRefetch();
-    } else {
-      await createLead(values).unwrap();
-      toast.success("Lead created successfully");
+      setIsDrawerOpen(false);
+    } catch (err: any) {
+      const errorMsg = err?.data?.message || err?.data?.error || err?.data?.detail || err?.message || "Operation failed";
+      toast.error(errorMsg);
     }
-    setIsDrawerOpen(false);
-  } catch (err: any) {
-    const errorMsg = err?.data?.message || err?.data?.error || err?.data?.detail || err?.message || "Operation failed";
-    toast.error(errorMsg);
-  }
-};
+  };
 
   const handleScheduleVisitSubmit = async (data: any) => {
     try {
@@ -451,7 +451,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         lead_priority_id: lead.lead_priority_id || 1,
         lead_status_id: newStatusId,
       };
-      
+
       await updateLead(payload).unwrap();
       toast.success('Status updated successfully!');
     } catch (err: any) {
@@ -484,12 +484,12 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         lead_status_id: statusId,
         junk_reason: reason,
       };
-      
+
       await updateLead(payload).unwrap();
       toast.success('Lead marked as junk for review!');
       setIsJunkDialogOpen(false);
       setPendingJunkUpdate(null);
-    } 
+    }
     catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
@@ -753,30 +753,30 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
           <div className="p-4 space-y-4">
 
-          <LeadTable
-            data={sortedLeads}
-            isLoading={isLoading || isFetching}
-            page={page}
-            limit={limit}
-            total={totalLeads}
-            onPageChange={handlePageChange}
-            onLimitChange={handleLimitChange}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onScheduleVisit={handleScheduleVisit}
-            onUpdateStatus={handleUpdateStatus}
-            onAssignRm={handleAssignRm}
-            onAssignEm={handleAssignEm}
-            sortField={sortField}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-            offset={serverOffset}
-            selectedUuids={selectedUuids}
-            onSelectUuids={handleSelectUuids}
-            managers={managers}
-          />
+            <LeadTable
+              data={sortedLeads}
+              isLoading={isLoading || isFetching}
+              page={page}
+              limit={limit}
+              total={totalLeads}
+              onPageChange={handlePageChange}
+              onLimitChange={handleLimitChange}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onScheduleVisit={handleScheduleVisit}
+              onUpdateStatus={handleUpdateStatus}
+              onAssignRm={handleAssignRm}
+              onAssignEm={handleAssignEm}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              offset={serverOffset}
+              selectedUuids={selectedUuids}
+              onSelectUuids={handleSelectUuids}
+              managers={managers}
+            />
+          </div>
         </div>
-      </div>
       )}
 
       {activeView === 'junk' && (
@@ -785,13 +785,13 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           onVerify={(lead) => {
             setSelectedJunkLead(lead);
             setActiveView('junk-review');
-          }} 
+          }}
         />
       )}
 
       {activeView === 'junk-review' && selectedJunkLead && (
         <>
-          <LeadJunkReviewPage 
+          <LeadJunkReviewPage
             lead={selectedJunkLead as unknown as Lead}
             onBack={() => setActiveView('junk')}
             onReassign={(reason) => {
@@ -808,14 +808,14 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onClose={() => setShowReassignModal(false)}
             lead={selectedJunkLead as unknown as Lead}
             onConfirm={(rmId) => {
-           
+
               const _leadStatusId = masterData?.lead_statuses?.find(s => s.code === 'NEWLED')?.id;
-              if(_leadStatusId){
-                const _lead = {...selectedJunkLead, lead_status_id: _leadStatusId };
+              if (_leadStatusId) {
+                const _lead = { ...selectedJunkLead, lead_status_id: _leadStatusId };
                 handleAssignRm(_lead, rmId);
               }
 
-              
+
               toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
               setActiveView('junk');
             }}
@@ -899,7 +899,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       />
 
       {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-        <BulkActionsBar 
+        <BulkActionsBar
           selectedCount={selectedUuids.length}
           rms={rms}
           ems={isAdmin ? ems : emsReportees}
@@ -908,6 +908,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           onMarkAsJunk={handleBulkMarkAsJunk}
           onCancel={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
           isLoading={isAnyBulkAssigning || isDeleting}
+          showAssignRm={isAdmin}
+          showAssignEm={isRM}
         />
       )}
 

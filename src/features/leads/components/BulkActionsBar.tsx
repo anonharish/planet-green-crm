@@ -25,6 +25,8 @@ interface BulkActionsBarProps {
   onMarkAsJunk: () => void;
   onCancel: () => void;
   isLoading?: boolean;
+  showAssignRm?: boolean;
+  showAssignEm?: boolean;
 }
 
 const InitialsAvatar = ({ name }: { name: string }) => {
@@ -45,7 +47,9 @@ export const BulkActionsBar = ({
   onAssignEm,
   onMarkAsJunk,
   onCancel,
-  isLoading
+  isLoading,
+  showAssignRm = true,
+  showAssignEm = false
 }: BulkActionsBarProps) => {
   const [rmOpen, setRmOpen] = React.useState(false);
   const [emOpen, setEmOpen] = React.useState(false);
@@ -70,6 +74,7 @@ export const BulkActionsBar = ({
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           {/* Assign RM */}
+          {showAssignRm && (
           <Popover open={rmOpen} onOpenChange={setRmOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -103,9 +108,11 @@ export const BulkActionsBar = ({
               </Command>
             </PopoverContent>
           </Popover>
+          )}
 
           {/* Assign EM */}
-          {/* <Popover open={emOpen} onOpenChange={setEmOpen}>
+          {showAssignEm && (
+          <Popover open={emOpen} onOpenChange={setEmOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -137,7 +144,8 @@ export const BulkActionsBar = ({
                 </CommandGroup>
               </Command>
             </PopoverContent>
-          </Popover> */}
+          </Popover>
+          )}
         </div>
 
         <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
