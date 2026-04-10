@@ -727,7 +727,7 @@ export const LeadsPage = () => {
                 dispatch(resetTabFilters(tabKey));
                 setIsFilterDialogOpen(false);
               }}
-              statusIds={activeView === 'leads' ? nonJunkStatusIds.map(String) : statusIds}
+              statusIds={statusIds}
               statusOptions={statusOptions}
               projectIds={projectIds}
               projectOptions={projectOptions}
@@ -751,7 +751,7 @@ export const LeadsPage = () => {
             </div>
           </div>
 
-          <div className="p-4 space-y-4">
+          <div>
 
             <LeadTable
               data={sortedLeads}

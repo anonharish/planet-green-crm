@@ -364,8 +364,8 @@ export const LeadTable = ({
       header: 'LEAD ID',
       width: '110px',
       render: (l: Lead) => (
-        <Link
-          to={`/leads/${l.uuid}`}
+        <Link 
+          to={`/leads/${l.uuid}`} 
           className="text-secondary-foreground font-semibold hover:text-primary transition-colors text-xs"
         >
           #{fallback(l.lead_id)}
@@ -378,7 +378,7 @@ export const LeadTable = ({
       sortable: true,
       width: '150px',
       render: (l: Lead) => (
-        <span className="font-bold text-primary text-xs">
+        <span className="font-bold text-xs" style={{ color: '#191C1E' }}>
           {fallback(l.first_name)} {l.last_name || ''}
         </span>
       ),
@@ -389,7 +389,7 @@ export const LeadTable = ({
       width: '150px',
       render: (l: Lead) => (
         <div className="flex flex-col gap-0.5">
-          <span className="text-zinc-800 dark:text-zinc-100 font-medium text-xs">{fallback(l.phone_number)}</span>
+          <span className="font-medium text-xs" style={{ color: '#334155' }}>{fallback(l.phone_number)}</span>
           <span className="text-zinc-400 text-[11px] truncate">{l.email_address || '--'}</span>
         </div>
       ),

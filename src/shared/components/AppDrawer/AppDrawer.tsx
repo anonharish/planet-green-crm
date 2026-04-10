@@ -28,9 +28,33 @@ export const AppDrawer = ({ open, onClose, title, description, children, width =
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <SheetContent className={`${WIDTH_MAP[width]} p-0 flex flex-col h-full overflow-hidden border-none shadow-2xl`}>
         {showHeader && (
-          <SheetHeader className="px-6 py-3.5 border-b shrink-0 space-y-0 text-left">
-            <SheetTitle className="text-lg font-bold">{title}</SheetTitle>
-            {description && <SheetDescription className="text-xs">{description}</SheetDescription>}
+          <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0 space-y-1 text-left">
+            <SheetTitle
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontWeight: 800,
+                fontSize: '24px',
+                lineHeight: '32px',
+                letterSpacing: '-0.6px',
+                color: '#191C1E',
+              }}
+            >
+              {title}
+            </SheetTitle>
+            {description && (
+              <SheetDescription
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 400,
+                  fontSize: '14px',
+                  lineHeight: '22.75px',
+                  letterSpacing: '0px',
+                  color: '#64748B',
+                }}
+              >
+                {description}
+              </SheetDescription>
+            )}
           </SheetHeader>
         )}
         <div className="flex-1 flex flex-col overflow-hidden">

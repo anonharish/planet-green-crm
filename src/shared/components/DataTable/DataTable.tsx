@@ -121,8 +121,8 @@ export function DataTable<T>({
         )}
         style={maxHeight ? { maxHeight } : undefined}
       >
-        <Table className="min-w-full border-separate border-spacing-y-3">
-          <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Table className="min-w-full">
+          <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -171,7 +171,7 @@ export function DataTable<T>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="space-y-3">
+          <TableBody>
             {isLoading ? (
               Array.from({ length: limit }).map((_, i) => (
                 <SkeletonRow key={i} columns={columns.length} />
@@ -186,10 +186,10 @@ export function DataTable<T>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="bg-white shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-all"
+                  className="bg-white border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50/50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className={cn("text-sm text-gray-700 px-4 py-5 bg-white", cell.column.id === 'selection' && "px-0")}>
+                    <TableCell key={cell.id} className={cn("text-sm text-gray-700 px-4 py-4", cell.column.id === 'selection' && "px-0")}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
