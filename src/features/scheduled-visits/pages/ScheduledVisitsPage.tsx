@@ -24,6 +24,7 @@ export const ScheduledVisitsPage = () => {
   const { userId: paramUserId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isAdmin = user?.role_id === 1 || user?.role_id === 2;
   
   const userId = paramUserId ? parseInt(paramUserId, 10) : user?.id;
 
@@ -53,37 +54,37 @@ export const ScheduledVisitsPage = () => {
 
   // Default to first user in ems list if current selection is not valid or empty
   React.useEffect(() => {
-    if (ems.length > 0 && (!selectedEmId || !ems.find((e: any) => e.id.toString() === selectedEmId))) {
+    if (isAdmin && ems.length > 0 && (!selectedEmId || !ems.find((e: any) => e.id.toString() === selectedEmId))) {
       setSelectedEmId(ems[0].id.toString());
     }
-  }, [ems, selectedEmId]);
-  
+  }, [ems, selectedEmId, isAdmin]);
+
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   const scheduledStatus = masterData?.site_visit_status?.find((s: any) => s.code === 'SCHDLD');
   const scheduledStatusId = scheduledStatus?.id;
-  
+
   const completedStatus = masterData?.site_visit_status?.find((s: any) => s.code === 'CMPLTD');
   const completedStatusId = completedStatus?.id;
 
   const activeStatusId = activeTab === 'SCHDLD' ? scheduledStatusId : completedStatusId;
 
   // Fetch Visits
-  const isTodayFilter = filterStartDate && filterEndDate && 
-    filterStartDate.toDateString() === new Date().toDateString() && 
+  const isTodayFilter = filterStartDate && filterEndDate &&
+    filterStartDate.toDateString() === new Date().toDateString() &&
     filterEndDate.toDateString() === new Date().toDateString();
 
   const { data: visitsData, isLoading } = useGetVisitsByUserIdQuery(
-    { 
-      user_id: selectedEmId ? parseInt(selectedEmId, 10) : (userId as number), 
-      offset: 0, 
-      date: activeTab === 'SCHDLD' 
-        ? format(date, 'yyyy-MM-dd') 
+    {
+      user_id: selectedEmId ? parseInt(selectedEmId, 10) : (userId as number),
+      offset: 0,
+      date: activeTab === 'SCHDLD'
+        ? format(date, 'yyyy-MM-dd')
         : (isTodayFilter ? format(new Date(), 'yyyy-MM-dd') : undefined),
       start_date: activeTab === 'COMPLETED' && !isTodayFilter && filterStartDate ? format(filterStartDate, 'yyyy-MM-dd') : undefined,
       end_date: activeTab === 'COMPLETED' && !isTodayFilter && filterEndDate ? format(filterEndDate, 'yyyy-MM-dd') : undefined,
-      visit_status: activeStatusId 
+      visit_status: activeStatusId
     },
     { skip: (!selectedEmId && !userId) || !activeStatusId }
   );
@@ -110,7 +111,7 @@ export const ScheduledVisitsPage = () => {
     return filteredVisits.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredVisits, currentPage]);
 
-  console.log(ems,"insideems");
+  console.log(ems, "insideems");
   return (
     <div className="flex flex-col h-full bg-transparent pt-8 pb-20 px-4 space-y-8">
       {/* Header Section */}
@@ -133,8 +134,8 @@ export const ScheduledVisitsPage = () => {
                   <div className="space-y-3">
                     <div className="flex flex-col space-y-1.5">
                       <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">From Date</label>
-                      <Input 
-                        type="date" 
+                      <Input
+                        type="date"
                         max={format(new Date(), 'yyyy-MM-dd')}
                         value={draftStartDate ? format(draftStartDate, 'yyyy-MM-dd') : ''}
                         onChange={(e) => setDraftStartDate(e.target.value ? new Date(e.target.value) : undefined)}
@@ -143,8 +144,8 @@ export const ScheduledVisitsPage = () => {
                     </div>
                     <div className="flex flex-col space-y-1.5">
                       <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">To Date</label>
-                      <Input 
-                        type="date" 
+                      <Input
+                        type="date"
                         max={format(new Date(), 'yyyy-MM-dd')}
                         value={draftEndDate ? format(draftEndDate, 'yyyy-MM-dd') : ''}
                         onChange={(e) => setDraftEndDate(e.target.value ? new Date(e.target.value) : undefined)}
@@ -153,8 +154,8 @@ export const ScheduledVisitsPage = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
-                    <Button 
-                      className="w-full font-bold bg-[#0f3d6b] hover:bg-[#0c3156] text-white" 
+                    <Button
+                      className="w-full font-bold bg-[#0f3d6b] hover:bg-[#0c3156] text-white"
                       onClick={() => {
                         setFilterStartDate(draftStartDate);
                         setFilterEndDate(draftEndDate);
@@ -163,14 +164,14 @@ export const ScheduledVisitsPage = () => {
                     >
                       Apply Filter
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full font-bold" 
-                      onClick={() => { 
-                        setDraftStartDate(new Date()); 
+                    <Button
+                      variant="outline"
+                      className="w-full font-bold"
+                      onClick={() => {
+                        setDraftStartDate(new Date());
                         setDraftEndDate(new Date());
-                        setFilterStartDate(new Date()); 
-                        setFilterEndDate(new Date()); 
+                        setFilterStartDate(new Date());
+                        setFilterEndDate(new Date());
                       }}
                     >
                       Reset to Today
@@ -182,20 +183,22 @@ export const ScheduledVisitsPage = () => {
           )}
 
           {/* EM Selection Dropdown */}
-          <div className="flex items-center gap-2 min-w-[200px]">
-            <Select value={selectedEmId} onValueChange={setSelectedEmId}>
-              <SelectTrigger className="h-11 rounded-[16px] px-4 border-search-border bg-white shadow-sm font-bold text-primary">
-                <SelectValue placeholder="Select Experience Manager" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-zinc-200 bg-white text-black">
-                {ems.map((em: any) => (
-                  <SelectItem key={em.id} value={em.id.toString()} className="font-medium text-black cursor-pointer">
-                    {em.first_name} {em.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2 min-w-[200px]">
+              <Select value={selectedEmId} onValueChange={setSelectedEmId}>
+                <SelectTrigger className="h-11 rounded-[16px] px-4 border-search-border bg-white shadow-sm font-bold text-primary">
+                  <SelectValue placeholder="Select Experience Manager" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-zinc-200 bg-white text-black">
+                  {ems.map((em: any) => (
+                    <SelectItem key={em.id} value={em.id.toString()} className="font-medium text-black cursor-pointer">
+                      {em.first_name} {em.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -204,8 +207,8 @@ export const ScheduledVisitsPage = () => {
         {/* Search Input (60%) */}
         <div className="w-[60%] relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-          <Input 
-            placeholder="Search leads....." 
+          <Input
+            placeholder="Search leads....."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 h-12 rounded-full bg-white dark:bg-zinc-900 border-search-border shadow-sm focus-visible:ring-primary/10 text-base placeholder:text-zinc-400"
@@ -218,8 +221,8 @@ export const ScheduledVisitsPage = () => {
             onClick={() => setActiveTab('SCHDLD')}
             className={cn(
               "flex-1 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
-              activeTab === 'SCHDLD' 
-                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]" 
+              activeTab === 'SCHDLD'
+                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
                 : "text-zinc-500 hover:text-zinc-700"
             )}
           >
@@ -234,8 +237,8 @@ export const ScheduledVisitsPage = () => {
             onClick={() => setActiveTab('COMPLETED')}
             className={cn(
               "flex-1 rounded-xl text-sm font-bold transition-all",
-              activeTab === 'COMPLETED' 
-                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]" 
+              activeTab === 'COMPLETED'
+                ? "bg-white dark:bg-zinc-800 text-[#0f3d6b] dark:text-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
                 : "text-zinc-500 hover:text-zinc-700"
             )}
           >
@@ -266,8 +269,8 @@ export const ScheduledVisitsPage = () => {
             </Popover>
           ) : (
             <div className="font-bold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              {filterStartDate && filterEndDate 
-                ? `${format(filterStartDate, 'do MMM, yyyy')} - ${format(filterEndDate, 'do MMM, yyyy')}` 
+              {filterStartDate && filterEndDate
+                ? `${format(filterStartDate, 'do MMM, yyyy')} - ${format(filterEndDate, 'do MMM, yyyy')}`
                 : 'All Completed Visits'}
               <span className="text-sm font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full ml-2">
                 {visits.length} results
@@ -316,9 +319,9 @@ export const ScheduledVisitsPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {activeTab === 'COMPLETED' && (
-                    <Button 
+                    <Button
                       className="ml-auto bg-[#0f3d6b] hover:bg-[#0c3156] text-white rounded-full px-6 font-bold"
                       onClick={() => navigate(`/visit-feedback/completed/${visit.id || visit.uuid}`, { state: { visit } })}
                     >
@@ -330,7 +333,7 @@ export const ScheduledVisitsPage = () => {
             })
           )}
         </div>
-        
+
         {/* Pagination Footer */}
         {filteredVisits.length > 0 && (
           <div className="mt-8 bg-white dark:bg-zinc-900 rounded-xl px-6 py-4 flex items-center justify-between shadow-sm">
@@ -340,41 +343,41 @@ export const ScheduledVisitsPage = () => {
               </span> of <span className="font-bold text-zinc-800 dark:text-zinc-200">{filteredVisits.length}</span> Site Visits
             </div>
             {totalPages > 1 && (
-            <div className="flex items-center gap-1.5 text-sm font-bold">
-              <Button 
-                variant="ghost" 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="text-zinc-500 flex items-center hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 h-9 disabled:opacity-50"
-              >
-                <span className="mr-1">&lt;</span> Previous
-              </Button>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                <Button 
-                  key={pageNum}
-                  variant={currentPage === pageNum ? "default" : "ghost"}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={cn(
-                    "h-9 w-9 p-0 rounded-xl transition-all",
-                    currentPage === pageNum 
-                      ? "bg-[#0f3d6b] text-white hover:bg-[#0c3156]" 
-                      : "text-zinc-500 hover:bg-zinc-100"
-                  )}
+              <div className="flex items-center gap-1.5 text-sm font-bold">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="text-zinc-500 flex items-center hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 h-9 disabled:opacity-50"
                 >
-                  {pageNum}
+                  <span className="mr-1">&lt;</span> Previous
                 </Button>
-              ))}
 
-              <Button 
-                variant="ghost" 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="text-zinc-900 border border-zinc-200 shadow-sm flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3 h-9 ml-2 disabled:opacity-50"
-              >
-                Next <span className="ml-1">&gt;</span>
-              </Button>
-            </div>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "ghost"}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={cn(
+                      "h-9 w-9 p-0 rounded-xl transition-all",
+                      currentPage === pageNum
+                        ? "bg-[#0f3d6b] text-white hover:bg-[#0c3156]"
+                        : "text-zinc-500 hover:bg-zinc-100"
+                    )}
+                  >
+                    {pageNum}
+                  </Button>
+                ))}
+
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="text-zinc-900 border border-zinc-200 shadow-sm flex items-center hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3 h-9 ml-2 disabled:opacity-50"
+                >
+                  Next <span className="ml-1">&gt;</span>
+                </Button>
+              </div>
             )}
           </div>
         )}
@@ -382,14 +385,14 @@ export const ScheduledVisitsPage = () => {
 
       {/* Needs refactor of ScheduleVisitDialog to support no-lead context */}
       {isScheduleOpen && (
-        <ScheduleVisitDialog 
-          open={isScheduleOpen} 
-          onClose={() => setIsScheduleOpen(false)} 
-          lead={null as any} 
-          siteVisitStatuses={siteVisitStatuses} 
-          rms={rms} 
-          onSubmit={async () => {}} 
-          isLoading={false} 
+        <ScheduleVisitDialog
+          open={isScheduleOpen}
+          onClose={() => setIsScheduleOpen(false)}
+          lead={null as any}
+          siteVisitStatuses={siteVisitStatuses}
+          rms={rms}
+          onSubmit={async () => { }}
+          isLoading={false}
         />
       )}
     </div>

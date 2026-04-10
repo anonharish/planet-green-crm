@@ -28,7 +28,7 @@ export const ExperienceManagerListDialog = ({
   onConfirm
 }: ExperienceManagerListDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
+  // const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
 
   // Fetch reportees for this manager
   const { data: reportees = [], isLoading, isFetching } = useGetReporteesQuery(
@@ -58,13 +58,13 @@ export const ExperienceManagerListDialog = ({
     return colors[id % colors.length];
   };
 
-  const handleConfirm = () => {
-    if (selectedAgentId && onConfirm) {
-      onConfirm(selectedAgentId);
-    }
-    // For now, if no onConfirm is passed (like in UserTable), we just close or handle it
-    if (!onConfirm) onClose();
-  };
+  // const handleConfirm = () => {
+  //   if (selectedAgentId && onConfirm) {
+  //     onConfirm(selectedAgentId);
+  //   }
+  //   // For now, if no onConfirm is passed (like in UserTable), we just close or handle it
+  //   if (!onConfirm) onClose();
+  // };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -119,7 +119,7 @@ export const ExperienceManagerListDialog = ({
             <div className="space-y-4">
               {filteredReports.map((agent: User) => {
                 const initials = `${agent.first_name[0]}${agent.last_name[0]}`;
-                const isSelected = selectedAgentId === agent.id;
+                // const isSelected = selectedAgentId === agent.id;
                 
                 // MOCK Metrics (as seen in Figma)
                 const mockVisits = (agent.id % 5) + 1;
@@ -128,13 +128,11 @@ export const ExperienceManagerListDialog = ({
                 return (
                   <div 
                     key={agent.id} 
-                    onClick={() => setSelectedAgentId(agent.id)}
+                    // onClick={() => setSelectedAgentId(agent.id)}
                     className={cn(
-                      "flex items-center gap-4 p-4 rounded-3xl border transition-all duration-200 cursor-pointer group",
-                      isSelected 
-                        ? "bg-white border-transparent shadow-lg shadow-zinc-200/50" 
-                        : "bg-white border-zinc-100 hover:border-zinc-200"
-                    )}
+                    "flex items-center gap-4 p-4 rounded-3xl border transition-all duration-200 cursor-default",
+                    "bg-white border-zinc-100 hover:border-zinc-200"
+                  )}
                   >
                     <div className={cn(
                       "w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0",
@@ -162,14 +160,14 @@ export const ExperienceManagerListDialog = ({
                       </div>
                     </div>
 
-                    <div className={cn(
+                    {/* <div className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
                       isSelected 
                         ? "border-[#0f3d6b] bg-[#0f3d6b]" 
                         : "border-zinc-200 bg-white"
                     )}>
                       {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
-                    </div>
+                    </div> */}
                   </div>
                 );
               })}
@@ -177,7 +175,7 @@ export const ExperienceManagerListDialog = ({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer
         <div className="p-8 pt-4 flex justify-center bg-white dark:bg-zinc-950">
           <Button 
             onClick={handleConfirm}
@@ -186,7 +184,7 @@ export const ExperienceManagerListDialog = ({
           >
             Confirm Assignment
           </Button>
-        </div>
+        </div> */}
       </DialogContent>
     </Dialog>
   );

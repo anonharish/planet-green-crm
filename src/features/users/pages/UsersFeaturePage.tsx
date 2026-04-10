@@ -119,10 +119,11 @@ export const UsersFeaturePage = ({
 
   const actions = can(`${permissionPrefix}.create`) && (
     <Button
-      onClick={() => { setEditingUser(null); setIsDrawerOpen(true); }}
-      className="bg-[#0f3d6b] hover:bg-[#0c2f54] text-white rounded-full px-5 py-2 flex items-center gap-2 shadow-sm"
+       onClick={() => { setEditingUser(null); setIsDrawerOpen(true); }}
+       className="bg-[#0f3d6b] hover:bg-[#0c2f54] text-white rounded-full px-5 py-2 flex items-center gap-2 
+       shadow-[0px_4px_6px_-4px_rgba(6,54,105,0.1),0px_10px_15px_-3px_rgba(6,54,105,0.1)]"
     >
-      <UserPlus className="h-4 w-4" />
+     <UserPlus className="h-4 w-4" />
       Create {permissionPrefix === 'manager' ? 'RM' : 'EM'}
     </Button>
   );
@@ -147,11 +148,10 @@ export const UsersFeaturePage = ({
         ────────────────────────────────────────────────────────────────────── */}
       <div
         style={{
-          background: '#ffffff',
+          background: '#FFFFFF',
           borderRadius: 16,
-          border: '1px solid #e8edf3',
-          boxShadow: '0 1px 6px rgba(15,61,107,0.07)',
-          overflow: 'hidden',   /* keep — gray tray fills naturally now */
+          boxShadow: '0px 4px 12px rgba(0,0,0,0.05)',
+          overflow: 'hidden',
         }}
       >
         <UserTable
