@@ -597,12 +597,12 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
   return (
     <div className="space-y-4">
-      {activeView === 'leads' ? (
+      {activeView === 'leads' || activeView === 'junk' ? (
         <PageHeader
-          title="Leads Dashboard"
-          description="Manage and track your sales pipeline efficiency"
+          title={activeView === 'leads' ? "Leads Dashboard" : "Manage Junks"}
+          description={activeView === 'leads' ? "Manage and track your sales pipeline efficiency" : "Streamline and audit the junk lead restoration process"}
           actions={
-            can(PERMISSIONS.LEAD_CREATE) ? (
+            activeView === 'leads' && can(PERMISSIONS.LEAD_CREATE) ? (
               <Button onClick={handleCreateNew} className="gap-2">
                 <UserPlus size={18} />
                 Create
@@ -731,7 +731,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               statusOptions={statusOptions}
               projectIds={projectIds}
               projectOptions={projectOptions}
-              rmIds={rmIds}
+              rmIds={isAdmin ? rmIds : (currentUser?.id ? [String(currentUser.id)] : [])}
               emIds={emIds}
               rmOptions={rms}
               showRmFilter={isAdmin}
@@ -780,7 +780,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       )}
 
       {activeView === 'junk' && (
-        <JunkLeadsPage 
+        <JunkLeadsPage
+          isAdmin={isAdmin}
           onVerify={(lead) => {
             setSelectedJunkLead(lead);
             setActiveView('junk-review');
