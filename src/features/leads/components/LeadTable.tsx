@@ -142,12 +142,12 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
 };
 
 // --- EM Popover Content (Lazy Loaded) ---
-const EmAssigneePopoverContent = ({ 
-  lead, 
-  onAssign, 
-  setOpen 
-}: { 
-  lead: Lead; 
+const EmAssigneePopoverContent = ({
+  lead,
+  onAssign,
+  setOpen
+}: {
+  lead: Lead;
   onAssign: (lead: Lead, emId: number | null) => void;
   setOpen: (open: boolean) => void;
 }) => {
@@ -241,10 +241,10 @@ const EmAssigneeCell = ({ lead, onAssign, disabled, emLabel }: {
         </PopoverTrigger>
         <PopoverContent className="w-56 p-0" align="start">
           {open && (
-            <EmAssigneePopoverContent 
-              lead={lead} 
-              onAssign={onAssign} 
-              setOpen={setOpen} 
+            <EmAssigneePopoverContent
+              lead={lead}
+              onAssign={onAssign}
+              setOpen={setOpen}
             />
           )}
         </PopoverContent>
@@ -308,15 +308,15 @@ export const LeadTable = ({
   const dataArray = data || [];
   const { currentRole, can } = usePermissions();
   const roleCode = currentRole?.code || '';
-  
-  const { 
-    getStatusLabel, 
-    getProjectLabel, 
-    getRmLabel, 
+
+  const {
+    getStatusLabel,
+    getProjectLabel,
+    getRmLabel,
     getEmLabel,
     getSourceLabel,
     masterData,
-    isLoading: isLookupLoading 
+    isLoading: isLookupLoading
   } = useMasterDataLookup();
 
   const fallback = (value: React.ReactNode) => value ?? '--';
@@ -324,12 +324,12 @@ export const LeadTable = ({
   const isAllSelected = dataArray.length > 0 && selectedUuids.length === dataArray.length;
 
   const columns: ColumnDef<Lead>[] = React.useMemo(() => [
-    ...( can(PERMISSIONS.LEAD_BULK_ACTIONS) ? [
+    ...(can(PERMISSIONS.LEAD_BULK_ACTIONS) ? [
       {
         key: 'selection',
         header: (
           <div className="flex items-center justify-center h-full">
-            <Checkbox 
+            <Checkbox
               checked={isAllSelected}
               onCheckedChange={(checked: boolean) => {
                 if (checked) {
@@ -345,10 +345,10 @@ export const LeadTable = ({
         width: '40px',
         render: (l: Lead) => (
           <div className="flex items-center justify-center">
-            <Checkbox 
+            <Checkbox
               checked={selectedUuids.includes(l.uuid)}
               onCheckedChange={(checked: boolean) => {
-                const newSelection = checked 
+                const newSelection = checked
                   ? [...selectedUuids, l.uuid]
                   : selectedUuids.filter(id => id !== l.uuid);
                 onSelectUuids?.(newSelection);
@@ -366,8 +366,7 @@ export const LeadTable = ({
       render: (l: Lead) => (
         <Link 
           to={`/leads/${l.uuid}`} 
-          className="font-semibold hover:text-primary transition-colors text-xs"
-          style={{ color: '#475569' }}
+          className="text-secondary-foreground font-semibold hover:text-primary transition-colors text-xs"
         >
           #{fallback(l.lead_id)}
         </Link>
@@ -395,6 +394,28 @@ export const LeadTable = ({
         </div>
       ),
     },
+
+    {
+      key: 'created_on',
+      header: 'CREATION DATE',
+      sortable: true,
+      width: '160px',
+      render: (l: Lead) => {
+        if (!l.created_on) return '--';
+
+        const formatted = new Date(l.created_on).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+
+        return (
+          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            {formatted}
+          </span>
+        );
+      },
+    },
     {
       key: 'source_id',
       header: 'SOURCE',
@@ -418,8 +439,8 @@ export const LeadTable = ({
       width: '150px',
       render: (l: Lead) => (
         <div onClick={(e) => e.stopPropagation()}>
-          <Select 
-            value={String(l.lead_status_id)} 
+          <Select
+            value={String(l.lead_status_id)}
             disabled={!can(PERMISSIONS.LEAD_STATUS_UPDATE)}
             onValueChange={(val) => onUpdateStatus?.(l, Number(val))}
           >
@@ -440,7 +461,7 @@ export const LeadTable = ({
       ),
     },
     // Conditional: RM for Admin/Super Admin (SADMIN, ADMIN)
-    ...( (roleCode === 'SADMIN' || roleCode === 'ADMIN') ? [
+    ...((roleCode === 'SADMIN' || roleCode === 'ADMIN') ? [
       {
         key: 'assigned_to_rm',
         header: 'ASSIGNED RM',
@@ -448,7 +469,7 @@ export const LeadTable = ({
         render: (l: Lead) => (
           <RmAssigneeCell
             lead={l}
-            onAssign={onAssignRm || (() => {})}
+            onAssign={onAssignRm || (() => { })}
             managers={managers}
             disabled={!can(PERMISSIONS.LEAD_EDIT)}
           />
@@ -456,7 +477,7 @@ export const LeadTable = ({
       }
     ] : []),
     // Conditional: EM for Admin/Super/RM (SADMIN, ADMIN, RELMNG)
-    ...( (roleCode === 'SADMIN' || roleCode === 'ADMIN' || roleCode === 'RELMNG') ? [
+    ...((roleCode === 'SADMIN' || roleCode === 'ADMIN' || roleCode === 'RELMNG') ? [
       {
         key: 'assigned_to_em',
         header: 'ASSIGNED EM',
@@ -464,7 +485,7 @@ export const LeadTable = ({
         render: (l: Lead) => (
           <EmAssigneeCell
             lead={l}
-            onAssign={onAssignEm || (() => {})}
+            onAssign={onAssignEm || (() => { })}
             disabled={!can(PERMISSIONS.LEAD_EDIT)}
             emLabel={getEmLabel(l.assigned_to_em)}
           />
@@ -523,8 +544,8 @@ export const LeadTable = ({
               {can(PERMISSIONS.LEAD_DELETE) && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => onDelete(lead.uuid)} 
+                  <DropdownMenuItem
+                    onClick={() => onDelete(lead.uuid)}
                     className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />

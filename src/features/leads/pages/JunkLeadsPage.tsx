@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 
 interface JunkLeadsPageProps {
   onVerify: (lead: Lead) => void;
+  isAdmin: boolean;
 }
 
 export const InitialsAvatar = ({ firstName, lastName }: { firstName?: string; lastName?: string }) => {
@@ -25,7 +26,8 @@ export const InitialsAvatar = ({ firstName, lastName }: { firstName?: string; la
 };
 
 export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
-  onVerify
+  onVerify,
+  isAdmin
 }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -51,14 +53,10 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
     getStatusLabel,
     getProjectLabel,
     getRmLabel,
-    getSourceLabel
+    getSourceLabel,
+    getEmLabel
   } = useMasterDataLookup();
 
-  // For server-side pagination with partial data, assume more if 200 chunk is full
-  // But wait, the DataTable expects a total. If we don't have a real total from API, 
-  // we might need to adjust. GetLeadsResponse is just an array.
-  // The backend might not return total. Let's see LeadsPage.tsx's total calculation.
-  // totalLeads = leads.length < 200 ? serverOffset + leads.length : serverOffset + 201;
   const total = leads.length < limit ? (page - 1) * limit + leads.length : (page - 1) * limit + limit + 1;
 
   const fallback = (value: React.ReactNode) => value ?? '--';
@@ -143,6 +141,31 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
         );
       },
     },
+
+    {
+      key: 'assigned_to_em',
+      header: 'EM NAME',
+      width: '180px',
+      render: (l: Lead) => {
+        const label = getEmLabel(l.assigned_to_em);
+
+        if (label === '--') {
+          return <span className="text-zinc-400 text-xs italic">Unassigned</span>;
+        }
+
+        return (
+          <div className="flex items-center gap-2">
+            <InitialsAvatar
+              firstName={label.split(' ')[0]}
+              lastName={label.split(' ')[1]}
+            />
+            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              {label}
+            </span>
+          </div>
+        );
+      },
+    },
     {
       key: 'junk_reason',
       header: 'JUNK REASON',
@@ -165,7 +188,10 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
         );
       },
     },
-    {
+  ];
+
+  if (isAdmin) {
+    columns.push({
       key: 'actions',
       header: 'ACTIONS',
       width: '120px',
@@ -179,15 +205,12 @@ export const JunkLeadsPage: React.FC<JunkLeadsPageProps> = ({
           Verify Lead
         </Button>
       ),
-    },
-  ];
+    });
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-3xl font-black text-[#0f3d6b] tracking-tight">Manage Junks</h1>
-        <p className="text-zinc-500 font-medium text-sm">Streamline and audit the junk lead restoration process</p>
-      </div>
+
 
       <div className="bg-white dark:bg-zinc-950 rounded-4xl border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
         <div className="px-8 py-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-50/30 dark:bg-zinc-900/10">
