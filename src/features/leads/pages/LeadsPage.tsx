@@ -25,7 +25,7 @@ import {
   useScheduleVisitMutation,
   useGetLeadsByRmIdQuery,
   useGetLeadsByEmIdQuery,
-   useAddLeadActivityMutation,
+  useAddLeadActivityMutation,
 } from "../api/leadsApi";
 import { useGetAllMasterDataQuery } from "../../master/api/masterApi";
 import {
@@ -167,29 +167,29 @@ export const LeadsPage = () => {
       .map((s: any) => s.id);
   }, [masterData]);
 
-  const queryStatusIds = React.useMemo(() => 
+  const queryStatusIds = React.useMemo(() =>
     debouncedFilters.statusIds.length > 0
       ? debouncedFilters.statusIds.map(Number)
       : (activeView === 'leads' ? nonJunkStatusIds : undefined)
-  , [debouncedFilters.statusIds, activeView, nonJunkStatusIds]);
+    , [debouncedFilters.statusIds, activeView, nonJunkStatusIds]);
 
   const queryProjectIds = React.useMemo(() =>
     debouncedFilters.projectIds.length > 0
       ? debouncedFilters.projectIds.map(Number)
       : undefined
-  , [debouncedFilters.projectIds]);
+    , [debouncedFilters.projectIds]);
 
   const queryRmIds = React.useMemo(() =>
     debouncedFilters.rmIds.length > 0
       ? debouncedFilters.rmIds.map(Number)
       : undefined
-  , [debouncedFilters.rmIds]);
+    , [debouncedFilters.rmIds]);
 
   const queryEmIds = React.useMemo(() =>
     debouncedFilters.emIds.length > 0
       ? debouncedFilters.emIds.map(Number)
       : undefined
-  , [debouncedFilters.emIds]);
+    , [debouncedFilters.emIds]);
 
   // Admin view uses getLeads
   const {
@@ -229,7 +229,7 @@ export const LeadsPage = () => {
     assigned_to_em: Number(currentUser?.id || 0),
     offset: serverOffset,
   }, { skip: !isEM });
-  const [addLeadActivity, { isLoading: isAddingActivity }] = 
+  const [addLeadActivity, { isLoading: isAddingActivity }] =
     useAddLeadActivityMutation();
 
   const handleRefetch = React.useCallback(() => {
@@ -272,7 +272,7 @@ export const LeadsPage = () => {
   const [updateLead, { isLoading: isUpdating }] = useUpdateLeadMutation();
   const [bulkAssign, { isLoading: isBulkAssigning }] =
     useBulkAssignLeadsToRmMutation();
-  const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] = 
+  const [bulkAssignToEm, { isLoading: isBulkAssignToEm }] =
     useBulkAssignLeadsToEmMutation();
   const { data: managers = [] } = useGetAllUsersByRoleIdQuery({ role_id: 3, offset: 0 });
   const [deleteLead, { isLoading: isDeleting }] = useDeleteLeadMutation();
@@ -392,25 +392,25 @@ export const LeadsPage = () => {
     setDeleteUuid(uuid);
   }, []);
 
-const handleFormSubmit = async (values: CreateLeadRequest) => {
-  try {
-    if (editingLead) {
-      await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
-      toast.success("Lead updated successfully");
-      if (values.assigned_to_rm) {
-        dispatch(setActiveTabAction(1));
+  const handleFormSubmit = async (values: CreateLeadRequest) => {
+    try {
+      if (editingLead) {
+        await updateLead({ ...values, uuid: editingLead.uuid }).unwrap();
+        toast.success("Lead updated successfully");
+        if (values.assigned_to_rm) {
+          dispatch(setActiveTabAction(1));
+        }
+        handleRefetch();
+      } else {
+        await createLead(values).unwrap();
+        toast.success("Lead created successfully");
       }
-      handleRefetch();
-    } else {
-      await createLead(values).unwrap();
-      toast.success("Lead created successfully");
+      setIsDrawerOpen(false);
+    } catch (err: any) {
+      const errorMsg = err?.data?.message || err?.data?.error || err?.data?.detail || err?.message || "Operation failed";
+      toast.error(errorMsg);
     }
-    setIsDrawerOpen(false);
-  } catch (err: any) {
-    const errorMsg = err?.data?.message || err?.data?.error || err?.data?.detail || err?.message || "Operation failed";
-    toast.error(errorMsg);
-  }
-};
+  };
 
   const handleScheduleVisitSubmit = async (data: any) => {
     try {
@@ -451,7 +451,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         lead_priority_id: lead.lead_priority_id || 1,
         lead_status_id: newStatusId,
       };
-      
+
       await updateLead(payload).unwrap();
       toast.success('Status updated successfully!');
     } catch (err: any) {
@@ -484,12 +484,12 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         lead_status_id: statusId,
         junk_reason: reason,
       };
-      
+
       await updateLead(payload).unwrap();
       toast.success('Lead marked as junk for review!');
       setIsJunkDialogOpen(false);
       setPendingJunkUpdate(null);
-    } 
+    }
     catch (err: any) {
       toast.error(err?.data?.message || 'Failed to update status');
     }
@@ -597,12 +597,12 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
   return (
     <div className="space-y-4">
-      {activeView === 'leads' ? (
+      {activeView === 'leads' || activeView === 'junk' ? (
         <PageHeader
-          title="Leads Dashboard"
-          description="Manage and track your sales pipeline efficiency"
+          title={activeView === 'leads' ? "Leads Dashboard" : "Manage Junks"}
+          description={activeView === 'leads' ? "Manage and track your sales pipeline efficiency" : "Streamline and audit the junk lead restoration process"}
           actions={
-            can(PERMISSIONS.LEAD_CREATE) ? (
+            activeView === 'leads' && can(PERMISSIONS.LEAD_CREATE) ? (
               <Button onClick={handleCreateNew} className="gap-2">
                 <UserPlus size={18} />
                 Create
@@ -621,7 +621,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
               onChange={(v) =>
                 dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
               }
-              placeholder="Search leads by name"
+              placeholder="Search by Name or Phone Number"
             />
           )}
         </div>
@@ -633,36 +633,48 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
                 dispatch(setActiveTabAction(0));
                 setActiveView('leads');
               }}
+              style={{ 
+                width: (activeTab === 0 && activeView === 'leads') ? '210.87px' : '155.8px',
+                height: (activeTab === 0 && activeView === 'leads') ? '39px' : '36px'
+              }}
               className={cn(
-                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeTab === 0 && activeView === 'leads'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
-              Unassigned
+              Unassigned {(activeTab === 0 && activeView === 'leads') && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] ml-1">24</span>}
             </button>
             <button
               onClick={() => {
                 dispatch(setActiveTabAction(1));
                 setActiveView('leads');
               }}
+              style={{ 
+                width: (activeTab === 1 && activeView === 'leads') ? '210.87px' : '155.8px',
+                height: (activeTab === 1 && activeView === 'leads') ? '39px' : '36px'
+              }}
               className={cn(
-                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeTab === 1 && activeView === 'leads'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
               Assigned
             </button>
             <button
               onClick={() => setActiveView('junk')}
+              style={{ 
+                width: (activeView === 'junk' || activeView === 'junk-review') ? '210.87px' : '155.8px',
+                height: (activeView === 'junk' || activeView === 'junk-review') ? '39px' : '36px'
+              }}
               className={cn(
-                "px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeView === 'junk' || activeView === 'junk-review'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
               Junk
@@ -677,8 +689,12 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
         {/* Card Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-foreground">Leads Queue</h2>
-            {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
+            <h2 
+              className="font-bold text-[#191C1E] font-['Plus_Jakarta_Sans']"
+              style={{ width: '175px', height: '28px', fontSize: '18px', lineHeight: '28px' }}
+            >
+              Leads Queue
+            </h2>
           </div>
           <div className="flex items-center gap-3">
             <Button 
@@ -737,44 +753,45 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
 
           <div className="p-4 space-y-4">
 
-          <LeadTable
-            data={sortedLeads}
-            isLoading={isLoading || isFetching}
-            page={page}
-            limit={limit}
-            total={totalLeads}
-            onPageChange={handlePageChange}
-            onLimitChange={handleLimitChange}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onScheduleVisit={handleScheduleVisit}
-            onUpdateStatus={handleUpdateStatus}
-            onAssignRm={handleAssignRm}
-            onAssignEm={handleAssignEm}
-            sortField={sortField}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-            offset={serverOffset}
-            selectedUuids={selectedUuids}
-            onSelectUuids={handleSelectUuids}
-            managers={managers}
-          />
+            <LeadTable
+              data={sortedLeads}
+              isLoading={isLoading || isFetching}
+              page={page}
+              limit={limit}
+              total={totalLeads}
+              onPageChange={handlePageChange}
+              onLimitChange={handleLimitChange}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onScheduleVisit={handleScheduleVisit}
+              onUpdateStatus={handleUpdateStatus}
+              onAssignRm={handleAssignRm}
+              onAssignEm={handleAssignEm}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              offset={serverOffset}
+              selectedUuids={selectedUuids}
+              onSelectUuids={handleSelectUuids}
+              managers={managers}
+            />
+          </div>
         </div>
-      </div>
       )}
 
       {activeView === 'junk' && (
-        <JunkLeadsPage 
+        <JunkLeadsPage
+          isAdmin={isAdmin}
           onVerify={(lead) => {
             setSelectedJunkLead(lead);
             setActiveView('junk-review');
-          }} 
+          }}
         />
       )}
 
       {activeView === 'junk-review' && selectedJunkLead && (
         <>
-          <LeadJunkReviewPage 
+          <LeadJunkReviewPage
             lead={selectedJunkLead as unknown as Lead}
             onBack={() => setActiveView('junk')}
             onReassign={(reason) => {
@@ -791,14 +808,14 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
             onClose={() => setShowReassignModal(false)}
             lead={selectedJunkLead as unknown as Lead}
             onConfirm={(rmId) => {
-           
+
               const _leadStatusId = masterData?.lead_statuses?.find(s => s.code === 'NEWLED')?.id;
-              if(_leadStatusId){
-                const _lead = {...selectedJunkLead, lead_status_id: _leadStatusId };
+              if (_leadStatusId) {
+                const _lead = { ...selectedJunkLead, lead_status_id: _leadStatusId };
                 handleAssignRm(_lead, rmId);
               }
 
-              
+
               toast.success(`Lead successfully reassigned to RM ID: ${rmId}`);
               setActiveView('junk');
             }}
@@ -882,7 +899,7 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
       />
 
       {selectedUuids.length > 0 && can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
-        <BulkActionsBar 
+        <BulkActionsBar
           selectedCount={selectedUuids.length}
           rms={rms}
           ems={isAdmin ? ems : emsReportees}
@@ -891,6 +908,8 @@ const handleFormSubmit = async (values: CreateLeadRequest) => {
           onMarkAsJunk={handleBulkMarkAsJunk}
           onCancel={() => dispatch(setSelectedUuids({ tabKey, uuids: [] }))}
           isLoading={isAnyBulkAssigning || isDeleting}
+          showAssignRm={isAdmin}
+          showAssignEm={isRM}
         />
       )}
 

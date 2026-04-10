@@ -16,7 +16,7 @@ export const SearchInput = ({ value, onChange, placeholder = 'Search...' }: Sear
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-12 pr-10 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm"
+        className="w-full pl-12 pr-10 py-3 rounded-full bg-white border border-[#00000033] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm"
       />
 
       {/* Search Icon */}
