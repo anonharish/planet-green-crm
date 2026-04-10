@@ -57,19 +57,19 @@ export const JunkReasonDialog: React.FC<JunkReasonDialogProps> = ({
               className="w-full h-24 bg-zinc-50/50 dark:bg-zinc-900 px-4 py-3 rounded-xl border border-zinc-100 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#0f3d6b]/10 focus:border-[#0f3d6b] transition-all resize-none text-zinc-600 dark:text-zinc-300 font-medium text-sm shadow-inner"
               placeholder="e.g., Wrong number, Not interested..."
               value={reason}
-              maxLength={100}
+              maxLength={1000}
               onChange={(e) => setReason(e.target.value)}
             />
             <div className="text-right text-xs text-zinc-400">
-              {reason.length}/100
+              {reason.length}/1000
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={handleClose}
-              className="px-6 h-[52px] text-sm font-bold text-zinc-500 hover:bg-zinc-50 transition-all"
+              className="px-6 h-[52px] text-sm font-bold text-zinc-500 border border-zinc-300 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 transition-all"
             >
               Cancel
             </Button>

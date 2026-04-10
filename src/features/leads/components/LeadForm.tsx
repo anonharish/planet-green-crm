@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { Loader2, User, ClipboardList, MapPin } from 'lucide-react';
+import { Loader2, User, ClipboardList } from 'lucide-react';
 import { useGetAllUsersQuery, useGetAllUsersByRoleIdQuery, useGetReporteesQuery } from '../../users/api/usersApi';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useGetAllMasterDataQuery } from '../../master/api/masterApi';
@@ -46,15 +46,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const INDIAN_STATES = [
-  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam",
-  "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir",
-  "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh",
-  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha",
-  "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
-  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
-];
+
 
 interface LeadFormProps {
   onSubmit: (values: CreateLeadRequest) => void;
@@ -99,7 +91,7 @@ export const LeadForm = ({
     },
   });
 
-  const sourceId = form.watch('source_id');
+
   const selectedRmId = form.watch('assigned_to_rm');
 
   // Fetch reportees (EMs) for the selected RM
@@ -118,10 +110,8 @@ export const LeadForm = ({
       return;
     }
     
-    // Only reset if we are not on the initial load / reset to same value
     if (selectedRmId !== initialRmId.current) {
       form.setValue('assigned_to_em', null);
-      // Once changed, the "initial" value is no longer relevant for reset logic
       initialRmId.current = -1; 
     }
   }, [selectedRmId, form]);
@@ -159,9 +149,20 @@ export const LeadForm = ({
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-10 bg-zinc-50/30 dark:bg-zinc-950/30">
           {/* Section: Personal Details */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2 text-primary">
-              <User className="h-4 w-4" />
-              <h3 className="text-sm font-bold tracking-tight">Personal Details</h3>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-[#063669]" />
+              <h3
+                style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  letterSpacing: '-0.4px',
+                  color: '#063669',
+                }}
+              >
+                Personal Details
+              </h3>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -170,14 +171,14 @@ export const LeadForm = ({
                 name="first_name"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">First Name</FormLabel>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>First Name</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="e.g. Jonathan" 
                         {...field} 
                         disabled={isLoading} 
                         maxLength={30}
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all font-medium"
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all font-medium placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                       />
                     </FormControl>
                     <FormMessage />
@@ -189,60 +190,14 @@ export const LeadForm = ({
                 name="last_name"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Last Name</FormLabel>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Last Name</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="e.g. Wick" 
                         {...field} 
                         disabled={isLoading} 
                         maxLength={30}
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all font-medium"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="phone_number"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Phone Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g. 9876543210"
-                        {...field}
-                        disabled={isLoading || isEdit}
-                        type="tel"
-                        maxLength={10}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const val = e.target.value.replace(/\D/g, '');
-                          field.onChange(val);
-                        }}
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all font-medium tracking-wider"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email_address"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Email Address</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="j.wick@continental.com" 
-                        {...field} 
-                        disabled={isLoading} 
-                        type="email"
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all font-medium placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                       />
                     </FormControl>
                     <FormMessage />
@@ -253,16 +208,61 @@ export const LeadForm = ({
 
             <FormField
               control={form.control}
+              name="phone_number"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="+00  000 000 0000"
+                      {...field}
+                      disabled={isLoading || isEdit}
+                      type="tel"
+                      maxLength={10}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        field.onChange(val);
+                      }}
+                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all font-medium tracking-wider placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email_address"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Email Address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="j.wick@continental.com" 
+                      {...field} 
+                      disabled={isLoading} 
+                      type="email"
+                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="occupation"
               render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Occupation</FormLabel>
+                  <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Occupation</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Consultant, Designer, etc." 
                       {...field} 
                       disabled={isLoading} 
-                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                     />
                   </FormControl>
                   <FormMessage />
@@ -271,81 +271,63 @@ export const LeadForm = ({
             />
           </div>
 
-          {/* Section: Classification */}
+          {/* Section: Classification & Address */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2 text-primary">
-              <ClipboardList className="h-4 w-4" />
-              <h3 className="text-sm font-bold tracking-tight">Classification</h3>
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-[#063669]" />
+              <h3
+                style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  letterSpacing: '-0.4px',
+                  color: '#063669',
+                }}
+              >
+                Classification
+              </h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="source_id"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Source</FormLabel>
-                    <Select 
-                      onValueChange={(v) => field.onChange(Number(v))} 
-                      value={field.value ? String(field.value) : ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
-                          <SelectValue placeholder="Select Source" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-white text-black">
-                        {masterData?.sources.map((source) => (
-                          <SelectItem key={source.id} value={String(source.id)} className="text-black cursor-pointer">
-                            {source.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="project_id"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Project</FormLabel>
-                    <Select 
-                      onValueChange={(v) => field.onChange(Number(v))} 
-                      value={field.value ? String(field.value) : ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
-                          <SelectValue placeholder="Select Project" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-white text-black">
-                        {masterData?.projects.map((project) => (
-                          <SelectItem key={project.id} value={String(project.id)} className="text-black cursor-pointer">
-                            {project.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="source_id"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Source</FormLabel>
+                  <Select 
+                    onValueChange={(v) => field.onChange(Number(v))} 
+                    value={field.value ? String(field.value) : ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                        <SelectValue placeholder="Organic Search" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white text-black">
+                      {masterData?.sources.map((source) => (
+                        <SelectItem key={source.id} value={String(source.id)} className="text-black cursor-pointer">
+                          {source.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {(() => {
+              const selectedSourceId = form.watch('source_id');
               const internalSource = masterData?.sources.find(s => s.code === 'INTERNAL' || s.description.toLowerCase().includes('internal'));
-              return sourceId === internalSource?.id;
+              return selectedSourceId === internalSource?.id;
             })() && (
               <FormField
                 control={form.control}
                 name="source_employee_user_id"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Source Employee</FormLabel>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Source Employee</FormLabel>
                     <Select 
                       onValueChange={(v) => field.onChange(Number(v))} 
                       value={field.value ? String(field.value) : ""}
@@ -369,6 +351,34 @@ export const LeadForm = ({
               />
             )}
 
+            <FormField
+              control={form.control}
+              name="project_id"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Project</FormLabel>
+                  <Select 
+                    onValueChange={(v) => field.onChange(Number(v))} 
+                    value={field.value ? String(field.value) : ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
+                        <SelectValue placeholder="Azure Heights Tower A" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-white text-black">
+                      {masterData?.projects.map((project) => (
+                        <SelectItem key={project.id} value={String(project.id)} className="text-black cursor-pointer">
+                          {project.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {!isEM && (
               <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -376,14 +386,14 @@ export const LeadForm = ({
                   name="assigned_to_rm"
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
-                      <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Assign to RM</FormLabel>
+                      <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Assign to RM</FormLabel>
                       <Select 
                         onValueChange={(v) => field.onChange(v === 'none' ? null : Number(v))} 
                         value={field.value ? String(field.value) : ""}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
-                            <SelectValue placeholder="Select RM" />
+                            <SelectValue placeholder="e.g. Jonathan" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="bg-white text-black">
@@ -404,16 +414,15 @@ export const LeadForm = ({
                   name="assigned_to_em"
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
-                      <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Assign to EM</FormLabel>
+                      <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Assign to EM</FormLabel>
                       <Select 
-                        key={selectedRmId || 'empty-rm'}
                         onValueChange={(v) => field.onChange(v === 'none' ? null : Number(v))} 
                         value={field.value ? String(field.value) : ""}
                         disabled={!selectedRmId || isLoadingReportees}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
-                            <SelectValue placeholder={!selectedRmId ? "Select RM first" : "Select EM"} />
+                            <SelectValue placeholder="e.g. Jonathan" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="bg-white text-black">
@@ -431,27 +440,19 @@ export const LeadForm = ({
                 />
               </div>
             )}
-          </div>
-
-          {/* Section: Address Details */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-primary">
-              <MapPin className="h-4 w-4" />
-              <h3 className="text-sm font-bold tracking-tight">Address Details</h3>
-            </div>
 
             <FormField
               control={form.control}
               name="address"
               render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Address</FormLabel>
+                  <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Address</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g. 123 Main St" 
+                      placeholder="e.g. Organic Search" 
                       {...field} 
                       disabled={isLoading} 
-                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                      className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                     />
                   </FormControl>
                   <FormMessage />
@@ -465,13 +466,13 @@ export const LeadForm = ({
                 name="country"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Country</FormLabel>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Country</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Country" 
+                        placeholder="e.g. Jonathan" 
                         {...field} 
                         disabled={isLoading} 
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                       />
                     </FormControl>
                     <FormMessage />
@@ -480,16 +481,16 @@ export const LeadForm = ({
               />
               <FormField
                 control={form.control}
-                name="city"
+                name="state"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">City</FormLabel>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>State</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="City" 
+                        placeholder="e.g. Jonathan" 
                         {...field} 
                         disabled={isLoading} 
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                       />
                     </FormControl>
                     <FormMessage />
@@ -501,28 +502,18 @@ export const LeadForm = ({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="state"
+                name="city"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">State</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value ? String(field.value) : ""}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl h-11 px-4 focus:ring-primary/20 transition-all">
-                          <SelectValue placeholder="Select State" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-white text-black">
-                        {INDIAN_STATES.map((state) => (
-                          <SelectItem key={state} value={state} className="text-black cursor-pointer">
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>City</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g. Jonathan" 
+                        {...field} 
+                        disabled={isLoading} 
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -532,13 +523,13 @@ export const LeadForm = ({
                 name="zip"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Zip Code</FormLabel>
+                    <FormLabel style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '11px', lineHeight: '16.5px', letterSpacing: '0.55px', textTransform: 'uppercase', color: '#64748B' }}>Pin Code</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Zip" 
+                        placeholder="e.g. Jonathan" 
                         {...field} 
                         disabled={isLoading} 
-                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all"
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 h-11 focus:ring-primary/20 transition-all placeholder:text-[#94A3B8] placeholder:font-normal placeholder:text-[14px] placeholder:font-['Inter']"
                       />
                     </FormControl>
                     <FormMessage />
@@ -550,10 +541,15 @@ export const LeadForm = ({
         </div>
 
         <div className="px-6 py-3 pb-5 bg-white dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800 shrink-0 sticky bottom-0 rounded-t-xl shadow-[0_-4px_20px_rgb(0,0,0,0.03)]">
-          <Button type="submit" disabled={isLoading} className="w-full h-10 rounded-xl bg-[#1A4B84] hover:bg-[#143965] text-white font-bold text-sm shadow-md active:scale-[0.98] transition-all">
+          <Button 
+            type="submit" 
+            disabled={isLoading} 
+            className="w-full h-[50px] rounded-xl bg-[#063669] hover:bg-[#052d58] text-white text-[16px] shadow-lg active:scale-[0.98] transition-all"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700 }}
+          >
             {isLoading ? (
               <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
                 <span>{isEdit ? 'Updating...' : 'Creating...'}</span>
               </div>
             ) : (
