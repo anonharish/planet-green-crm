@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DataTable } from '../../../shared/components/DataTable/DataTable';
-import { Pencil, Trash2, MoreVertical, Eye, CalendarClock, ChevronDown, UserCircle2, User } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Eye, CalendarClock, UserCircle2, User } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Link } from 'react-router-dom';
 import {
@@ -75,9 +75,12 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild disabled={disabled}>
           <button
+            style={{ width: '88px', height: '32px', borderRadius: '12px' }}
             className={cn(
-              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all w-full min-w-28",
-              "hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer",
+              "flex items-center transition-all",
+              assigned 
+                ? "gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer w-full min-w-28"
+                : "bg-primary text-white p-0 font-bold text-[10px] shadow-sm hover:bg-primary/90 justify-center",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
@@ -89,11 +92,7 @@ const RmAssigneeCell = ({ lead, onAssign, managers, disabled }: {
                 </span>
               </>
             ) : (
-              <>
-                <UnassignedAvatar />
-                <span className="text-zinc-500 font-medium">Unassigned</span>
-                <ChevronDown className="h-3.5 w-3.5 ml-auto text-zinc-400 shrink-0" />
-              </>
+              <span>Assign RM</span>
             )}
           </button>
         </PopoverTrigger>
@@ -217,9 +216,12 @@ const EmAssigneeCell = ({ lead, onAssign, disabled, emLabel }: {
       <Popover open={open} onOpenChange={(v) => { if (!isDisabled) setOpen(v); }}>
         <PopoverTrigger asChild disabled={isDisabled}>
           <button
+            style={{ width: '88px', height: '32px', borderRadius: '12px' }}
             className={cn(
-              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all w-full min-w-28",
-              "hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer",
+              "flex items-center transition-all",
+              lead.assigned_to_em
+                ? "gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer w-full min-w-28"
+                : "bg-primary text-white p-0 font-bold text-[10px] shadow-sm hover:bg-primary/90 justify-center",
               isDisabled && "opacity-50 cursor-not-allowed"
             )}
           >
@@ -233,13 +235,7 @@ const EmAssigneeCell = ({ lead, onAssign, disabled, emLabel }: {
                 </span>
               </>
             ) : (
-              <>
-                <UnassignedAvatar />
-                <span className="text-zinc-500 font-medium">
-                  {!lead.assigned_to_rm ? 'Select RM first' : 'Unassigned'}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 ml-auto text-zinc-400 shrink-0" />
-              </>
+              <span>{!lead.assigned_to_rm ? 'Select RM first' : 'Assign EM'}</span>
             )}
           </button>
         </PopoverTrigger>

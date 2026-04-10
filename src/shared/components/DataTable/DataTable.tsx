@@ -122,7 +122,7 @@ export function DataTable<T>({
         style={maxHeight ? { maxHeight } : undefined}
       >
         <Table className="min-w-full border-separate border-spacing-y-3">
-          <TableHeader className="sticky top-0 z-20 bg-gray-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <TableHeader className="sticky top-0 z-20 bg-[#F8F9FA] dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -132,7 +132,7 @@ export function DataTable<T>({
                       key={header.id}
                       style={meta?.width ? { width: meta.width, minWidth: meta.width } : undefined}
                       className={cn(
-                        "font-semibold text-gray-500 dark:text-zinc-400 text-[11px] uppercase tracking-wider h-11 whitespace-nowrap bg-inherit",
+                        "font-semibold text-gray-500 dark:text-zinc-400 text-[11px] uppercase tracking-wider h-[60px] whitespace-nowrap bg-inherit",
                         meta?.sortable && "p-0"
                       )}
                     >
