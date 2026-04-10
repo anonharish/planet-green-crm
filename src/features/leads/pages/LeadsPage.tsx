@@ -621,7 +621,7 @@ export const LeadsPage = () => {
               onChange={(v) =>
                 dispatch(updateTabFilters({ tabKey, updates: { search: v, page: 1 } }))
               }
-              placeholder="Search leads by name"
+              placeholder="Search by Name or Phone Number"
             />
           )}
         </div>
@@ -633,36 +633,48 @@ export const LeadsPage = () => {
                 dispatch(setActiveTabAction(0));
                 setActiveView('leads');
               }}
+              style={{ 
+                width: (activeTab === 0 && activeView === 'leads') ? '210.87px' : '155.8px',
+                height: (activeTab === 0 && activeView === 'leads') ? '39px' : '36px'
+              }}
               className={cn(
-                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeTab === 0 && activeView === 'leads'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
-              Unassigned
+              Unassigned {(activeTab === 0 && activeView === 'leads') && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] ml-1">24</span>}
             </button>
             <button
               onClick={() => {
                 dispatch(setActiveTabAction(1));
                 setActiveView('leads');
               }}
+              style={{ 
+                width: (activeTab === 1 && activeView === 'leads') ? '210.87px' : '155.8px',
+                height: (activeTab === 1 && activeView === 'leads') ? '39px' : '36px'
+              }}
               className={cn(
-                "flex items-center gap-2.5 px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeTab === 1 && activeView === 'leads'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
               Assigned
             </button>
             <button
               onClick={() => setActiveView('junk')}
+              style={{ 
+                width: (activeView === 'junk' || activeView === 'junk-review') ? '210.87px' : '155.8px',
+                height: (activeView === 'junk' || activeView === 'junk-review') ? '39px' : '36px'
+              }}
               className={cn(
-                "px-5 py-2 text-sm font-bold rounded-md transition-all duration-200",
+                "flex items-center justify-center gap-2 rounded-[8px] transition-all duration-200 text-sm font-bold",
                 activeView === 'junk' || activeView === 'junk-review'
-                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm"
-                  : "text-slate-500 hover:text-primary",
+                  ? "bg-white dark:bg-zinc-800 text-primary shadow-sm border border-zinc-200 pt-[7.5px] pb-[9.5px] px-6"
+                  : "text-slate-500 hover:text-primary p-2 px-6",
               )}
             >
               Junk
@@ -674,53 +686,57 @@ export const LeadsPage = () => {
       {/* Main Table Card */}
       {activeView === 'leads' && (
         <div className="rounded-3xl border border-border/40 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
-          {/* Card Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-foreground">Leads Queue</h2>
-              {/* <span className="w-2 h-2 rounded-full bg-emerald-500" /> */}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setIsFilterDialogOpen(true)}
-                className="gap-3 relative h-11 rounded-[16px] px-6 border-zinc-200 dark:border-zinc-800 text-base font-bold text-primary bg-white shadow-sm hover:bg-zinc-50 transition-all ring-0 focus-visible:ring-0"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filter
-                {(statusIds.length + projectIds.length + rmIds.length + emIds.length) > 0 && (
-                  <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 py-0.5 text-[10px] font-bold bg-primary text-white rounded-full">
-                    {statusIds.length + projectIds.length + rmIds.length + emIds.length}
-                  </span>
-                )}
-              </Button>
+        {/* Card Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <h2 
+              className="font-bold text-[#191C1E] font-['Plus_Jakarta_Sans']"
+              style={{ width: '175px', height: '28px', fontSize: '18px', lineHeight: '28px' }}
+            >
+              Leads Queue
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsFilterDialogOpen(true)}
+              className="gap-3 relative h-11 rounded-[16px] px-6 border-zinc-200 dark:border-zinc-800 text-base font-bold text-primary bg-white shadow-sm hover:bg-zinc-50 transition-all ring-0 focus-visible:ring-0"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filter
+              {(statusIds.length + projectIds.length + rmIds.length + emIds.length) > 0 && (
+                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 py-0.5 text-[10px] font-bold bg-primary text-white rounded-full">
+                  {statusIds.length + projectIds.length + rmIds.length + emIds.length}
+                </span>
+              )}
+            </Button>
 
-              <FilterDialog
-                open={isFilterDialogOpen}
-                onClose={() => setIsFilterDialogOpen(false)}
-                onApply={(filters) => {
-                  dispatch(updateTabFilters({
-                    tabKey,
-                    updates: {
-                      ...filters,
-                      page: 1
-                    }
-                  }));
-                }}
-                onReset={() => {
-                  dispatch(resetTabFilters(tabKey));
-                  setIsFilterDialogOpen(false);
-                }}
-                statusIds={activeView === 'leads' ? nonJunkStatusIds.map(String) : statusIds}
-                statusOptions={statusOptions}
-                projectIds={projectIds}
-                projectOptions={projectOptions}
-                rmIds={isAdmin ? rmIds : (currentUser?.id ? [String(currentUser.id)] : [])}
-                emIds={emIds}
-                rmOptions={rms}
-                showRmFilter={isAdmin}
-                showEmFilter={isAdmin || isRM}
-              />
+            <FilterDialog
+              open={isFilterDialogOpen}
+              onClose={() => setIsFilterDialogOpen(false)}
+              onApply={(filters) => {
+                dispatch(updateTabFilters({ 
+                  tabKey, 
+                  updates: { 
+                    ...filters,
+                    page: 1 
+                  } 
+                }));
+              }}
+              onReset={() => {
+                dispatch(resetTabFilters(tabKey));
+                setIsFilterDialogOpen(false);
+              }}
+              statusIds={activeView === 'leads' ? nonJunkStatusIds.map(String) : statusIds}
+              statusOptions={statusOptions}
+              projectIds={projectIds}
+              projectOptions={projectOptions}
+              rmIds={isAdmin ? rmIds : (currentUser?.id ? [String(currentUser.id)] : [])}
+              emIds={emIds}
+              rmOptions={rms}
+              showRmFilter={isAdmin}
+              showEmFilter={isAdmin || isRM}
+            />
 
               {can(PERMISSIONS.LEAD_BULK_ACTIONS) && (
                 <Button

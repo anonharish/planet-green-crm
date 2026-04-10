@@ -10,16 +10,9 @@ import { useAuth } from "../context/AuthContext";
 import {
   LogOut,
   LayoutDashboard,
-  LayoutGrid,
-  Users,
-  UsersRound,
-  ShieldCheck,
   UserCircle,
-  Contact,
-  Briefcase,
   ChevronRight,
   FlaskConical,
-  ClipboardList,
   ChevronLeft,
 } from "lucide-react";
 import { usePermissions } from "../hooks/usePermissions";
@@ -35,6 +28,22 @@ import {
 } from "../components/ui/dropdown-menu";
 import { cn } from "../utils";
 import { GlobalApiLoader } from "../shared/components/GlobalApiLoader";
+
+const NavIcon = ({ name }: { name: string }) => (
+  <div 
+    className="w-[22px] h-[22px] bg-current"
+    style={{
+      maskImage: `url(/icons/${name}.svg)`,
+      maskRepeat: 'no-repeat',
+      maskPosition: 'center',
+      maskSize: 'contain',
+      WebkitMaskImage: `url(/icons/${name}.svg)`,
+      WebkitMaskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      WebkitMaskSize: 'contain',
+    }}
+  />
+);
 
 export const MainLayout = () => {
   const { isAuthenticated, isFirstLogin, user, logout } = useAuth();
@@ -52,32 +61,26 @@ export const MainLayout = () => {
   }
 
   const allNavItems = [
-    { label: "Dashboard", path: "/leads", icon: <LayoutGrid size={22} /> },
+    { label: "Manage Leads", path: "/leads", icon: <NavIcon name="manage" /> },
     {
       label: "Customers",
       path: "/customers",
-      icon: <Contact size={22} />,
+      icon: <NavIcon name="customers" />,
       permission: PERMISSIONS.CUSTOMER_VIEW,
     },
     {
       label: "Relationship Managers",
       path: "/relationship-managers",
-      icon: <UsersRound size={22} />,
+      icon: <NavIcon name="relation" />,
       permission: PERMISSIONS.MANAGER_VIEW,
     },
     {
       label: "Experience Managers",
       path: "/agents",
-      icon: <ShieldCheck size={22} />,
+      icon: <NavIcon name="experience" />,
       permission: PERMISSIONS.AGENT_VIEW,
     },
-    { label: "Scheduled Visits", path: "/scheduled-visits", icon: <ClipboardList size={22} /> },
-    // {
-    //   label: "UI Playground",
-    //   path: "/playground",
-    //   icon: <FlaskConical size={22} />,
-    //   permission: PERMISSIONS.MANAGER_VIEW,
-    // },
+    { label: "Scheduled Visits", path: "/scheduled-visits", icon: <NavIcon name="schedule" /> },
   ];
 
   const navItems = allNavItems.filter(
